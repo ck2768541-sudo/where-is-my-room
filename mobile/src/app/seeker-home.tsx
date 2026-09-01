@@ -589,6 +589,9 @@ export default function SeekerHomeScreen() {
           />
 
 
+
+
+
           
 
           <Text
@@ -599,6 +602,26 @@ export default function SeekerHomeScreen() {
             Search Rooms
           </Text>
         </TouchableOpacity>
+
+
+<TouchableOpacity
+  style={styles.mapButton}
+  activeOpacity={0.85}
+  onPress={() => {
+    router.push("/seeker-map" as any);
+  }}
+>
+  <Ionicons
+    name="map-outline"
+    size={20}
+    color={COLORS.primary}
+  />
+
+  <Text style={styles.mapButtonText}>
+    View on Map
+  </Text>
+</TouchableOpacity>
+
 
         <View
           style={
@@ -1320,4 +1343,24 @@ const styles =
       textTransform:
         "capitalize",
     },
+mapButton: {
+  height: 52,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: COLORS.primary,
+  backgroundColor: COLORS.surface,
+  marginTop: 12,
+},
+
+mapButtonText: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: COLORS.primary,
+},
+
+
   });

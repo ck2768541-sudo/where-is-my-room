@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -12,11 +12,7 @@ import {
   View,
 } from "react-native";
 
-import MapView, {
-  Callout,
-  Marker,
-  Region,
-} from "react-native-maps";
+import { WebView } from "react-native-webview";
 
 import { API_BASE_URL } from "../config/api";
 import { COLORS } from "../constants/colors";
@@ -38,13 +34,20 @@ type Property = {
 export default function SeekerMapScreen() {
   const router = useRouter();
 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [latitude, setLatitude] =
+    useState<number | null>(null);
 
-  const [region, setRegion] = useState<Region | null>(null);
+  const [longitude, setLongitude] =
+    useState<number | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] =
+    useState<Property[]>([]);
 
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   const loadMapData = async () => {
     try {
@@ -66,18 +69,13 @@ export default function SeekerMapScreen() {
           accuracy: Location.Accuracy.Balanced,
         });
 
-      const latitude =
-        currentLocation.coords.latitude;
+      setLatitude(
+        currentLocation.coords.latitude
+      );
 
-      const longitude =
-        currentLocation.coords.longitude;
-
-      setRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      });
+      setLongitude(
+        currentLocation.coords.longitude
+      );
 
       const token = await getAuthToken();
 
@@ -106,12 +104,13 @@ export default function SeekerMapScreen() {
         return;
       }
 
-      const validProperties = Array.isArray(data.properties)
-        ? data.properties.filter(
-            (property: Property) =>
-              property.location?.coordinates?.length === 2
-          )
-        : [];
+      const validProperties =
+        Array.isArray(data.properties)
+          ? data.properties.filter(
+              (property: Property) =>
+                property.location?.coordinates?.length === 2
+            )
+          : [];
 
       setProperties(validProperties);
     } catch (error) {
@@ -121,7 +120,7 @@ export default function SeekerMapScreen() {
       );
 
       setError(
-        "Unable to load map."
+        "Unable to load map data."
       );
     } finally {
       setLoading(false);
@@ -132,16 +131,203 @@ export default function SeekerMapScreen() {
     loadMapData();
   }, []);
 
+  const html = useMemo(() => {
+    if (
+      latitude === null ||
+      longitude === null
+    ) {
+      return "";
+    }
+
+    const propertyMarkers =
+      properties
+        .map((property) => {
+          const coordinates =
+            property.location?.coordinates;
+
+          if (!coordinates) {
+            return "";
+          }
+
+          const propertyLongitude =
+            coordinates[0];
+
+          const propertyLatitude =
+            coordinates[1];
+
+          const safeTitle =
+            property.title.replace(
+              /'/g,
+              "\\'"
+            );
+
+          const safeLocality =
+            property.locality.replace(
+              /'/g,
+              "\\'"
+            );
+
+          const safeCity =
+            property.city.replace(
+              /'/g,
+              "\\'"
+            );
+
+          return `
+            L.marker([
+              ${propertyLatitude},
+              ${propertyLongitude}
+            ])
+            .addTo(map)
+            .bindPopup(
+              '<div style="font-family: Arial; min-width: 170px;">' +
+              '<b style="font-size: 15px;">${safeTitle}</b><br/>' +
+              '<span style="color:#2563EB;font-weight:700;">₹${property.monthlyRent}/month</span><br/>' +
+              '<span style="font-size:12px;color:#64748B;">${safeLocality}, ${safeCity}</span><br/>' +
+              '<button onclick="openProperty(\\'${property._id}\\')" style="margin-top:8px;padding:7px 10px;border:0;border-radius:7px;background:#2563EB;color:white;font-weight:700;">View Details</button>' +
+              '</div>'
+            );
+          `;
+        })
+        .join("\n");
+
+    return `
+      <!DOCTYPE html>
+
+      <html>
+
+      <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+        />
+
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
+
+        <style>
+          html,
+          body,
+          #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+          }
+
+          body {
+            overflow: hidden;
+          }
+
+          .user-location-marker {
+            width: 18px;
+            height: 18px;
+            background: #2563EB;
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px #2563EB;
+          }
+        </style>
+      </head>
+
+      <body>
+
+        <div id="map"></div>
+
+        <script
+          src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        ></script>
+
+        <script>
+          const map = L.map(
+            'map',
+            {
+              zoomControl: true
+            }
+          ).setView(
+            [
+              ${latitude},
+              ${longitude}
+            ],
+            14
+          );
+
+          L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+              maxZoom: 19,
+              attribution:
+                '&copy; OpenStreetMap contributors'
+            }
+          ).addTo(map);
+
+          const userIcon =
+            L.divIcon({
+              className: '',
+              html:
+                '<div class="user-location-marker"></div>',
+              iconSize: [18, 18],
+              iconAnchor: [9, 9]
+            });
+
+          L.marker(
+            [
+              ${latitude},
+              ${longitude}
+            ],
+            {
+              icon: userIcon
+            }
+          )
+          .addTo(map)
+          .bindPopup(
+            '<b>Your Location</b>'
+          );
+
+          ${propertyMarkers}
+
+          function openProperty(
+            propertyId
+          ) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'OPEN_PROPERTY',
+                propertyId: propertyId
+              })
+            );
+          }
+        </script>
+
+      </body>
+
+      </html>
+    `;
+  }, [
+    latitude,
+    longitude,
+    properties,
+  ]);
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContainer}>
+      <SafeAreaView
+        style={styles.container}
+      >
+        <View
+          style={styles.center}
+        >
           <ActivityIndicator
             size="large"
             color={COLORS.primary}
           />
 
-          <Text style={styles.loadingText}>
+          <Text
+            style={
+              styles.loadingText
+            }
+          >
             Loading map...
           </Text>
         </View>
@@ -149,25 +335,45 @@ export default function SeekerMapScreen() {
     );
   }
 
-  if (error || !region) {
+  if (
+    error ||
+    latitude === null ||
+    longitude === null
+  ) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContainer}>
+      <SafeAreaView
+        style={styles.container}
+      >
+        <View
+          style={styles.center}
+        >
           <Ionicons
             name="map-outline"
             size={46}
-            color={COLORS.textSecondary}
+            color={
+              COLORS.textSecondary
+            }
           />
 
-          <Text style={styles.errorText}>
-            {error || "Unable to load map."}
+          <Text
+            style={styles.errorText}
+          >
+            {error ||
+              "Unable to load map."}
           </Text>
 
           <TouchableOpacity
-            style={styles.retryButton}
+            style={
+              styles.retryButton
+            }
+            activeOpacity={0.85}
             onPress={loadMapData}
           >
-            <Text style={styles.retryText}>
+            <Text
+              style={
+                styles.retryText
+              }
+            >
               Try Again
             </Text>
           </TouchableOpacity>
@@ -177,198 +383,185 @@ export default function SeekerMapScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView
+      style={styles.container}
+    >
+      <View
+        style={styles.header}
+      >
         <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
+          style={
+            styles.backButton
+          }
           activeOpacity={0.8}
+          onPress={() =>
+            router.back()
+          }
         >
           <Ionicons
             name="arrow-back"
             size={23}
-            color={COLORS.textPrimary}
+            color={
+              COLORS.textPrimary
+            }
           />
         </TouchableOpacity>
 
         <View>
-          <Text style={styles.headerTitle}>
+          <Text
+            style={
+              styles.title
+            }
+          >
             Map View
           </Text>
 
-          <Text style={styles.headerSubtitle}>
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
             Properties near your location
           </Text>
         </View>
       </View>
 
-      <MapView
-        style={styles.map}
-        initialRegion={region}
-        showsUserLocation
-        showsMyLocationButton
-      >
-        {properties.map((property) => {
-          const coordinates =
-            property.location?.coordinates;
+      <WebView
+        style={styles.webView}
+        originWhitelist={["*"]}
+        source={{
+          html,
+        }}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        mixedContentMode="always"
+        onMessage={(event) => {
+          try {
+            const message =
+              JSON.parse(
+                event.nativeEvent.data
+              );
 
-          if (!coordinates) {
-            return null;
+            if (
+              message.type ===
+                "OPEN_PROPERTY" &&
+              message.propertyId
+            ) {
+              router.push({
+                pathname:
+                  "/property-details",
+                params: {
+                  propertyId:
+                    message.propertyId,
+                },
+              });
+            }
+          } catch (error) {
+            console.error(
+              "Map message error:",
+              error
+            );
           }
-
-          const longitude =
-            coordinates[0];
-
-          const latitude =
-            coordinates[1];
-
-          return (
-            <Marker
-              key={property._id}
-              coordinate={{
-                latitude,
-                longitude,
-              }}
-            >
-              <Callout
-                onPress={() =>
-                  router.push({
-                    pathname: "/property-details",
-                    params: {
-                      propertyId: property._id,
-                    },
-                  })
-                }
-              >
-                <View style={styles.callout}>
-                  <Text style={styles.propertyTitle}>
-                    {property.title}
-                  </Text>
-
-                  <Text style={styles.rent}>
-                    ₹{property.monthlyRent} / month
-                  </Text>
-
-                  <Text style={styles.locationText}>
-                    {property.locality}, {property.city}
-                  </Text>
-
-                  <Text style={styles.viewDetails}>
-                    View Details
-                  </Text>
-                </View>
-              </Callout>
-            </Marker>
-          );
-        })}
-      </MapView>
+        }}
+      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+const styles =
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor:
+        COLORS.background,
+    },
 
-  header: {
-    minHeight: 82,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    gap: 14,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
+    header: {
+      minHeight: 82,
+      flexDirection:
+        "row",
+      alignItems:
+        "center",
+      paddingHorizontal: 18,
+      gap: 14,
+      backgroundColor:
+        COLORS.surface,
+      borderBottomWidth: 1,
+      borderBottomColor:
+        COLORS.border,
+    },
 
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.background,
-  },
+    backButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems:
+        "center",
+      justifyContent:
+        "center",
+      backgroundColor:
+        COLORS.background,
+    },
 
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-  },
+    title: {
+      fontSize: 20,
+      fontWeight:
+        "800",
+      color:
+        COLORS.textPrimary,
+    },
 
-  headerSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 3,
-  },
+    subtitle: {
+      marginTop: 3,
+      fontSize: 13,
+      color:
+        COLORS.textSecondary,
+    },
 
-  map: {
-    flex: 1,
-  },
+    webView: {
+      flex: 1,
+      backgroundColor:
+        COLORS.background,
+    },
 
-  centerContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
+    center: {
+      flex: 1,
+      alignItems:
+        "center",
+      justifyContent:
+        "center",
+      paddingHorizontal: 24,
+    },
 
-  loadingText: {
-    marginTop: 12,
-    fontSize: 15,
-    color: COLORS.textSecondary,
-  },
+    loadingText: {
+      marginTop: 12,
+      fontSize: 15,
+      color:
+        COLORS.textSecondary,
+    },
 
-  errorText: {
-    marginTop: 12,
-    textAlign: "center",
-    fontSize: 15,
-    color: COLORS.error,
-  },
+    errorText: {
+      marginTop: 12,
+      fontSize: 15,
+      textAlign:
+        "center",
+      color:
+        COLORS.error,
+    },
 
-  retryButton: {
-    marginTop: 18,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 11,
-    borderRadius: 12,
-  },
+    retryButton: {
+      marginTop: 18,
+      paddingHorizontal: 20,
+      paddingVertical: 11,
+      borderRadius: 12,
+      backgroundColor:
+        COLORS.primary,
+    },
 
-  retryText: {
-    color: COLORS.surface,
-    fontWeight: "700",
-  },
-
-  callout: {
-    width: 190,
-    padding: 5,
-  },
-
-  propertyTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-  },
-
-  rent: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginTop: 5,
-  },
-
-  locationText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-
-  viewDetails: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginTop: 8,
-  },
-});
+    retryText: {
+      fontWeight:
+        "700",
+      color:
+        COLORS.surface,
+    },
+  });
