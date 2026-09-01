@@ -122,6 +122,16 @@ export default function SeekerHomeScreen() {
       null
     );
 
+  const [
+    favoritePropertyIds,
+    setFavoritePropertyIds,
+  ] = useState<string[]>([]);
+
+  const [
+    updatingFavoriteId,
+    setUpdatingFavoriteId,
+  ] = useState<string | null>(null);
+
   const propertyTypes: PropertyType[] =
     [
       "Room",
@@ -346,12 +356,150 @@ export default function SeekerHomeScreen() {
       }
     };
 
+  const fetchFavorites =
+    async () => {
+      try {
+        const token =
+          await getAuthToken();
+
+        if (!token) {
+          return;
+        }
+
+        const response =
+          await fetch(
+            `${API_BASE_URL}/favorites`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          console.error(
+            "Fetch favorites failed:",
+            data?.message
+          );
+          return;
+        }
+
+        const favorites =
+          Array.isArray(
+            data.favorites
+          )
+            ? data.favorites
+            : [];
+
+        setFavoritePropertyIds(
+          favorites
+            .map(
+              (
+                property: Property
+              ) =>
+                property._id
+            )
+            .filter(Boolean)
+        );
+      } catch (error) {
+        console.error(
+          "Fetch favorites error:",
+          error
+        );
+      }
+    };
+
+  const toggleFavorite =
+    async (
+      propertyId: string
+    ) => {
+      try {
+        setUpdatingFavoriteId(
+          propertyId
+        );
+
+        const token =
+          await getAuthToken();
+
+        if (!token) {
+          setError(
+            "Please login again."
+          );
+          return;
+        }
+
+        const response =
+          await fetch(
+            `${API_BASE_URL}/favorites/${propertyId}`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          console.error(
+            "Favorite update failed:",
+            data?.message
+          );
+          return;
+        }
+
+        setFavoritePropertyIds(
+          (
+            currentIds
+          ) => {
+            if (
+              data.isFavorite
+            ) {
+              return currentIds.includes(
+                propertyId
+              )
+                ? currentIds
+                : [
+                    ...currentIds,
+                    propertyId,
+                  ];
+            }
+
+            return currentIds.filter(
+              (id) =>
+                id !==
+                propertyId
+            );
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Toggle favorite error:",
+          error
+        );
+      } finally {
+        setUpdatingFavoriteId(
+          null
+        );
+      }
+    };
+
   useEffect(() => {
     getUserLocation();
 
     fetchProperties(
       false
     );
+
+    fetchFavorites();
   }, []);
 
   const handleSearch =
@@ -621,6 +769,27 @@ export default function SeekerHomeScreen() {
     View on Map
   </Text>
 </TouchableOpacity>
+<TouchableOpacity
+  style={styles.favoritesButton}
+  activeOpacity={0.85}
+  onPress={() => {
+    router.push("/seeker-favorites" as any);
+  }}
+>
+  <Ionicons
+    name="heart-outline"
+    size={20}
+    color={COLORS.error}
+  />
+
+  <Text style={styles.favoritesButtonText}>
+    View Favorites
+  </Text>
+</TouchableOpacity>
+
+
+
+
 
 
         <View
@@ -775,6 +944,15 @@ export default function SeekerHomeScreen() {
                     )
                   : null;
 
+              const isFavorite =
+                favoritePropertyIds.includes(
+                  property._id
+                );
+
+              const isUpdatingFavorite =
+                updatingFavoriteId ===
+                property._id;
+
               return (
                 <TouchableOpacity
                   key={
@@ -800,6 +978,46 @@ export default function SeekerHomeScreen() {
                     )
                   }
                 >
+                  <TouchableOpacity
+                    style={
+                      styles.favoriteButton
+                    }
+                    activeOpacity={0.85}
+                    disabled={
+                      isUpdatingFavorite
+                    }
+                    onPress={(event) => {
+                      event.stopPropagation();
+
+                      toggleFavorite(
+                        property._id
+                      );
+                    }}
+                  >
+                    {isUpdatingFavorite ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={
+                          COLORS.primary
+                        }
+                      />
+                    ) : (
+                      <Ionicons
+                        name={
+                          isFavorite
+                            ? "heart"
+                            : "heart-outline"
+                        }
+                        size={23}
+                        color={
+                          isFavorite
+                            ? COLORS.error
+                            : COLORS.textPrimary
+                        }
+                      />
+                    )}
+                  </TouchableOpacity>
+
                   {imageUrl ? (
                     <Image
                       source={{
@@ -1223,6 +1441,23 @@ const styles =
         "hidden",
     },
 
+    favoriteButton: {
+      position: "absolute",
+      top: 12,
+      right: 12,
+      zIndex: 10,
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+    },
+
     propertyImage: {
       width: "100%",
       height: 190,
@@ -1360,6 +1595,25 @@ mapButtonText: {
   fontSize: 16,
   fontWeight: "700",
   color: COLORS.primary,
+},
+
+favoritesButton: {
+  height: 52,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: COLORS.error,
+  backgroundColor: COLORS.surface,
+  marginTop: 10,
+},
+
+favoritesButtonText: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: COLORS.error,
 },
 
 
