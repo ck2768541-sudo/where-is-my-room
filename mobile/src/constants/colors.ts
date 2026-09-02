@@ -1,16 +1,21 @@
 export const COLORS = {
-  primary: "#2563EB",
-  navy: "#0F172A",
+  primary: "#635BFF",
+  primaryDark: "#4F46E5",
 
-  background: "#F8FAFC",
+  accent: "#8B5CF6",
+  accentLight: "#F1EFFF",
+
+  navy: "#111827",
+
+  background: "#F8F9FD",
   surface: "#FFFFFF",
 
-  textPrimary: "#0F172A",
-  textSecondary: "#64748B",
+  textPrimary: "#111827",
+  textSecondary: "#667085",
 
-  border: "#E2E8F0",
+  border: "#E8EAF2",
 
-  success: "#10B981",
-  warning: "#F59E0B",
-  error: "#EF4444",
+  success: "#12B76A",
+  warning: "#F79009",
+  error: "#F04438",
 };

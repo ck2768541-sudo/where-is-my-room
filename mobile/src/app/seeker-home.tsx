@@ -701,663 +701,565 @@ export default function SeekerHomeScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={
-        styles.container
-      }
-    >
+    <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={
-          styles.content
-        }
-        showsVerticalScrollIndicator={
-          false
-        }
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
+        {/* PREMIUM HEADER */}
         <View style={styles.topHeader}>
-          <Text style={styles.brand}>
-           StayRent
-          </Text>
+          <View style={styles.brandWrap}>
+            <View style={styles.brandLogo}>
+              <Ionicons
+                name="home"
+                size={19}
+                color="#FFFFFF"
+              />
+            </View>
 
-          <TouchableOpacity
-            style={styles.logoutButton}
-            activeOpacity={0.8}
-            onPress={handleLogout}
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={20}
-              color={COLORS.error}
-            />
+            <View>
+              <Text style={styles.brand}>StayRent</Text>
+              <Text style={styles.brandCaption}>
+                Find your next stay
+              </Text>
+            </View>
+          </View>
 
-            <Text style={styles.logoutButtonText}>
-              Logout
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text
-          style={
-            styles.title
-          }
-        >
-          Find your next place
-        </Text>
-
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          Search available rooms, PGs and rental properties near your preferred location.
-        </Text>
-
-        <Text
-          style={
-            styles.sectionLabel
-          }
-        >
-          Where do you want to stay?
-        </Text>
-
-        <View
-          style={
-            styles.searchContainer
-          }
-        >
-          <Ionicons
-            name="location-outline"
-            size={22}
-            color={
-              COLORS.textSecondary
-            }
-          />
-
-          <TextInput
-            style={
-              styles.searchInput
-            }
-            placeholder="Search city"
-            placeholderTextColor={
-              COLORS.textSecondary
-            }
-            value={
-              location
-            }
-            onChangeText={
-              setLocation
-            }
-          />
-
-          {location.length >
-            0 && (
+          <View style={styles.headerActions}>
             <TouchableOpacity
+              style={styles.headerIconButton}
+              activeOpacity={0.8}
               onPress={() =>
-                setLocation(
-                  ""
-                )
-              }
-              activeOpacity={
-                0.7
+                router.push("/seeker-favorites" as any)
               }
             >
               <Ionicons
-                name="close-circle"
+                name="heart-outline"
                 size={21}
-                color={
-                  COLORS.textSecondary
-                }
+                color="#635BFF"
               />
             </TouchableOpacity>
-          )}
-        </View>
 
-        <Text
-          style={
-            styles.filterTitle
-          }
-        >
-          Property Type
-        </Text>
-
-        <View
-          style={
-            styles.chipRow
-          }
-        >
-          {propertyTypes.map(
-            (item) => {
-              const selected =
-                propertyType ===
-                item;
-
-              return (
-                <TouchableOpacity
-                  key={
-                    item
-                  }
-                  style={[
-                    styles.chip,
-                    selected &&
-                      styles.chipSelected,
-                  ]}
-                  activeOpacity={
-                    0.8
-                  }
-                  onPress={() =>
-                    setPropertyType(
-                      item
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected &&
-                        styles.chipTextSelected,
-                    ]}
-                  >
-                    {
-                      item
-                    }
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-          )}
-        </View>
-
-        <Text
-          style={
-            styles.filterTitle
-          }
-        >
-          Available For
-        </Text>
-
-        <View
-          style={
-            styles.chipRow
-          }
-        >
-          {availabilityOptions.map(
-            (item) => {
-              const selected =
-                availability ===
-                item;
-
-              return (
-                <TouchableOpacity
-                  key={
-                    item
-                  }
-                  style={[
-                    styles.chip,
-                    selected &&
-                      styles.chipSelected,
-                  ]}
-                  activeOpacity={
-                    0.8
-                  }
-                  onPress={() =>
-                    setAvailability(
-                      item
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected &&
-                        styles.chipTextSelected,
-                    ]}
-                  >
-                    {
-                      item
-                    }
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-          )}
-        </View>
-
-        <Text
-          style={
-            styles.filterTitle
-          }
-        >
-          Monthly Rent Range
-        </Text>
-
-        <View
-          style={
-            styles.rentRangeRow
-          }
-        >
-          <View
-            style={
-              styles.rentInputContainer
-            }
-          >
-            <Text
-              style={
-                styles.currencyText
-              }
+            <TouchableOpacity
+              style={styles.logoutIconButton}
+              activeOpacity={0.8}
+              onPress={handleLogout}
             >
-              ₹
-            </Text>
+              <Ionicons
+                name="log-out-outline"
+                size={21}
+                color="#F04438"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            <TextInput
-              style={
-                styles.rentInput
-              }
-              placeholder="Min rent"
-              placeholderTextColor={
-                COLORS.textSecondary
-              }
-              keyboardType="numeric"
-              value={minRent}
-              onChangeText={setMinRent}
-              maxLength={7}
-            />
+        {/* HERO */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
+
+          <View style={styles.heroBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.heroBadgeText}>
+              RENTALS AROUND YOU
+            </Text>
           </View>
 
-          <Text
-            style={
-              styles.rentRangeSeparator
-            }
-          >
-            to
+          <Text style={styles.title}>
+            Find a place{"\n"}that fits your life.
           </Text>
 
-          <View
-            style={
-              styles.rentInputContainer
-            }
-          >
-            <Text
-              style={
-                styles.currencyText
-              }
-            >
-              ₹
-            </Text>
+          <Text style={styles.subtitle}>
+            Search rooms, PGs and flats by location,
+            budget and distance.
+          </Text>
 
-            <TextInput
-              style={
-                styles.rentInput
-              }
-              placeholder="Max rent"
-              placeholderTextColor={
-                COLORS.textSecondary
-              }
-              keyboardType="numeric"
-              value={maxRent}
-              onChangeText={setMaxRent}
-              maxLength={7}
-            />
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatItem}>
+              <Ionicons
+                name="location-outline"
+                size={17}
+                color="#635BFF"
+              />
+              <Text style={styles.heroStatText}>
+                Nearby
+              </Text>
+            </View>
+
+            <View style={styles.heroStatDivider} />
+
+            <View style={styles.heroStatItem}>
+              <Ionicons
+                name="options-outline"
+                size={17}
+                color="#635BFF"
+              />
+              <Text style={styles.heroStatText}>
+                Smart filters
+              </Text>
+            </View>
+
+            <View style={styles.heroStatDivider} />
+
+            <View style={styles.heroStatItem}>
+              <Ionicons
+                name="heart-outline"
+                size={17}
+                color="#635BFF"
+              />
+              <Text style={styles.heroStatText}>
+                Save
+              </Text>
+            </View>
           </View>
         </View>
 
-        <Text
-          style={
-            styles.filterTitle
-          }
-        >
-          Distance from You
-        </Text>
+        {/* SEARCH + FILTERS */}
+        <View style={styles.searchPanel}>
+          <View style={styles.panelHeader}>
+            <View>
+              <Text style={styles.panelEyebrow}>
+                DISCOVER
+              </Text>
+              <Text style={styles.panelTitle}>
+                Search rentals
+              </Text>
+            </View>
 
-        <View
-          style={
-            styles.chipRow
-          }
-        >
-          {distanceOptions.map(
-            (item) => {
+            <View style={styles.filterIconBox}>
+              <Ionicons
+                name="options-outline"
+                size={20}
+                color="#635BFF"
+              />
+            </View>
+          </View>
+
+          <Text style={styles.sectionLabel}>
+            Location
+          </Text>
+
+          <View style={styles.searchContainer}>
+            <View style={styles.searchIconBox}>
+              <Ionicons
+                name="location-outline"
+                size={20}
+                color="#635BFF"
+              />
+            </View>
+
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search city"
+              placeholderTextColor="#98A2B3"
+              value={location}
+              onChangeText={setLocation}
+            />
+
+            {location.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setLocation("")}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="close-circle"
+                  size={21}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.filterTitle}>
+            Property type
+          </Text>
+
+          <View style={styles.chipRow}>
+            {propertyTypes.map((item) => {
+              const selected = propertyType === item;
+
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[
+                    styles.chip,
+                    selected && styles.chipSelected,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => setPropertyType(item)}
+                >
+                  <Ionicons
+                    name={
+                      item === "Room"
+                        ? "home-outline"
+                        : item === "PG"
+                        ? "bed-outline"
+                        : "business-outline"
+                    }
+                    size={15}
+                    color={
+                      selected
+                        ? "#FFFFFF"
+                        : "#667085"
+                    }
+                  />
+
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected &&
+                        styles.chipTextSelected,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.filterTitle}>
+            Available for
+          </Text>
+
+          <View style={styles.chipRow}>
+            {availabilityOptions.map((item) => {
+              const selected = availability === item;
+
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[
+                    styles.chip,
+                    selected && styles.chipSelected,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => setAvailability(item)}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected &&
+                        styles.chipTextSelected,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.filterTitle}>
+            Monthly rent
+          </Text>
+
+          <View style={styles.rentRangeRow}>
+            <View style={styles.rentInputContainer}>
+              <Text style={styles.currencyText}>₹</Text>
+              <TextInput
+                style={styles.rentInput}
+                placeholder="Min rent"
+                placeholderTextColor="#98A2B3"
+                keyboardType="numeric"
+                value={minRent}
+                onChangeText={setMinRent}
+                maxLength={7}
+              />
+            </View>
+
+            <View style={styles.rentDivider}>
+              <Text style={styles.rentRangeSeparator}>
+                —
+              </Text>
+            </View>
+
+            <View style={styles.rentInputContainer}>
+              <Text style={styles.currencyText}>₹</Text>
+              <TextInput
+                style={styles.rentInput}
+                placeholder="Max rent"
+                placeholderTextColor="#98A2B3"
+                keyboardType="numeric"
+                value={maxRent}
+                onChangeText={setMaxRent}
+                maxLength={7}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.filterTitle}>
+            Distance from you
+          </Text>
+
+          <View style={styles.chipRow}>
+            {distanceOptions.map((item) => {
               const selected =
-                selectedDistanceKm ===
-                item.value;
+                selectedDistanceKm === item.value;
 
               return (
                 <TouchableOpacity
                   key={item.label}
                   style={[
-                    styles.chip,
+                    styles.distanceChip,
                     selected &&
-                      styles.chipSelected,
+                      styles.distanceChipSelected,
                   ]}
                   activeOpacity={0.8}
                   onPress={() =>
-                    setSelectedDistanceKm(
-                      item.value
-                    )
+                    setSelectedDistanceKm(item.value)
                   }
                 >
+                  <Ionicons
+                    name="navigate-outline"
+                    size={14}
+                    color={
+                      selected
+                        ? "#FFFFFF"
+                        : "#667085"
+                    }
+                  />
+
                   <Text
                     style={[
-                      styles.chipText,
+                      styles.distanceChipText,
                       selected &&
-                        styles.chipTextSelected,
+                        styles.distanceChipTextSelected,
                     ]}
                   >
                     {item.label}
                   </Text>
                 </TouchableOpacity>
               );
-            }
-          )}
+            })}
+          </View>
+
+          <TouchableOpacity
+            style={styles.searchButton}
+            activeOpacity={0.9}
+            onPress={handleSearch}
+          >
+            <Ionicons
+              name="search"
+              size={20}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.searchButtonText}>
+              Search Properties
+            </Text>
+
+            <View style={styles.searchArrowBox}>
+              <Ionicons
+                name="arrow-forward"
+                size={18}
+                color="#635BFF"
+              />
+            </View>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={
-            styles.searchButton
-          }
-          activeOpacity={
-            0.85
-          }
-          onPress={
-            handleSearch
-          }
-        >
-          <Ionicons
-            name="search"
-            size={20}
-            color={
-              COLORS.surface
-            }
-          />
-
-
-
-
-
-          
-
-          <Text
-            style={
-              styles.searchButtonText
+        {/* QUICK ACTIONS */}
+        <View style={styles.quickActionsRow}>
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              router.push("/seeker-map" as any)
             }
           >
-            Search Rooms
-          </Text>
-        </TouchableOpacity>
+            <View style={styles.quickActionIcon}>
+              <Ionicons
+                name="map-outline"
+                size={22}
+                color="#635BFF"
+              />
+            </View>
 
+            <View style={styles.quickActionTextWrap}>
+              <Text style={styles.quickActionTitle}>
+                Explore map
+              </Text>
+              <Text style={styles.quickActionText}>
+                See nearby listings
+              </Text>
+            </View>
 
-<TouchableOpacity
-  style={styles.mapButton}
-  activeOpacity={0.85}
-  onPress={() => {
-    router.push("/seeker-map" as any);
-  }}
->
-  <Ionicons
-    name="map-outline"
-    size={20}
-    color={COLORS.primary}
-  />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
 
-  <Text style={styles.mapButtonText}>
-    View on Map
-  </Text>
-</TouchableOpacity>
-<TouchableOpacity
-  style={styles.favoritesButton}
-  activeOpacity={0.85}
-  onPress={() => {
-    router.push("/seeker-favorites" as any);
-  }}
->
-  <Ionicons
-    name="heart-outline"
-    size={20}
-    color={COLORS.error}
-  />
-
-  <Text style={styles.favoritesButtonText}>
-    View Favorites
-  </Text>
-</TouchableOpacity>
-
-
-
-
-
-
-        <View
-          style={
-            styles.resultsHeader
-          }
-        >
-          <Text
-            style={
-              styles.resultsTitle
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              router.push("/seeker-favorites" as any)
             }
           >
-            Available Properties
-          </Text>
+            <View style={styles.favoriteActionIcon}>
+              <Ionicons
+                name="heart-outline"
+                size={22}
+                color="#F04438"
+              />
+            </View>
+
+            <View style={styles.quickActionTextWrap}>
+              <Text style={styles.quickActionTitle}>
+                Saved
+              </Text>
+              <Text style={styles.quickActionText}>
+                View favorites
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* RESULTS */}
+        <View style={styles.resultsHeader}>
+          <View>
+            <Text style={styles.resultsEyebrow}>
+              DISCOVER
+            </Text>
+            <Text style={styles.resultsTitle}>
+              Available properties
+            </Text>
+          </View>
 
           {!loading && (
-            <Text
-              style={
-                styles.resultsCount
-              }
-            >
-              {
-                properties.length
-              }
-            </Text>
+            <View style={styles.resultsCountBadge}>
+              <Text style={styles.resultsCount}>
+                {properties.length}
+              </Text>
+            </View>
           )}
         </View>
 
         {loading && (
-          <View
-            style={
-              styles.loadingContainer
-            }
-          >
-            <ActivityIndicator
-              size="large"
-              color={
-                COLORS.primary
-              }
-            />
+          <View style={styles.loadingContainer}>
+            <View style={styles.loadingIconBox}>
+              <ActivityIndicator
+                size="small"
+                color="#635BFF"
+              />
+            </View>
 
-            <Text
-              style={
-                styles.loadingText
-              }
-            >
-              Finding properties...
+            <Text style={styles.loadingTitle}>
+              Finding the best places...
+            </Text>
+
+            <Text style={styles.loadingText}>
+              This will only take a moment.
+            </Text>
+          </View>
+        )}
+
+        {!loading && error !== "" && (
+          <View style={styles.messageBox}>
+            <View style={styles.errorIconBox}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={25}
+                color="#F04438"
+              />
+            </View>
+
+            <Text style={styles.errorTitle}>
+              Something went wrong
+            </Text>
+
+            <Text style={styles.errorText}>
+              {error}
             </Text>
           </View>
         )}
 
         {!loading &&
-          error !== "" && (
-            <View
-              style={
-                styles.messageBox
-              }
-            >
-              <Ionicons
-                name="alert-circle-outline"
-                size={24}
-                color={
-                  COLORS.error
-                }
-              />
-
-              <Text
-                style={
-                  styles.errorText
-                }
-              >
-                {
-                  error
-                }
-              </Text>
-            </View>
-          )}
-
-        {!loading &&
           error === "" &&
-          properties.length ===
-            0 && (
-            <View
-              style={
-                styles.messageBox
-              }
-            >
-              <Ionicons
-                name="home-outline"
-                size={30}
-                color={
-                  COLORS.textSecondary
-                }
-              />
+          properties.length === 0 && (
+            <View style={styles.messageBox}>
+              <View style={styles.emptyIconBox}>
+                <Ionicons
+                  name="home-outline"
+                  size={27}
+                  color="#635BFF"
+                />
+              </View>
 
-              <Text
-                style={
-                  styles.emptyTitle
-                }
-              >
+              <Text style={styles.emptyTitle}>
                 No properties found
               </Text>
 
-              <Text
-                style={
-                  styles.emptyText
-                }
-              >
-                Try another city or filter.
+              <Text style={styles.emptyText}>
+                Try another city or adjust your
+                filters.
               </Text>
             </View>
           )}
 
         {!loading &&
           error === "" &&
-          properties.map(
-            (
-              property
-            ) => {
-              const imageUrl =
-                property.photos &&
-                property
-                  .photos
-                  .length >
-                  0
-                  ? property
-                      .photos[0]
-                  : null;
+          properties.map((property) => {
+            const imageUrl =
+              property.photos &&
+              property.photos.length > 0
+                ? property.photos[0]
+                : null;
 
-              const hasDistance =
-                userLatitude !==
-                  null &&
-                userLongitude !==
-                  null &&
-                property
-                  .location
-                  ?.coordinates
-                  ?.length ===
-                  2;
+            const hasDistance =
+              userLatitude !== null &&
+              userLongitude !== null &&
+              property.location?.coordinates
+                ?.length === 2;
 
-              const distance =
-                hasDistance
-                  ? getDistanceInKm(
-                      userLatitude!,
-                      userLongitude!,
-                      property
-                        .location!
-                        .coordinates[1],
-                      property
-                        .location!
-                        .coordinates[0]
-                    )
-                  : null;
+            const distance = hasDistance
+              ? getDistanceInKm(
+                  userLatitude!,
+                  userLongitude!,
+                  property.location!.coordinates[1],
+                  property.location!.coordinates[0]
+                )
+              : null;
 
-              const isFavorite =
-                favoritePropertyIds.includes(
-                  property._id
-                );
+            const isFavorite =
+              favoritePropertyIds.includes(
+                property._id
+              );
 
-              const isUpdatingFavorite =
-                updatingFavoriteId ===
-                property._id;
+            const isUpdatingFavorite =
+              updatingFavoriteId === property._id;
 
-              return (
-                <TouchableOpacity
-                  key={
-                    property._id
-                  }
-                  style={
-                    styles.propertyCard
-                  }
-                  activeOpacity={
-                    0.9
-                  }
-                  onPress={() =>
-                    router.push(
-                      {
-                        pathname:
-                          "/property-details",
-
-                        params: {
-                          propertyId:
-                            property._id,
-                        },
-                      }
-                    )
-                  }
-                >
-                  <TouchableOpacity
-                    style={
-                      styles.favoriteButton
-                    }
-                    activeOpacity={0.85}
-                    disabled={
-                      isUpdatingFavorite
-                    }
-                    onPress={(event) => {
-                      event.stopPropagation();
-
-                      toggleFavorite(
-                        property._id
-                      );
-                    }}
-                  >
-                    {isUpdatingFavorite ? (
-                      <ActivityIndicator
-                        size="small"
-                        color={
-                          COLORS.primary
-                        }
-                      />
-                    ) : (
-                      <Ionicons
-                        name={
-                          isFavorite
-                            ? "heart"
-                            : "heart-outline"
-                        }
-                        size={23}
-                        color={
-                          isFavorite
-                            ? COLORS.error
-                            : COLORS.textPrimary
-                        }
-                      />
-                    )}
-                  </TouchableOpacity>
-
+            return (
+              <TouchableOpacity
+                key={property._id}
+                style={styles.propertyCard}
+                activeOpacity={0.92}
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/property-details",
+                    params: {
+                      propertyId:
+                        property._id,
+                    },
+                  })
+                }
+              >
+                <View style={styles.imageWrap}>
                   {imageUrl ? (
                     <Image
-                      source={{
-                        uri: imageUrl,
-                      }}
-                      style={
-                        styles.propertyImage
-                      }
+                      source={{ uri: imageUrl }}
+                      style={styles.propertyImage}
                       resizeMode="cover"
                     />
                   ) : (
@@ -1366,651 +1268,1005 @@ export default function SeekerHomeScreen() {
                         styles.noImageContainer
                       }
                     >
-                      <Ionicons
-                        name="image-outline"
-                        size={38}
-                        color={
-                          COLORS.textSecondary
-                        }
-                      />
-
-                      <Text
+                      <View
                         style={
-                          styles.noImageText
+                          styles.noImageIconBox
                         }
                       >
-                        No photo
+                        <Ionicons
+                          name="image-outline"
+                          size={31}
+                          color="#635BFF"
+                        />
+                      </View>
+
+                      <Text
+                        style={styles.noImageText}
+                      >
+                        Photo not available
                       </Text>
                     </View>
                   )}
 
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    activeOpacity={0.85}
+                    disabled={isUpdatingFavorite}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      toggleFavorite(property._id);
+                    }}
+                  >
+                    {isUpdatingFavorite ? (
+                      <ActivityIndicator
+                        size="small"
+                        color="#635BFF"
+                      />
+                    ) : (
+                      <Ionicons
+                        name={
+                          isFavorite
+                            ? "heart"
+                            : "heart-outline"
+                        }
+                        size={22}
+                        color={
+                          isFavorite
+                            ? "#F04438"
+                            : "#111827"
+                        }
+                      />
+                    )}
+                  </TouchableOpacity>
+
                   <View
-                    style={
-                      styles.propertyContent
-                    }
+                    style={styles.typeImageBadge}
+                  >
+                    <Text
+                      style={
+                        styles.typeImageBadgeText
+                      }
+                    >
+                      {property.propertyType.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  style={styles.propertyContent}
+                >
+                  <View
+                    style={styles.propertyTopRow}
                   >
                     <View
                       style={
-                        styles.propertyTopRow
+                        styles.propertyTitleWrap
                       }
                     >
                       <Text
                         style={
                           styles.propertyTitle
                         }
-                        numberOfLines={
-                          2
-                        }
+                        numberOfLines={2}
                       >
-                        {
-                          property.title
-                        }
+                        {property.title}
                       </Text>
 
+                      <View
+                        style={
+                          styles.locationRow
+                        }
+                      >
+                        <Ionicons
+                          name="location-outline"
+                          size={15}
+                          color="#98A2B3"
+                        />
+
+                        <Text
+                          style={
+                            styles.locationText
+                          }
+                          numberOfLines={1}
+                        >
+                          {property.locality},{" "}
+                          {property.city}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View
+                      style={
+                        styles.rentBlock
+                      }
+                    >
                       <Text
                         style={
                           styles.propertyRent
                         }
                       >
                         ₹
-                        {
-                          property.monthlyRent
-                        }
+                        {property.monthlyRent}
                       </Text>
-                    </View>
-
-                    <Text
-                      style={
-                        styles.rentPeriod
-                      }
-                    >
-                      per month
-                    </Text>
-
-                    <View
-                      style={
-                        styles.locationRow
-                      }
-                    >
-                      <Ionicons
-                        name="location-outline"
-                        size={17}
-                        color={
-                          COLORS.textSecondary
-                        }
-                      />
 
                       <Text
                         style={
-                          styles.locationText
+                          styles.rentPeriod
                         }
                       >
-                        {
-                          property.locality
-                        }
-                        ,{" "}
-                        {
-                          property.city
-                        }
+                        /month
                       </Text>
                     </View>
+                  </View>
 
-                    {distance !==
-                      null && (
-                      <View
-                        style={
-                          styles.distanceRow
-                        }
-                      >
-                        <Ionicons
-                          name="navigate-outline"
-                          size={17}
-                          color={
-                            COLORS.primary
-                          }
-                        />
+                  <View style={styles.cardDivider} />
 
-                        <Text
-                          style={
-                            styles.distanceText
-                          }
-                        >
-                          {distance.toFixed(
-                            1
-                          )}{" "}
-                          km away
-                        </Text>
-                      </View>
-                    )}
-
+                  <View
+                    style={
+                      styles.cardBottomRow
+                    }
+                  >
                     <View
                       style={
                         styles.propertyInfoRow
                       }
                     >
                       <View
-                        style={
-                          styles.smallBadge
-                        }
+                        style={styles.smallBadge}
                       >
+                        <Ionicons
+                          name="person-outline"
+                          size={13}
+                          color="#635BFF"
+                        />
+
                         <Text
                           style={
                             styles.smallBadgeText
                           }
                         >
-                          {property.propertyType.toUpperCase()}
+                          {property.availableFor}
                         </Text>
                       </View>
 
-                      <View
-                        style={
-                          styles.smallBadge
-                        }
-                      >
-                        <Text
+                      {distance !== null && (
+                        <View
                           style={
-                            styles.smallBadgeText
+                            styles.distanceBadge
                           }
                         >
-                          For{" "}
-                          {
-                            property.availableFor
-                          }
-                        </Text>
-                      </View>
+                          <Ionicons
+                            name="navigate-outline"
+                            size={13}
+                            color="#12B76A"
+                          />
+
+                          <Text
+                            style={
+                              styles.distanceText
+                            }
+                          >
+                            {distance.toFixed(1)} km
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View
+                      style={
+                        styles.viewDetailsButton
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.viewDetailsText
+                        }
+                      >
+                        View
+                      </Text>
+
+                      <Ionicons
+                        name="arrow-forward"
+                        size={14}
+                        color="#635BFF"
+                      />
                     </View>
                   </View>
-                </TouchableOpacity>
-              );
-            }
-          )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor:
-        COLORS.background,
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FD",
+  },
+
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 26,
+    paddingBottom: 60,
+  },
+
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 22,
+  },
+
+  brandWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  brandLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: "#635BFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 5,
     },
+    elevation: 4,
+  },
 
-    content: {
-      paddingHorizontal: 24,
-      paddingTop: 44,
-      paddingBottom: 50,
+  brand: {
+    marginLeft: 11,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#111827",
+  },
+
+  brandCaption: {
+    marginLeft: 11,
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#98A2B3",
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+
+  headerIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  logoutIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F4",
+    borderWidth: 1,
+    borderColor: "#FEE4E2",
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    padding: 22,
+    borderRadius: 26,
+    backgroundColor: "#111827",
+    marginBottom: 18,
+  },
+
+  heroGlow: {
+    position: "absolute",
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    right: -70,
+    top: -70,
+    backgroundColor: "#312E81",
+    opacity: 0.65,
+  },
+
+  heroBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#7CFFB2",
+  },
+
+  heroBadgeText: {
+    marginLeft: 7,
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    color: "#E9E7FF",
+  },
+
+  title: {
+    marginTop: 18,
+    fontSize: 31,
+    lineHeight: 38,
+    fontWeight: "900",
+    letterSpacing: -1,
+    color: "#FFFFFF",
+  },
+
+  subtitle: {
+    marginTop: 11,
+    maxWidth: 305,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "#C7CDD8",
+  },
+
+  heroStatsRow: {
+    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  heroStatItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  heroStatText: {
+    marginLeft: 5,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#D0D5DD",
+  },
+
+  heroStatDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginHorizontal: 10,
+    backgroundColor: "#475467",
+  },
+
+  searchPanel: {
+    padding: 18,
+    borderRadius: 26,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 7,
     },
+    elevation: 3,
+  },
 
-    topHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 24,
+  panelHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 21,
+  },
+
+  panelEyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.3,
+    color: "#635BFF",
+  },
+
+  panelTitle: {
+    marginTop: 4,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#111827",
+  },
+
+  filterIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  sectionLabel: {
+    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#344054",
+  },
+
+  searchContainer: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    borderRadius: 17,
+    backgroundColor: "#FBFCFE",
+  },
+
+  searchIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  searchInput: {
+    flex: 1,
+    minHeight: 56,
+    marginHorizontal: 10,
+    fontSize: 15,
+    color: "#111827",
+  },
+
+  filterTitle: {
+    marginTop: 21,
+    marginBottom: 10,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#344054",
+  },
+
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  chip: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FFFFFF",
+  },
+
+  chipSelected: {
+    borderColor: "#635BFF",
+    backgroundColor: "#635BFF",
+  },
+
+  chipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475467",
+    textTransform: "capitalize",
+  },
+
+  chipTextSelected: {
+    color: "#FFFFFF",
+  },
+
+  distanceChip: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FFFFFF",
+  },
+
+  distanceChipSelected: {
+    borderColor: "#635BFF",
+    backgroundColor: "#635BFF",
+  },
+
+  distanceChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475467",
+  },
+
+  distanceChipTextSelected: {
+    color: "#FFFFFF",
+  },
+
+  rentRangeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  rentInputContainer: {
+    flex: 1,
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 13,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    borderRadius: 15,
+    backgroundColor: "#FBFCFE",
+  },
+
+  currencyText: {
+    marginRight: 5,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#635BFF",
+  },
+
+  rentInput: {
+    flex: 1,
+    minHeight: 52,
+    fontSize: 14,
+    color: "#111827",
+  },
+
+  rentDivider: {
+    width: 28,
+    alignItems: "center",
+  },
+
+  rentRangeSeparator: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#98A2B3",
+  },
+
+  searchButton: {
+    height: 60,
+    marginTop: 24,
+    borderRadius: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#635BFF",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 7,
     },
+    elevation: 5,
+  },
 
-    brand: {
-      flex: 1,
-      fontSize: 18,
-      fontWeight:
-        "700",
-      color:
-        COLORS.primary,
+  searchButtonText: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  searchArrowBox: {
+    position: "absolute",
+    right: 9,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  quickActionsRow: {
+    marginTop: 14,
+    gap: 10,
+  },
+
+  quickActionCard: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    backgroundColor: "#FFFFFF",
+  },
+
+  quickActionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  favoriteActionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
+
+  quickActionTextWrap: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  quickActionTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  quickActionText: {
+    marginTop: 3,
+    fontSize: 10,
+    color: "#98A2B3",
+  },
+
+  resultsHeader: {
+    marginTop: 34,
+    marginBottom: 14,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+
+  resultsEyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.3,
+    color: "#635BFF",
+  },
+
+  resultsTitle: {
+    marginTop: 4,
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#111827",
+  },
+
+  resultsCountBadge: {
+    minWidth: 34,
+    height: 34,
+    paddingHorizontal: 9,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  resultsCount: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#635BFF",
+  },
+
+  loadingContainer: {
+    paddingVertical: 36,
+    alignItems: "center",
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  loadingIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  loadingTitle: {
+    marginTop: 13,
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  loadingText: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#98A2B3",
+  },
+
+  messageBox: {
+    padding: 28,
+    alignItems: "center",
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  errorIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
+
+  errorTitle: {
+    marginTop: 13,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  errorText: {
+    marginTop: 6,
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#F04438",
+  },
+
+  emptyIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  emptyTitle: {
+    marginTop: 13,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  emptyText: {
+    marginTop: 6,
+    maxWidth: 250,
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#98A2B3",
+  },
+
+  propertyCard: {
+    marginBottom: 18,
+    overflow: "hidden",
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 8,
     },
+    elevation: 3,
+  },
 
-    logoutButton: {
-      minHeight: 40,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      paddingHorizontal: 12,
-      borderWidth: 1,
-      borderColor: COLORS.error,
-      borderRadius: 12,
-      backgroundColor: COLORS.surface,
-    },
+  imageWrap: {
+    position: "relative",
+  },
 
-    logoutButtonText: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: COLORS.error,
-    },
+  propertyImage: {
+    width: "100%",
+    height: 205,
+    backgroundColor: "#F2F4F7",
+  },
 
-    title: {
-      fontSize: 32,
-      lineHeight: 40,
-      fontWeight:
-        "800",
-      color:
-        COLORS.textPrimary,
-    },
+  noImageContainer: {
+    width: "100%",
+    height: 205,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F7F5FF",
+  },
 
-    subtitle: {
-      fontSize: 16,
-      lineHeight: 24,
-      color:
-        COLORS.textSecondary,
-      marginTop: 10,
-    },
+  noImageIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
 
-    sectionLabel: {
-      fontSize: 16,
-      fontWeight:
-        "700",
-      color:
-        COLORS.textPrimary,
-      marginTop: 36,
-      marginBottom: 10,
-    },
+  noImageText: {
+    marginTop: 10,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#98A2B3",
+  },
 
-    searchContainer: {
-      height: 58,
-      flexDirection:
-        "row",
-      alignItems:
-        "center",
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius: 16,
-      paddingHorizontal: 16,
-    },
+  favoriteButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.85)",
+  },
 
-    searchInput: {
-      flex: 1,
-      height: "100%",
-      marginHorizontal: 10,
-      fontSize: 16,
-      color:
-        COLORS.textPrimary,
-    },
+  typeImageBadge: {
+    position: "absolute",
+    left: 12,
+    bottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "rgba(17,24,39,0.84)",
+  },
 
-    filterTitle: {
-      fontSize: 15,
-      fontWeight:
-        "700",
-      color:
-        COLORS.textPrimary,
-      marginTop: 24,
-      marginBottom: 10,
-    },
+  typeImageBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    color: "#FFFFFF",
+  },
 
-    chipRow: {
-      flexDirection:
-        "row",
-      flexWrap:
-        "wrap",
-      gap: 10,
-    },
+  propertyContent: {
+    padding: 17,
+  },
 
-    chip: {
-      paddingHorizontal: 16,
-      paddingVertical: 11,
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius: 12,
-    },
+  propertyTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
 
-    chipSelected: {
-      backgroundColor:
-        COLORS.primary,
-      borderColor:
-        COLORS.primary,
-    },
+  propertyTitleWrap: {
+    flex: 1,
+    paddingRight: 12,
+  },
 
-    chipText: {
-      fontSize: 14,
-      fontWeight:
-        "600",
-      color:
-        COLORS.textPrimary,
-    },
+  propertyTitle: {
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+    color: "#111827",
+  },
 
-    chipTextSelected: {
-      color:
-        COLORS.surface,
-    },
+  rentBlock: {
+    alignItems: "flex-end",
+  },
 
-    rentRangeRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-    },
+  propertyRent: {
+    fontSize: 19,
+    fontWeight: "900",
+    color: "#635BFF",
+  },
 
-    rentInputContainer: {
-      flex: 1,
-      height: 54,
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 14,
-      borderWidth: 1,
-      borderColor: COLORS.border,
-      borderRadius: 14,
-      backgroundColor: COLORS.surface,
-    },
+  rentPeriod: {
+    marginTop: 1,
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#98A2B3",
+  },
 
-    currencyText: {
-      fontSize: 16,
-      fontWeight: "700",
-      color: COLORS.textPrimary,
-      marginRight: 5,
-    },
+  locationRow: {
+    marginTop: 7,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
 
-    rentInput: {
-      flex: 1,
-      height: "100%",
-      fontSize: 15,
-      color: COLORS.textPrimary,
-    },
+  locationText: {
+    flex: 1,
+    fontSize: 11,
+    color: "#667085",
+  },
 
-    rentRangeSeparator: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: COLORS.textSecondary,
-    },
+  cardDivider: {
+    height: 1,
+    marginVertical: 14,
+    backgroundColor: "#F0F1F4",
+  },
 
-    searchButton: {
-      height: 56,
-      flexDirection:
-        "row",
-      alignItems:
-        "center",
-      justifyContent:
-        "center",
-      backgroundColor:
-        COLORS.primary,
-      borderRadius: 16,
-      marginTop: 28,
-      gap: 8,
-    },
+  cardBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 
-    searchButtonText: {
-      fontSize: 17,
-      fontWeight:
-        "700",
-      color:
-        COLORS.surface,
-    },
+  propertyInfoRow: {
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+  },
 
-    resultsHeader: {
-      flexDirection:
-        "row",
-      alignItems:
-        "center",
-      justifyContent:
-        "space-between",
-      marginTop: 38,
-      marginBottom: 14,
-    },
+  smallBadge: {
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "#F1EFFF",
+  },
 
-    resultsTitle: {
-      fontSize: 20,
-      fontWeight:
-        "800",
-      color:
-        COLORS.textPrimary,
-    },
+  smallBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#635BFF",
+    textTransform: "capitalize",
+  },
 
-    resultsCount: {
-      minWidth: 30,
-      height: 30,
-      borderRadius: 15,
-      backgroundColor:
-        COLORS.primary,
-      color:
-        COLORS.surface,
-      textAlign:
-        "center",
-      textAlignVertical:
-        "center",
-      fontWeight:
-        "700",
-    },
+  distanceBadge: {
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "#ECFDF3",
+  },
 
-    loadingContainer: {
-      paddingVertical: 40,
-      alignItems:
-        "center",
-    },
+  distanceText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#027A48",
+  },
 
-    loadingText: {
-      marginTop: 12,
-      fontSize: 15,
-      color:
-        COLORS.textSecondary,
-    },
+  viewDetailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#F8F7FF",
+  },
 
-    messageBox: {
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius: 16,
-      padding: 24,
-      alignItems:
-        "center",
-      marginBottom: 18,
-    },
-
-    errorText: {
-      marginTop: 10,
-      textAlign:
-        "center",
-      color:
-        COLORS.error,
-      fontSize: 15,
-    },
-
-    emptyTitle: {
-      fontSize: 17,
-      fontWeight:
-        "700",
-      color:
-        COLORS.textPrimary,
-      marginTop: 10,
-    },
-
-    emptyText: {
-      fontSize: 14,
-      color:
-        COLORS.textSecondary,
-      marginTop: 5,
-    },
-
-    propertyCard: {
-      backgroundColor:
-        COLORS.surface,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      marginBottom: 18,
-      overflow:
-        "hidden",
-    },
-
-    favoriteButton: {
-      position: "absolute",
-      top: 12,
-      right: 12,
-      zIndex: 10,
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-    },
-
-    propertyImage: {
-      width: "100%",
-      height: 190,
-    },
-
-    noImageContainer: {
-      width: "100%",
-      height: 190,
-      alignItems:
-        "center",
-      justifyContent:
-        "center",
-      backgroundColor:
-        COLORS.background,
-    },
-
-    noImageText: {
-      color:
-        COLORS.textSecondary,
-      fontSize: 14,
-      marginTop: 8,
-    },
-
-    propertyContent: {
-      padding: 16,
-    },
-
-    propertyTopRow: {
-      flexDirection:
-        "row",
-      justifyContent:
-        "space-between",
-      gap: 12,
-    },
-
-    propertyTitle: {
-      flex: 1,
-      fontSize: 18,
-      fontWeight:
-        "800",
-      color:
-        COLORS.textPrimary,
-    },
-
-    propertyRent: {
-      fontSize: 20,
-      fontWeight:
-        "800",
-      color:
-        COLORS.primary,
-    },
-
-    rentPeriod: {
-      alignSelf:
-        "flex-end",
-      marginTop: 2,
-      fontSize: 12,
-      color:
-        COLORS.textSecondary,
-    },
-
-    locationRow: {
-      flexDirection:
-        "row",
-      alignItems:
-        "center",
-      marginTop: 14,
-      gap: 5,
-    },
-
-    locationText: {
-      flex: 1,
-      fontSize: 14,
-      color:
-        COLORS.textSecondary,
-    },
-
-    distanceRow: {
-      flexDirection:
-        "row",
-      alignItems:
-        "center",
-      gap: 5,
-      marginTop: 8,
-    },
-
-    distanceText: {
-      fontSize: 14,
-      fontWeight:
-        "700",
-      color:
-        COLORS.primary,
-    },
-
-    propertyInfoRow: {
-      flexDirection:
-        "row",
-      flexWrap:
-        "wrap",
-      gap: 8,
-      marginTop: 14,
-    },
-
-    smallBadge: {
-      backgroundColor:
-        COLORS.background,
-      borderRadius: 10,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
-    },
-
-    smallBadgeText: {
-      fontSize: 12,
-      fontWeight:
-        "700",
-      color:
-        COLORS.textPrimary,
-      textTransform:
-        "capitalize",
-    },
-mapButton: {
-  height: 52,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-  borderRadius: 14,
-  borderWidth: 1,
-  borderColor: COLORS.primary,
-  backgroundColor: COLORS.surface,
-  marginTop: 12,
-},
-
-mapButtonText: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: COLORS.primary,
-},
-
-favoritesButton: {
-  height: 52,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-  borderRadius: 14,
-  borderWidth: 1,
-  borderColor: COLORS.error,
-  backgroundColor: COLORS.surface,
-  marginTop: 10,
-},
-
-favoritesButtonText: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: COLORS.error,
-},
-
-
-  });
+  viewDetailsText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#635BFF",
+  },
+});

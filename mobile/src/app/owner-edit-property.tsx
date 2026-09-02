@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -8,6 +9,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -16,7 +18,6 @@ import {
 } from "react-native";
 
 import { API_BASE_URL } from "../config/api";
-import { COLORS } from "../constants/colors";
 import { getAuthToken } from "../utils/authStorage";
 
 type PropertyType = "room" | "pg" | "flat";
@@ -43,6 +44,7 @@ type Property = {
 };
 
 export default function OwnerEditPropertyScreen() {
+
   const router = useRouter();
 
   const { propertyId } = useLocalSearchParams<{
@@ -292,14 +294,23 @@ export default function OwnerEditPropertyScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.glowOne} />
+        <View style={styles.glowTwo} />
+
         <View style={styles.centerContainer}>
-          <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
-          />
+          <View style={styles.loadingIconBox}>
+            <ActivityIndicator
+              size="small"
+              color="#635BFF"
+            />
+          </View>
+
+          <Text style={styles.loadingTitle}>
+            Loading property
+          </Text>
 
           <Text style={styles.loadingText}>
-            Loading property...
+            Getting the latest property details...
           </Text>
         </View>
       </SafeAreaView>
@@ -309,15 +320,55 @@ export default function OwnerEditPropertyScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.glowOne} />
+        <View style={styles.glowTwo} />
+
+        <TouchableOpacity
+          style={styles.errorBackButton}
+          activeOpacity={0.8}
+       onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/owner-properties");
+  }
+}}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={21}
+            color="#111827"
+          />
+        </TouchableOpacity>
+
         <View style={styles.centerContainer}>
+          <View style={styles.errorIconBox}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={30}
+              color="#F04438"
+            />
+          </View>
+
+          <Text style={styles.errorTitle}>
+            Unable to load property
+          </Text>
+
           <Text style={styles.errorText}>
             {error}
           </Text>
 
           <TouchableOpacity
             style={styles.retryButton}
+            activeOpacity={0.9}
             onPress={loadProperty}
           >
+            <Ionicons
+              name="refresh"
+              size={17}
+              color="#FFFFFF"
+            />
+
             <Text style={styles.retryText}>
               Try Again
             </Text>
@@ -329,6 +380,14 @@ export default function OwnerEditPropertyScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#F8F9FD"
+      />
+
+      <View style={styles.glowOne} />
+      <View style={styles.glowTwo} />
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={
@@ -342,242 +401,444 @@ export default function OwnerEditPropertyScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.brand}>
-            StayRent
-          </Text>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              activeOpacity={0.8}
+            onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/owner-properties");
+  }
+}}
+              disabled={saving}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={21}
+                color="#111827"
+              />
+            </TouchableOpacity>
 
-          <Text style={styles.title}>
-            Edit Property
-          </Text>
+            <View style={styles.brandRow}>
+              <View style={styles.brandLogo}>
+                <Ionicons
+                  name="home"
+                  size={17}
+                  color="#FFFFFF"
+                />
+              </View>
 
-          <Text style={styles.subtitle}>
-            Update your rental property details.
-          </Text>
-
-          <Text style={styles.label}>
-            Property Title
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Property title"
-            placeholderTextColor={COLORS.textSecondary}
-          />
-
-          <Text style={styles.label}>
-            Description
-          </Text>
-
-          <TextInput
-            style={[
-              styles.input,
-              styles.multiline,
-            ]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Tell renters about this property"
-            placeholderTextColor={COLORS.textSecondary}
-            multiline
-          />
-
-          <Text style={styles.label}>
-            Property Type
-          </Text>
-
-          <View style={styles.chipRow}>
-            {propertyTypes.map((item) => {
-              const selected =
-                propertyType === item.value;
-
-              return (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.chip,
-                    selected &&
-                      styles.chipSelected,
-                  ]}
-                  onPress={() =>
-                    setPropertyType(item.value)
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected &&
-                        styles.chipTextSelected,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+              <Text style={styles.brand}>
+                StayRent
+              </Text>
+            </View>
           </View>
 
-          <Text style={styles.label}>
-            Monthly Rent
-          </Text>
+          <View style={styles.hero}>
+            <View style={styles.heroIcon}>
+              <Ionicons
+                name="create-outline"
+                size={29}
+                color="#635BFF"
+              />
+            </View>
 
-          <TextInput
-            style={styles.input}
-            value={monthlyRent}
-            onChangeText={setMonthlyRent}
-            keyboardType="number-pad"
-            placeholder="Monthly rent"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+            <Text style={styles.eyebrow}>
+              UPDATE LISTING
+            </Text>
 
-          <Text style={styles.label}>
-            Security Deposit
-          </Text>
+            <Text style={styles.title}>
+              Edit your{"\n"}
+              property.
+            </Text>
 
-          <TextInput
-            style={styles.input}
-            value={securityDeposit}
-            onChangeText={setSecurityDeposit}
-            keyboardType="number-pad"
-            placeholder="Security deposit"
-            placeholderTextColor={COLORS.textSecondary}
-          />
-
-          <Text style={styles.label}>
-            Available For
-          </Text>
-
-          <View style={styles.chipRow}>
-            {availableOptions.map((item) => {
-              const selected =
-                availableFor === item.value;
-
-              return (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.chip,
-                    selected &&
-                      styles.chipSelected,
-                  ]}
-                  onPress={() =>
-                    setAvailableFor(item.value)
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected &&
-                        styles.chipTextSelected,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            <Text style={styles.subtitle}>
+              Keep your rental information accurate
+              so renters always see the latest
+              property details.
+            </Text>
           </View>
 
-          <Text style={styles.label}>
-            Furnishing
-          </Text>
+          <View style={styles.formCard}>
+            <View style={styles.formHeader}>
+              <View>
+                <Text style={styles.formEyebrow}>
+                  PROPERTY
+                </Text>
 
-          <View style={styles.chipRow}>
-            {furnishingOptions.map((item) => {
-              const selected =
-                furnishing === item.value;
+                <Text style={styles.formTitle}>
+                  Basic details
+                </Text>
+              </View>
 
-              return (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.chip,
-                    selected &&
-                      styles.chipSelected,
-                  ]}
-                  onPress={() =>
-                    setFurnishing(item.value)
-                  }
-                >
-                  <Text
+              <View style={styles.formIcon}>
+                <Ionicons
+                  name="business-outline"
+                  size={20}
+                  color="#635BFF"
+                />
+              </View>
+            </View>
+
+            <Text style={styles.label}>
+              Property title
+            </Text>
+
+            <View style={styles.inputBox}>
+              <Ionicons
+                name="text-outline"
+                size={18}
+                color="#98A2B3"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Property title"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Description
+            </Text>
+
+            <View
+              style={[
+                styles.inputBox,
+                styles.multilineBox,
+              ]}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={18}
+                color="#98A2B3"
+                style={styles.multilineIcon}
+              />
+
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.multilineInput,
+                ]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Tell renters about this property"
+                placeholderTextColor="#98A2B3"
+                multiline
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Property type
+            </Text>
+
+            <View style={styles.chipRow}>
+              {propertyTypes.map((item) => {
+                const selected =
+                  propertyType === item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.value}
                     style={[
-                      styles.chipText,
+                      styles.chip,
                       selected &&
-                        styles.chipTextSelected,
+                        styles.chipSelected,
                     ]}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      setPropertyType(item.value)
+                    }
                   >
-                    {item.label}
+                    <Ionicons
+                      name={
+                        item.value === "room"
+                          ? "home-outline"
+                          : item.value === "pg"
+                          ? "bed-outline"
+                          : "business-outline"
+                      }
+                      size={15}
+                      color={
+                        selected
+                          ? "#FFFFFF"
+                          : "#667085"
+                      }
+                    />
+
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selected &&
+                          styles.chipTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.twoColumnRow}>
+              <View style={styles.halfField}>
+                <Text style={styles.label}>
+                  Monthly rent
+                </Text>
+
+                <View style={styles.inputBox}>
+                  <Text style={styles.currency}>
+                    ₹
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
+
+                  <TextInput
+                    style={styles.input}
+                    value={monthlyRent}
+                    onChangeText={setMonthlyRent}
+                    keyboardType="number-pad"
+                    placeholder="Monthly rent"
+                    placeholderTextColor="#98A2B3"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.halfField}>
+                <Text style={styles.label}>
+                  Security deposit
+                </Text>
+
+                <View style={styles.inputBox}>
+                  <Text style={styles.currency}>
+                    ₹
+                  </Text>
+
+                  <TextInput
+                    style={styles.input}
+                    value={securityDeposit}
+                    onChangeText={setSecurityDeposit}
+                    keyboardType="number-pad"
+                    placeholder="Deposit"
+                    placeholderTextColor="#98A2B3"
+                  />
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.label}>
+              Available for
+            </Text>
+
+            <View style={styles.chipRow}>
+              {availableOptions.map((item) => {
+                const selected =
+                  availableFor === item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[
+                      styles.chip,
+                      selected &&
+                        styles.chipSelected,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      setAvailableFor(item.value)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selected &&
+                          styles.chipTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.label}>
+              Furnishing
+            </Text>
+
+            <View style={styles.chipRow}>
+              {furnishingOptions.map((item) => {
+                const selected =
+                  furnishing === item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[
+                      styles.chip,
+                      selected &&
+                        styles.chipSelected,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      setFurnishing(item.value)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selected &&
+                          styles.chipTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
-          <Text style={styles.label}>
-            Full Address
-          </Text>
+          <View style={styles.formCard}>
+            <View style={styles.formHeader}>
+              <View>
+                <Text style={styles.formEyebrow}>
+                  LOCATION
+                </Text>
 
-          <TextInput
-            style={[
-              styles.input,
-              styles.multiline,
-            ]}
-            value={address}
-            onChangeText={setAddress}
-            multiline
-            placeholder="Full address"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+                <Text style={styles.formTitle}>
+                  Address details
+                </Text>
+              </View>
 
-          <Text style={styles.label}>
-            Locality / Area
-          </Text>
+              <View style={styles.formIcon}>
+                <Ionicons
+                  name="location-outline"
+                  size={20}
+                  color="#635BFF"
+                />
+              </View>
+            </View>
 
-          <TextInput
-            style={styles.input}
-            value={locality}
-            onChangeText={setLocality}
-            placeholder="Locality"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+            <Text style={styles.label}>
+              Full address
+            </Text>
 
-          <Text style={styles.label}>
-            City
-          </Text>
+            <View
+              style={[
+                styles.inputBox,
+                styles.multilineBox,
+              ]}
+            >
+              <Ionicons
+                name="navigate-outline"
+                size={18}
+                color="#98A2B3"
+                style={styles.multilineIcon}
+              />
 
-          <TextInput
-            style={styles.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="City"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.multilineInput,
+                ]}
+                value={address}
+                onChangeText={setAddress}
+                multiline
+                placeholder="Full address"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
 
-          <Text style={styles.label}>
-            State
-          </Text>
+            <Text style={styles.label}>
+              Locality / Area
+            </Text>
 
-          <TextInput
-            style={styles.input}
-            value={state}
-            onChangeText={setState}
-            placeholder="State"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+            <View style={styles.inputBox}>
+              <Ionicons
+                name="map-outline"
+                size={18}
+                color="#98A2B3"
+              />
 
-          <Text style={styles.label}>
-            Pincode
-          </Text>
+              <TextInput
+                style={styles.input}
+                value={locality}
+                onChangeText={setLocality}
+                placeholder="Locality"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
 
-          <TextInput
-            style={styles.input}
-            value={pincode}
-            onChangeText={setPincode}
-            keyboardType="number-pad"
-            maxLength={6}
-            placeholder="Pincode"
-            placeholderTextColor={COLORS.textSecondary}
-          />
+            <Text style={styles.label}>
+              City
+            </Text>
+
+            <View style={styles.inputBox}>
+              <Ionicons
+                name="business-outline"
+                size={18}
+                color="#98A2B3"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={city}
+                onChangeText={setCity}
+                placeholder="City"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
+
+            <Text style={styles.label}>
+              State
+            </Text>
+
+            <View style={styles.inputBox}>
+              <Ionicons
+                name="map-outline"
+                size={18}
+                color="#98A2B3"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={state}
+                onChangeText={setState}
+                placeholder="State"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
+
+            <Text style={styles.label}>
+              Pincode
+            </Text>
+
+            <View
+              style={[
+                styles.inputBox,
+                styles.lastInputBox,
+              ]}
+            >
+              <Ionicons
+                name="pin-outline"
+                size={18}
+                color="#98A2B3"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={pincode}
+                onChangeText={setPincode}
+                keyboardType="number-pad"
+                maxLength={6}
+                placeholder="Pincode"
+                placeholderTextColor="#98A2B3"
+              />
+            </View>
+          </View>
 
           <TouchableOpacity
             style={[
@@ -585,31 +846,88 @@ export default function OwnerEditPropertyScreen() {
               saving &&
                 styles.saveButtonDisabled,
             ]}
-            activeOpacity={0.85}
+            activeOpacity={0.9}
             disabled={saving}
             onPress={handleSave}
           >
             {saving ? (
-              <ActivityIndicator
-                color={COLORS.surface}
-              />
+              <>
+                <ActivityIndicator
+                  size="small"
+                  color="#FFFFFF"
+                />
+
+                <Text
+                  style={styles.saveButtonText}
+                >
+                  Saving Changes...
+                </Text>
+              </>
             ) : (
-              <Text style={styles.saveButtonText}>
-                Save Changes
-              </Text>
+              <>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color="#FFFFFF"
+                />
+
+                <Text
+                  style={styles.saveButtonText}
+                >
+                  Save Changes
+                </Text>
+
+                <View
+                  style={styles.buttonArrow}
+                >
+                  <Ionicons
+                    name="arrow-forward"
+                    size={18}
+                    color="#635BFF"
+                  />
+                </View>
+              </>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.cancelButton}
             activeOpacity={0.8}
-            onPress={() => router.back()}
+            onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/owner-properties");
+  }
+}}
             disabled={saving}
           >
-            <Text style={styles.cancelButtonText}>
+            <Ionicons
+              name="close-outline"
+              size={18}
+              color="#667085"
+            />
+
+            <Text
+              style={styles.cancelButtonText}
+            >
               Cancel
             </Text>
           </TouchableOpacity>
+
+          <View style={styles.infoNote}>
+            <Ionicons
+              name="information-circle-outline"
+              size={17}
+              color="#635BFF"
+            />
+
+            <Text style={styles.infoNoteText}>
+              This screen updates property details
+              only. Existing photos and GPS location
+              remain unchanged.
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -619,134 +937,366 @@ export default function OwnerEditPropertyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#F8F9FD",
   },
 
   keyboardView: {
     flex: 1,
   },
 
+  glowOne: {
+    position: "absolute",
+    width: 270,
+    height: 270,
+    borderRadius: 135,
+    top: -130,
+    right: -130,
+    backgroundColor: "#F1EFFF",
+  },
+
+  glowTwo: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    bottom: 40,
+    left: -155,
+    backgroundColor: "#F5F3FF",
+  },
+
   centerContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
+  },
+
+  loadingIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  loadingTitle: {
+    marginTop: 16,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#111827",
   },
 
   loadingText: {
-    marginTop: 12,
-    color: COLORS.textSecondary,
+    marginTop: 7,
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#98A2B3",
+  },
+
+  errorBackButton: {
+    position: "absolute",
+    top: 18,
+    left: 20,
+    zIndex: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  errorIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
+
+  errorTitle: {
+    marginTop: 17,
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
   },
 
   errorText: {
-    fontSize: 16,
+    marginTop: 8,
+    maxWidth: 300,
     textAlign: "center",
-    color: COLORS.error,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#667085",
   },
 
   retryButton: {
-    marginTop: 18,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 11,
-    borderRadius: 12,
+    height: 50,
+    marginTop: 20,
+    paddingHorizontal: 19,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: "#635BFF",
   },
 
   retryText: {
-    color: COLORS.surface,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 44,
-    paddingBottom: 50,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 56,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  brandLogo: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#635BFF",
   },
 
   brand: {
+    marginLeft: 8,
     fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginBottom: 18,
+    fontWeight: "900",
+    letterSpacing: -0.4,
+    color: "#111827",
+  },
+
+  hero: {
+    marginTop: 30,
+    marginBottom: 24,
+  },
+
+  heroIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  eyebrow: {
+    marginTop: 18,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    color: "#635BFF",
   },
 
   title: {
+    marginTop: 8,
     fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
+    lineHeight: 39,
+    fontWeight: "900",
+    letterSpacing: -1,
+    color: "#111827",
   },
 
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.textSecondary,
-    marginTop: 8,
-    marginBottom: 28,
+    marginTop: 11,
+    maxWidth: 330,
+    fontSize: 13,
+    lineHeight: 21,
+    color: "#667085",
+  },
+
+  formCard: {
+    marginBottom: 16,
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    elevation: 2,
+  },
+
+  formHeader: {
+    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  formEyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    color: "#635BFF",
+  },
+
+  formTitle: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  formIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
   },
 
   label: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
     marginBottom: 8,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#344054",
+  },
+
+  inputBox: {
+    minHeight: 54,
+    marginBottom: 17,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FBFCFE",
+  },
+
+  lastInputBox: {
+    marginBottom: 0,
   },
 
   input: {
-    minHeight: 54,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: COLORS.textPrimary,
-    marginBottom: 20,
+    flex: 1,
+    marginLeft: 9,
+    minHeight: 52,
+    fontSize: 14,
+    color: "#111827",
   },
 
-  multiline: {
-    minHeight: 90,
-    paddingTop: 14,
+  multilineBox: {
+    minHeight: 96,
+    alignItems: "flex-start",
+  },
+
+  multilineIcon: {
+    marginTop: 17,
+  },
+
+  multilineInput: {
+    minHeight: 92,
+    paddingTop: 15,
     textAlignVertical: "top",
   },
 
   chipRow: {
+    marginBottom: 20,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 22,
+    gap: 8,
   },
 
   chip: {
-    paddingHorizontal: 15,
-    paddingVertical: 11,
-    borderRadius: 12,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FFFFFF",
   },
 
   chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: "#635BFF",
+    borderColor: "#635BFF",
   },
 
   chipText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475467",
   },
 
   chipTextSelected: {
-    color: COLORS.surface,
+    color: "#FFFFFF",
+  },
+
+  twoColumnRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  halfField: {
+    flex: 1,
+  },
+
+  currency: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#635BFF",
   },
 
   saveButton: {
-    height: 56,
-    backgroundColor: COLORS.primary,
-    borderRadius: 16,
+    height: 60,
+    marginTop: 2,
+    borderRadius: 18,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    gap: 8,
+    backgroundColor: "#635BFF",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.22,
+    shadowRadius: 15,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 5,
   },
 
   saveButtonDisabled: {
@@ -754,21 +1304,53 @@ const styles = StyleSheet.create({
   },
 
   saveButtonText: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: COLORS.surface,
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  buttonArrow: {
+    position: "absolute",
+    right: 9,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
 
   cancelButton: {
-    height: 52,
+    height: 50,
+    marginTop: 10,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
+    gap: 5,
+    borderRadius: 15,
   },
 
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#667085",
+  },
+
+  infoNote: {
+    marginTop: 8,
+    padding: 13,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderRadius: 14,
+    backgroundColor: "#F7F5FF",
+  },
+
+  infoNoteText: {
+    flex: 1,
+    marginLeft: 7,
+    fontSize: 10,
+    lineHeight: 16,
+    fontWeight: "600",
+    color: "#667085",
   },
 });

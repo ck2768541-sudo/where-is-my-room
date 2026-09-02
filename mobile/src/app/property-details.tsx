@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import {
   ActivityIndicator,
+  Dimensions,
   Image,
   Linking,
   SafeAreaView,
@@ -15,8 +16,9 @@ import {
 } from "react-native";
 
 import { API_BASE_URL } from "../config/api";
-import { COLORS } from "../constants/colors";
 import { getAuthToken } from "../utils/authStorage";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 type Property = {
   _id: string;
@@ -191,23 +193,24 @@ export default function PropertyDetailsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.container}
-      >
-        <View
-          style={
-            styles.centerContainer
-          }
-        >
-          <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
-          />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.glowOne} />
+        <View style={styles.glowTwo} />
 
-          <Text
-            style={styles.loadingText}
-          >
-            Loading property...
+        <View style={styles.centerContainer}>
+          <View style={styles.loadingIconBox}>
+            <ActivityIndicator
+              size="small"
+              color="#635BFF"
+            />
+          </View>
+
+          <Text style={styles.loadingTitle}>
+            Loading property
+          </Text>
+
+          <Text style={styles.loadingText}>
+            Getting the latest rental details...
           </Text>
         </View>
       </SafeAreaView>
@@ -216,39 +219,57 @@ export default function PropertyDetailsScreen() {
 
   if (error || !property) {
     return (
-      <SafeAreaView
-        style={styles.container}
-      >
-        <View
-          style={
-            styles.centerContainer
-          }
+      <SafeAreaView style={styles.container}>
+        <View style={styles.glowOne} />
+        <View style={styles.glowTwo} />
+
+        <TouchableOpacity
+          style={styles.errorBackButton}
+        onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/seeker-home");
+  }
+}}
+          activeOpacity={0.8}
         >
           <Ionicons
-            name="alert-circle-outline"
-            size={40}
-            color={COLORS.error}
+            name="arrow-back"
+            size={21}
+            color="#111827"
           />
+        </TouchableOpacity>
 
-          <Text
-            style={styles.errorText}
-          >
-            {error ||
-              "Property not found."}
+        <View style={styles.centerContainer}>
+          <View style={styles.errorIconBox}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={30}
+              color="#F04438"
+            />
+          </View>
+
+          <Text style={styles.errorTitle}>
+            Property unavailable
+          </Text>
+
+          <Text style={styles.errorText}>
+            {error || "Property not found."}
           </Text>
 
           <TouchableOpacity
-            style={
-              styles.retryButton
-            }
+            style={styles.retryButton}
             onPress={fetchProperty}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
-            <Text
-              style={
-                styles.retryButtonText
-              }
-            >
+            <Ionicons
+              name="refresh"
+              size={18}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.retryButtonText}>
               Try Again
             </Text>
           </TouchableOpacity>
@@ -258,276 +279,281 @@ export default function PropertyDetailsScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-    >
+    <SafeAreaView style={styles.container}>
       <ScrollView
-        showsVerticalScrollIndicator={
-          false
-        }
-        contentContainerStyle={
-          styles.content
-        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={
-              COLORS.textPrimary
-            }
-          />
-        </TouchableOpacity>
-
-        {property.photos &&
-        property.photos.length > 0 ? (
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={
-              false
-            }
-            style={
-              styles.photoSlider
-            }
-          >
-            {property.photos.map(
-              (photo, index) => (
-                <Image
-                  key={`${photo}-${index}`}
-                  source={{
-                    uri: photo,
-                  }}
-                  style={
-                    styles.propertyImage
-                  }
-                  resizeMode="cover"
-                />
-              )
-            )}
-          </ScrollView>
-        ) : (
-          <View
-            style={styles.noPhoto}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.backButton}
+        onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/seeker-home");
+  }
+}}
+            activeOpacity={0.8}
           >
             <Ionicons
-              name="image-outline"
-              size={46}
-              color={
-                COLORS.textSecondary
-              }
+              name="arrow-back"
+              size={21}
+              color="#111827"
             />
+          </TouchableOpacity>
 
-            <Text
-              style={
-                styles.noPhotoText
-              }
-            >
-              No property photos
+          <View style={styles.brandRow}>
+            <View style={styles.brandLogo}>
+              <Ionicons
+                name="home"
+                size={16}
+                color="#FFFFFF"
+              />
+            </View>
+
+            <Text style={styles.brand}>
+              StayRent
             </Text>
           </View>
-        )}
+        </View>
 
-        <View
-          style={styles.mainContent}
-        >
-          <Text
-            style={styles.title}
-          >
+        <View style={styles.galleryShell}>
+          {property.photos &&
+          property.photos.length > 0 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.photoSlider}
+            >
+              {property.photos.map(
+                (photo, index) => (
+                  <View
+                    key={`${photo}-${index}`}
+                    style={styles.photoPage}
+                  >
+                    <Image
+                      source={{ uri: photo }}
+                      style={styles.propertyImage}
+                      resizeMode="cover"
+                    />
+
+                    <View style={styles.photoCounter}>
+                      <Ionicons
+                        name="images-outline"
+                        size={14}
+                        color="#FFFFFF"
+                      />
+
+                      <Text style={styles.photoCounterText}>
+                        {index + 1}/{property.photos?.length}
+                      </Text>
+                    </View>
+                  </View>
+                )
+              )}
+            </ScrollView>
+          ) : (
+            <View style={styles.noPhoto}>
+              <View style={styles.noPhotoIconBox}>
+                <Ionicons
+                  name="image-outline"
+                  size={33}
+                  color="#635BFF"
+                />
+              </View>
+
+              <Text style={styles.noPhotoTitle}>
+                No property photos
+              </Text>
+
+              <Text style={styles.noPhotoText}>
+                The owner has not uploaded photos yet.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.mainContent}>
+          <View style={styles.typeBadge}>
+            <Text style={styles.typeBadgeText}>
+              {property.propertyType.toUpperCase()}
+            </Text>
+          </View>
+
+          <Text style={styles.title}>
             {property.title}
           </Text>
 
-          <Text
-            style={styles.rent}
-          >
-            ₹{property.monthlyRent} / month
-          </Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.rent}>
+              ₹{property.monthlyRent}
+            </Text>
 
-          <View
-            style={
-              styles.locationRow
-            }
-          >
-            <Ionicons
-              name="location-outline"
-              size={20}
-              color={
-                COLORS.textSecondary
-              }
-            />
-
-            <Text
-              style={
-                styles.locationText
-              }
-            >
-              {property.locality},{" "}
-              {property.city}
+            <Text style={styles.rentPeriod}>
+              / month
             </Text>
           </View>
 
-          <View
-            style={styles.badgeRow}
-          >
-            <View
-              style={styles.badge}
-            >
-              <Text
-                style={
-                  styles.badgeText
-                }
-              >
-                {property.propertyType.toUpperCase()}
-              </Text>
+          <View style={styles.locationRow}>
+            <View style={styles.locationIconBox}>
+              <Ionicons
+                name="location-outline"
+                size={17}
+                color="#635BFF"
+              />
             </View>
 
-            <View
-              style={styles.badge}
-            >
-              <Text
-                style={
-                  styles.badgeText
-                }
-              >
-                For{" "}
-                {property.availableFor}
+            <Text style={styles.locationText}>
+              {property.locality}, {property.city}
+            </Text>
+          </View>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badge}>
+              <Ionicons
+                name="person-outline"
+                size={14}
+                color="#635BFF"
+              />
+
+              <Text style={styles.badgeText}>
+                For {property.availableFor}
               </Text>
             </View>
 
             {property.furnishing && (
-              <View
-                style={styles.badge}
-              >
-                <Text
-                  style={
-                    styles.badgeText
-                  }
-                >
+              <View style={styles.badge}>
+                <Ionicons
+                  name="bed-outline"
+                  size={14}
+                  color="#635BFF"
+                />
+
+                <Text style={styles.badgeText}>
                   {property.furnishing}
                 </Text>
               </View>
             )}
           </View>
 
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            Price Details
-          </Text>
-
-          <View
-            style={styles.detailCard}
-          >
-            <View
-              style={
-                styles.detailRow
-              }
-            >
-              <Text
-                style={
-                  styles.detailLabel
-                }
-              >
-                Monthly Rent
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionEyebrow}>
+                COST
               </Text>
+              <Text style={styles.sectionTitle}>
+                Price details
+              </Text>
+            </View>
 
-              <Text
-                style={
-                  styles.detailValue
-                }
-              >
+            <View style={styles.sectionIcon}>
+              <Ionicons
+                name="wallet-outline"
+                size={19}
+                color="#635BFF"
+              />
+            </View>
+          </View>
+
+          <View style={styles.detailCard}>
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelWrap}>
+                <View style={styles.detailMiniIcon}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color="#635BFF"
+                  />
+                </View>
+
+                <Text style={styles.detailLabel}>
+                  Monthly rent
+                </Text>
+              </View>
+
+              <Text style={styles.detailValue}>
                 ₹{property.monthlyRent}
               </Text>
             </View>
 
-            <View
-              style={styles.divider}
-            />
+            <View style={styles.divider} />
 
-            <View
-              style={
-                styles.detailRow
-              }
-            >
-              <Text
-                style={
-                  styles.detailLabel
-                }
-              >
-                Security Deposit
-              </Text>
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelWrap}>
+                <View style={styles.detailMiniIcon}>
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={16}
+                    color="#635BFF"
+                  />
+                </View>
 
-              <Text
-                style={
-                  styles.detailValue
-                }
-              >
-                ₹
-                {property.securityDeposit ||
-                  0}
+                <Text style={styles.detailLabel}>
+                  Security deposit
+                </Text>
+              </View>
+
+              <Text style={styles.detailValue}>
+                ₹{property.securityDeposit || 0}
               </Text>
             </View>
           </View>
 
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            Address
-          </Text>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionEyebrow}>
+                LOCATION
+              </Text>
+              <Text style={styles.sectionTitle}>
+                Address
+              </Text>
+            </View>
 
-          <View
-            style={styles.detailCard}
-          >
-            <Text
-              style={
-                styles.addressText
-              }
-            >
+            <View style={styles.sectionIcon}>
+              <Ionicons
+                name="location-outline"
+                size={19}
+                color="#635BFF"
+              />
+            </View>
+          </View>
+
+          <View style={styles.detailCard}>
+            <Text style={styles.addressText}>
               {property.address}
             </Text>
 
-            <Text
-              style={
-                styles.addressSubText
-              }
-            >
-              {property.locality},{" "}
-              {property.city},{" "}
-              {property.state} -{" "}
-              {property.pincode}
+            <Text style={styles.addressSubText}>
+              {property.locality}, {property.city},{" "}
+              {property.state} - {property.pincode}
             </Text>
           </View>
 
           {property.description ? (
             <>
-              <Text
-                style={
-                  styles.sectionTitle
-                }
-              >
-                About this property
-              </Text>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionEyebrow}>
+                    OVERVIEW
+                  </Text>
+                  <Text style={styles.sectionTitle}>
+                    About this property
+                  </Text>
+                </View>
 
-              <View
-                style={
-                  styles.detailCard
-                }
-              >
-                <Text
-                  style={
-                    styles.description
-                  }
-                >
+                <View style={styles.sectionIcon}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={19}
+                    color="#635BFF"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.detailCard}>
+                <Text style={styles.description}>
                   {property.description}
                 </Text>
               </View>
@@ -535,46 +561,43 @@ export default function PropertyDetailsScreen() {
           ) : null}
 
           {property.amenities &&
-          property.amenities.length >
-            0 ? (
+          property.amenities.length > 0 ? (
             <>
-              <Text
-                style={
-                  styles.sectionTitle
-                }
-              >
-                Amenities
-              </Text>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionEyebrow}>
+                    INCLUDED
+                  </Text>
+                  <Text style={styles.sectionTitle}>
+                    Amenities
+                  </Text>
+                </View>
 
-              <View
-                style={
-                  styles.amenitiesContainer
-                }
-              >
+                <View style={styles.sectionIcon}>
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={19}
+                    color="#635BFF"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.amenitiesContainer}>
                 {property.amenities.map(
-                  (
-                    amenity,
-                    index
-                  ) => (
+                  (amenity, index) => (
                     <View
                       key={`${amenity}-${index}`}
-                      style={
-                        styles.amenityBadge
-                      }
+                      style={styles.amenityBadge}
                     >
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={16}
-                        color={
-                          COLORS.success
-                        }
-                      />
+                      <View style={styles.amenityCheck}>
+                        <Ionicons
+                          name="checkmark"
+                          size={12}
+                          color="#FFFFFF"
+                        />
+                      </View>
 
-                      <Text
-                        style={
-                          styles.amenityText
-                        }
-                      >
+                      <Text style={styles.amenityText}>
                         {amenity}
                       </Text>
                     </View>
@@ -584,441 +607,705 @@ export default function PropertyDetailsScreen() {
             </>
           ) : null}
 
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            Owner Details
-          </Text>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionEyebrow}>
+                CONTACT
+              </Text>
+              <Text style={styles.sectionTitle}>
+                Property owner
+              </Text>
+            </View>
 
-          <View
-            style={styles.detailCard}
-          >
-            <View
-              style={styles.ownerRow}
-            >
+            <View style={styles.sectionIcon}>
               <Ionicons
-                name="person-circle-outline"
-                size={42}
-                color={
-                  COLORS.primary
-                }
+                name="person-outline"
+                size={19}
+                color="#635BFF"
               />
+            </View>
+          </View>
 
-              <View
-                style={
-                  styles.ownerInfo
-                }
-              >
-                <Text
-                  style={
-                    styles.ownerName
-                  }
-                >
-                  {property.owner
-                    ?.name ||
-                    "Property Owner"}
+          <View style={styles.ownerCard}>
+            <View style={styles.ownerAvatar}>
+              <Ionicons
+                name="person"
+                size={24}
+                color="#635BFF"
+              />
+            </View>
+
+            <View style={styles.ownerInfo}>
+              <Text style={styles.ownerName}>
+                {property.owner?.name ||
+                  "Property Owner"}
+              </Text>
+
+              <View style={styles.ownerVerifiedRow}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={14}
+                  color="#12B76A"
+                />
+
+                <Text style={styles.ownerVerifiedText}>
+                  Listed property contact
                 </Text>
-
-                {property.owner
-                  ?.phone ? (
-                  <Text
-                    style={
-                      styles.ownerContact
-                    }
-                  >
-                    {
-                      property.owner
-                        .phone
-                    }
-                  </Text>
-                ) : null}
-
-                {property.owner
-                  ?.email ? (
-                  <Text
-                    style={
-                      styles.ownerContact
-                    }
-                  >
-                    {
-                      property.owner
-                        .email
-                    }
-                  </Text>
-                ) : null}
               </View>
+
+              {property.owner?.phone ? (
+                <Text style={styles.ownerContact}>
+                  {property.owner.phone}
+                </Text>
+              ) : null}
+
+              {property.owner?.email ? (
+                <Text style={styles.ownerContact}>
+                  {property.owner.email}
+                </Text>
+              ) : null}
             </View>
           </View>
 
           {property.owner?.phone ? (
-            <View
-              style={
-                styles.contactButtons
-              }
-            >
+            <View style={styles.contactButtons}>
               <TouchableOpacity
-                style={
-                  styles.callButton
-                }
-                activeOpacity={0.85}
+                style={styles.callButton}
+                activeOpacity={0.9}
                 onPress={handleCall}
               >
                 <Ionicons
                   name="call"
-                  size={20}
-                  color={
-                    COLORS.surface
-                  }
+                  size={19}
+                  color="#FFFFFF"
                 />
 
-                <Text
-                  style={
-                    styles.contactButtonText
-                  }
-                >
+                <Text style={styles.contactButtonText}>
                   Call Owner
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={
-                  styles.whatsappButton
-                }
-                activeOpacity={0.85}
-                onPress={
-                  handleWhatsApp
-                }
+                style={styles.whatsappButton}
+                activeOpacity={0.9}
+                onPress={handleWhatsApp}
               >
                 <Ionicons
                   name="logo-whatsapp"
-                  size={21}
-                  color={
-                    COLORS.surface
-                  }
+                  size={20}
+                  color="#FFFFFF"
                 />
 
-                <Text
-                  style={
-                    styles.contactButtonText
-                  }
-                >
+                <Text style={styles.contactButtonText}>
                   WhatsApp
                 </Text>
               </TouchableOpacity>
             </View>
           ) : null}
+
+          <View style={styles.safetyNote}>
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color="#635BFF"
+            />
+
+            <Text style={styles.safetyNoteText}>
+              Verify property details directly with
+              the owner before making any commitment.
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor:
-        COLORS.background,
-    },
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FD",
+  },
 
-    content: {
-      paddingBottom: 50,
-    },
+  content: {
+    paddingBottom: 54,
+  },
 
-    centerContainer: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 24,
-    },
+  glowOne: {
+    position: "absolute",
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    top: -110,
+    right: -110,
+    backgroundColor: "#F1EFFF",
+  },
 
-    loadingText: {
-      marginTop: 12,
-      fontSize: 15,
-      color:
-        COLORS.textSecondary,
-    },
+  glowTwo: {
+    position: "absolute",
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    left: -140,
+    bottom: 20,
+    backgroundColor: "#F5F3FF",
+  },
 
-    errorText: {
-      marginTop: 12,
-      textAlign: "center",
-      fontSize: 16,
-      color: COLORS.error,
-    },
+  centerContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
 
-    retryButton: {
-      marginTop: 20,
-      paddingHorizontal: 22,
-      paddingVertical: 12,
-      backgroundColor:
-        COLORS.primary,
-      borderRadius: 12,
-    },
+  loadingIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
 
-    retryButtonText: {
-      color: COLORS.surface,
-      fontWeight: "700",
-    },
+  loadingTitle: {
+    marginTop: 16,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#111827",
+  },
 
-    backButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      alignItems: "center",
-      justifyContent:
-        "center",
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      marginTop: 18,
-      marginLeft: 20,
-      marginBottom: 14,
-    },
+  loadingText: {
+    marginTop: 7,
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#98A2B3",
+  },
 
-    photoSlider: {
-      width: "100%",
-    },
+  errorBackButton: {
+    position: "absolute",
+    top: 18,
+    left: 20,
+    zIndex: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
 
-    propertyImage: {
-      width: 390,
-      height: 260,
-    },
+  errorIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
 
-    noPhoto: {
-      height: 240,
-      alignItems: "center",
-      justifyContent:
-        "center",
-      backgroundColor:
-        COLORS.surface,
-    },
+  errorTitle: {
+    marginTop: 17,
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
+  },
 
-    noPhotoText: {
-      marginTop: 8,
-      color:
-        COLORS.textSecondary,
-    },
+  errorText: {
+    marginTop: 8,
+    maxWidth: 300,
+    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#667085",
+  },
 
-    mainContent: {
-      paddingHorizontal: 24,
-      paddingTop: 24,
+  retryButton: {
+    height: 52,
+    marginTop: 22,
+    paddingHorizontal: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    borderRadius: 16,
+    backgroundColor: "#635BFF",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 6,
     },
+    elevation: 4,
+  },
 
-    title: {
-      fontSize: 28,
-      lineHeight: 36,
-      fontWeight: "800",
-      color:
-        COLORS.textPrimary,
-    },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
 
-    rent: {
-      fontSize: 23,
-      fontWeight: "800",
-      color: COLORS.primary,
-      marginTop: 10,
-    },
+  topBar: {
+    height: 72,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 
-    locationRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginTop: 16,
-    },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
 
-    locationText: {
-      flex: 1,
-      fontSize: 15,
-      color:
-        COLORS.textSecondary,
-    },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-    badgeRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 9,
-      marginTop: 18,
-    },
+  brandLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#635BFF",
+  },
 
-    badge: {
-      paddingHorizontal: 11,
-      paddingVertical: 8,
-      borderRadius: 10,
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-    },
+  brand: {
+    marginLeft: 8,
+    fontSize: 17,
+    fontWeight: "900",
+    letterSpacing: -0.4,
+    color: "#111827",
+  },
 
-    badgeText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color:
-        COLORS.textPrimary,
-      textTransform:
-        "capitalize",
-    },
+  galleryShell: {
+    overflow: "hidden",
+    backgroundColor: "#EEF0F6",
+  },
 
-    sectionTitle: {
-      fontSize: 19,
-      fontWeight: "800",
-      color:
-        COLORS.textPrimary,
-      marginTop: 30,
-      marginBottom: 10,
-    },
+  photoSlider: {
+    width: "100%",
+  },
 
-    detailCard: {
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius: 16,
-      padding: 16,
-    },
+  photoPage: {
+    width: SCREEN_WIDTH,
+    height: 285,
+    position: "relative",
+  },
 
-    detailRow: {
-      flexDirection: "row",
-      justifyContent:
-        "space-between",
-      gap: 16,
-    },
+  propertyImage: {
+    width: SCREEN_WIDTH,
+    height: 285,
+    backgroundColor: "#EEF0F6",
+  },
 
-    detailLabel: {
-      fontSize: 15,
-      color:
-        COLORS.textSecondary,
-    },
+  photoCounter: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(17,24,39,0.78)",
+  },
 
-    detailValue: {
-      fontSize: 16,
-      fontWeight: "700",
-      color:
-        COLORS.textPrimary,
-    },
+  photoCounterText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
 
-    divider: {
-      height: 1,
-      backgroundColor:
-        COLORS.border,
-      marginVertical: 14,
-    },
+  noPhoto: {
+    height: 260,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F7F5FF",
+  },
 
-    addressText: {
-      fontSize: 16,
-      fontWeight: "700",
-      color:
-        COLORS.textPrimary,
-    },
+  noPhotoIconBox: {
+    width: 62,
+    height: 62,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
 
-    addressSubText: {
-      marginTop: 8,
-      fontSize: 14,
-      lineHeight: 21,
-      color:
-        COLORS.textSecondary,
-    },
+  noPhotoTitle: {
+    marginTop: 13,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+  },
 
-    description: {
-      fontSize: 15,
-      lineHeight: 23,
-      color:
-        COLORS.textSecondary,
-    },
+  noPhotoText: {
+    marginTop: 5,
+    fontSize: 11,
+    color: "#98A2B3",
+  },
 
-    amenitiesContainer: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-    },
+  mainContent: {
+    paddingHorizontal: 20,
+    paddingTop: 22,
+  },
 
-    amenityBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius: 12,
-    },
+  typeBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#F1EFFF",
+  },
 
-    amenityText: {
-      fontSize: 13,
-      fontWeight: "600",
-      color:
-        COLORS.textPrimary,
-    },
+  typeBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.9,
+    color: "#635BFF",
+  },
 
-    ownerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
+  title: {
+    marginTop: 13,
+    fontSize: 28,
+    lineHeight: 35,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+    color: "#111827",
+  },
 
-    ownerInfo: {
-      flex: 1,
-      marginLeft: 12,
-    },
+  priceRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
 
-    ownerName: {
-      fontSize: 17,
-      fontWeight: "700",
-      color:
-        COLORS.textPrimary,
-    },
+  rent: {
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#635BFF",
+  },
 
-    ownerContact: {
-      marginTop: 4,
-      fontSize: 14,
-      color:
-        COLORS.textSecondary,
-    },
+  rentPeriod: {
+    marginLeft: 4,
+    marginBottom: 3,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#98A2B3",
+  },
 
-    contactButtons: {
-      flexDirection: "row",
-      gap: 12,
-      marginTop: 16,
-      marginBottom: 20,
-    },
+  locationRow: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-    callButton: {
-      flex: 1,
-      height: 52,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent:
-        "center",
-      gap: 8,
-      backgroundColor:
-        COLORS.primary,
-      borderRadius: 14,
-    },
+  locationIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
 
-    whatsappButton: {
-      flex: 1,
-      height: 52,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent:
-        "center",
-      gap: 8,
-      backgroundColor:
-        COLORS.success,
-      borderRadius: 14,
-    },
+  locationText: {
+    flex: 1,
+    marginLeft: 9,
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#667085",
+  },
 
-    contactButtonText: {
-      fontSize: 15,
-      fontWeight: "700",
-      color: COLORS.surface,
+  badgeRow: {
+    marginTop: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  badge: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 11,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#475467",
+    textTransform: "capitalize",
+  },
+
+  sectionHeader: {
+    marginTop: 30,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  sectionEyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.25,
+    color: "#635BFF",
+  },
+
+  sectionTitle: {
+    marginTop: 3,
+    fontSize: 19,
+    fontWeight: "900",
+    letterSpacing: -0.4,
+    color: "#111827",
+  },
+
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  detailCard: {
+    padding: 17,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 5,
     },
-  });
+    elevation: 2,
+  },
+
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+
+  detailLabelWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  detailMiniIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F7F5FF",
+  },
+
+  detailLabel: {
+    marginLeft: 10,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#667085",
+  },
+
+  detailValue: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  divider: {
+    height: 1,
+    marginVertical: 14,
+    backgroundColor: "#F0F1F4",
+  },
+
+  addressText: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  addressSubText: {
+    marginTop: 7,
+    fontSize: 12,
+    lineHeight: 19,
+    color: "#667085",
+  },
+
+  description: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: "#667085",
+  },
+
+  amenitiesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  amenityBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  amenityCheck: {
+    width: 19,
+    height: 19,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#12B76A",
+  },
+
+  amenityText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475467",
+  },
+
+  ownerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 17,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  ownerAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  ownerInfo: {
+    flex: 1,
+    marginLeft: 13,
+  },
+
+  ownerName: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  ownerVerifiedRow: {
+    marginTop: 4,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  ownerVerifiedText: {
+    marginLeft: 5,
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  ownerContact: {
+    marginTop: 5,
+    fontSize: 11,
+    color: "#667085",
+  },
+
+  contactButtons: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  callButton: {
+    flex: 1,
+    height: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    borderRadius: 16,
+    backgroundColor: "#635BFF",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    elevation: 3,
+  },
+
+  whatsappButton: {
+    flex: 1,
+    height: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    borderRadius: 16,
+    backgroundColor: "#12B76A",
+  },
+
+  contactButtonText: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  safetyNote: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 13,
+    borderRadius: 14,
+    backgroundColor: "#F7F5FF",
+  },
+
+  safetyNoteText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 10,
+    lineHeight: 16,
+    fontWeight: "600",
+    color: "#667085",
+  },
+});

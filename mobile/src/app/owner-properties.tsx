@@ -16,7 +16,6 @@ import {
 } from "react-native";
 
 import { API_BASE_URL } from "../config/api";
-import { COLORS } from "../constants/colors";
 import { clearAuthSession, getAuthToken } from "../utils/authStorage";
 
 type Property = {
@@ -298,14 +297,34 @@ export default function OwnerPropertiesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.glowOne} />
+      <View style={styles.glowTwo} />
+
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* HEADER */}
         <View style={styles.topHeader}>
-          <Text style={styles.brand}>
-         StayRent
-          </Text>
+          <View style={styles.brandWrap}>
+            <View style={styles.brandLogo}>
+              <Ionicons
+                name="home"
+                size={19}
+                color="#FFFFFF"
+              />
+            </View>
+
+            <View>
+              <Text style={styles.brand}>
+                StayRent
+              </Text>
+
+              <Text style={styles.brandCaption}>
+                Owner dashboard
+              </Text>
+            </View>
+          </View>
 
           <TouchableOpacity
             style={styles.logoutButton}
@@ -315,61 +334,168 @@ export default function OwnerPropertiesScreen() {
             <Ionicons
               name="log-out-outline"
               size={20}
-              color={COLORS.error}
+              color="#F04438"
             />
-
-            <Text style={styles.logoutButtonText}>
-              Logout
-            </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>
-          My Properties
-        </Text>
+        {/* HERO */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
 
-        <Text style={styles.subtitle}>
-          Manage all your rental listings from one place.
-        </Text>
+          <View style={styles.heroBadge}>
+            <Ionicons
+              name="business-outline"
+              size={15}
+              color="#D9D6FE"
+            />
 
+            <Text style={styles.heroBadgeText}>
+              OWNER PORTFOLIO
+            </Text>
+          </View>
+
+          <Text style={styles.title}>
+            Manage your{"\n"}
+            rental properties.
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Add listings, update availability,
+            edit details and keep everything
+            organized from one place.
+          </Text>
+
+          <View style={styles.heroSummaryRow}>
+            <View style={styles.heroSummaryItem}>
+              <Text style={styles.heroSummaryNumber}>
+                {properties.length}
+              </Text>
+              <Text style={styles.heroSummaryLabel}>
+                Total
+              </Text>
+            </View>
+
+            <View style={styles.heroSummaryDivider} />
+
+            <View style={styles.heroSummaryItem}>
+              <Text style={styles.heroSummaryNumber}>
+                {
+                  properties.filter(
+                    (property) =>
+                      property.isAvailable
+                  ).length
+                }
+              </Text>
+              <Text style={styles.heroSummaryLabel}>
+                Available
+              </Text>
+            </View>
+
+            <View style={styles.heroSummaryDivider} />
+
+            <View style={styles.heroSummaryItem}>
+              <Text style={styles.heroSummaryNumber}>
+                {
+                  properties.filter(
+                    (property) =>
+                      !property.isAvailable
+                  ).length
+                }
+              </Text>
+              <Text style={styles.heroSummaryLabel}>
+                Occupied
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ADD PROPERTY */}
         <TouchableOpacity
           style={styles.addButton}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
           onPress={() =>
             router.push("/owner-add-property")
           }
         >
-          <Ionicons
-            name="add-circle-outline"
-            size={22}
-            color={COLORS.surface}
-          />
+          <View style={styles.addButtonIcon}>
+            <Ionicons
+              name="add"
+              size={22}
+              color="#635BFF"
+            />
+          </View>
 
-          <Text style={styles.addButtonText}>
-            Add New Property
-          </Text>
+          <View style={styles.addButtonTextWrap}>
+            <Text style={styles.addButtonText}>
+              Add New Property
+            </Text>
+
+            <Text style={styles.addButtonSubtext}>
+              Create a new rental listing
+            </Text>
+          </View>
+
+          <Ionicons
+            name="arrow-forward"
+            size={19}
+            color="#FFFFFF"
+          />
         </TouchableOpacity>
+
+        {/* SECTION */}
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionEyebrow}>
+              YOUR LISTINGS
+            </Text>
+
+            <Text style={styles.sectionTitle}>
+              My Properties
+            </Text>
+          </View>
+
+          {!loading && error === "" && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>
+                {properties.length}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {loading && (
           <View style={styles.centerBox}>
-            <ActivityIndicator
-              size="large"
-              color={COLORS.primary}
-            />
+            <View style={styles.loadingIconBox}>
+              <ActivityIndicator
+                size="small"
+                color="#635BFF"
+              />
+            </View>
+
+            <Text style={styles.loadingTitle}>
+              Loading your properties
+            </Text>
 
             <Text style={styles.loadingText}>
-              Loading your properties...
+              Getting your latest listings...
             </Text>
           </View>
         )}
 
         {!loading && error !== "" && (
           <View style={styles.centerBox}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={34}
-              color={COLORS.error}
-            />
+            <View style={styles.errorIconBox}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={29}
+                color="#F04438"
+              />
+            </View>
+
+            <Text style={styles.errorTitle}>
+              Unable to load properties
+            </Text>
 
             <Text style={styles.errorText}>
               {error}
@@ -377,8 +503,15 @@ export default function OwnerPropertiesScreen() {
 
             <TouchableOpacity
               style={styles.retryButton}
+              activeOpacity={0.9}
               onPress={fetchOwnerProperties}
             >
+              <Ionicons
+                name="refresh"
+                size={17}
+                color="#FFFFFF"
+              />
+
               <Text style={styles.retryText}>
                 Try Again
               </Text>
@@ -390,18 +523,21 @@ export default function OwnerPropertiesScreen() {
           error === "" &&
           properties.length === 0 && (
             <View style={styles.centerBox}>
-              <Ionicons
-                name="home-outline"
-                size={42}
-                color={COLORS.textSecondary}
-              />
+              <View style={styles.emptyIconBox}>
+                <Ionicons
+                  name="home-outline"
+                  size={31}
+                  color="#635BFF"
+                />
+              </View>
 
               <Text style={styles.emptyTitle}>
                 No properties yet
               </Text>
 
               <Text style={styles.emptyText}>
-                Add your first rental property to get started.
+                Add your first rental property
+                to start building your portfolio.
               </Text>
             </View>
           )}
@@ -427,7 +563,7 @@ export default function OwnerPropertiesScreen() {
               <TouchableOpacity
                 key={property._id}
                 style={styles.propertyCard}
-                activeOpacity={0.9}
+                activeOpacity={0.92}
                 onPress={() =>
                   router.push({
                     pathname:
@@ -439,229 +575,230 @@ export default function OwnerPropertiesScreen() {
                   })
                 }
               >
-                {imageUrl ? (
-                  <Image
-                    source={{
-                      uri: imageUrl,
-                    }}
-                    style={
-                      styles.propertyImage
-                    }
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={styles.noImage}
-                  >
-                    <Ionicons
-                      name="image-outline"
-                      size={36}
-                      color={
-                        COLORS.textSecondary
-                      }
+                <View style={styles.imageWrap}>
+                  {imageUrl ? (
+                    <Image
+                      source={{ uri: imageUrl }}
+                      style={styles.propertyImage}
+                      resizeMode="cover"
                     />
-                  </View>
-                )}
-
-                <View
-                  style={
-                    styles.propertyContent
-                  }
-                >
-                  <View
-                    style={styles.topRow}
-                  >
-                    <Text
-                      style={
-                        styles.propertyTitle
-                      }
-                      numberOfLines={2}
-                    >
-                      {property.title}
-                    </Text>
-
-                    <Text
-                      style={styles.rent}
-                    >
-                      ₹
-                      {
-                        property.monthlyRent
-                      }
-                    </Text>
-                  </View>
-
-                  <View
-                    style={
-                      styles.locationRow
-                    }
-                  >
-                    <Ionicons
-                      name="location-outline"
-                      size={17}
-                      color={
-                        COLORS.textSecondary
-                      }
-                    />
-
-                    <Text
-                      style={
-                        styles.locationText
-                      }
-                    >
-                      {property.locality},{" "}
-                      {property.city}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={
-                      styles.badgeRow
-                    }
-                  >
-                    <View
-                      style={styles.badge}
-                    >
-                      <Text
+                  ) : (
+                    <View style={styles.noImage}>
+                      <View
                         style={
-                          styles.badgeText
+                          styles.noImageIconBox
                         }
                       >
-                        {property.propertyType.toUpperCase()}
-                      </Text>
-                    </View>
+                        <Ionicons
+                          name="image-outline"
+                          size={31}
+                          color="#635BFF"
+                        />
+                      </View>
 
-                    <View
-                      style={styles.badge}
-                    >
                       <Text
                         style={
-                          styles.badgeText
+                          styles.noImageText
                         }
                       >
-                        For{" "}
-                        {
-                          property.availableFor
-                        }
+                        Photo not available
                       </Text>
                     </View>
+                  )}
 
+                  <View style={styles.typeBadge}>
+                    <Text
+                      style={
+                        styles.typeBadgeText
+                      }
+                    >
+                      {property.propertyType.toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.statusImageBadge,
+                      property.isAvailable
+                        ? styles.statusImageBadgeAvailable
+                        : styles.statusImageBadgeOccupied,
+                    ]}
+                  >
                     <View
                       style={[
-                        styles.statusBadge,
+                        styles.statusDot,
                         property.isAvailable
-                          ? styles.availableBadge
-                          : styles.occupiedBadge,
+                          ? styles.availableDot
+                          : styles.occupiedDot,
                       ]}
-                    >
-                      <Text
-                        style={
-                          styles.statusText
-                        }
-                      >
-                        {property.isAvailable
-                          ? "Available"
-                          : "Occupied"}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* EDIT PROPERTY */}
-
-                  <TouchableOpacity
-                    style={
-                      styles.editButton
-                    }
-                    activeOpacity={0.85}
-                    onPress={(event) => {
-                      event.stopPropagation();
-
-                      router.push({
-                        pathname:
-                          "/owner-edit-property",
-                        params: {
-                          propertyId:
-                            property._id,
-                        },
-                      });
-                    }}
-                  >
-                    <Ionicons
-                      name="create-outline"
-                      size={19}
-                      color={
-                        COLORS.primary
-                      }
                     />
 
                     <Text
-                      style={
-                        styles.editButtonText
-                      }
-                    >
-                      Edit Property
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* AVAILABLE / OCCUPIED */}
-
-                  <TouchableOpacity
-                    style={[
-                      styles.statusButton,
-                      property.isAvailable
-                        ? styles.markOccupiedButton
-                        : styles.markAvailableButton,
-                      isUpdating &&
-                        styles.statusButtonDisabled,
-                    ]}
-                    activeOpacity={0.85}
-                    disabled={
-                      isUpdating ||
-                      isDeleting
-                    }
-                    onPress={(event) => {
-                      event.stopPropagation();
-
-                      updateAvailability(
-                        property._id,
+                      style={[
+                        styles.statusImageBadgeText,
                         property.isAvailable
-                      );
-                    }}
-                  >
-                    {isUpdating ? (
-                      <ActivityIndicator
-                        size="small"
-                        color={
-                          COLORS.surface
-                        }
-                      />
-                    ) : (
-                      <>
+                          ? styles.availableStatusText
+                          : styles.occupiedStatusText,
+                      ]}
+                    >
+                      {property.isAvailable
+                        ? "Available"
+                        : "Occupied"}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.propertyContent}>
+                  <View style={styles.topRow}>
+                    <View style={styles.titleWrap}>
+                      <Text
+                        style={styles.propertyTitle}
+                        numberOfLines={2}
+                      >
+                        {property.title}
+                      </Text>
+
+                      <View
+                        style={styles.locationRow}
+                      >
                         <Ionicons
-                          name={
-                            property.isAvailable
-                              ? "close-circle-outline"
-                              : "checkmark-circle-outline"
-                          }
-                          size={19}
-                          color={
-                            COLORS.surface
-                          }
+                          name="location-outline"
+                          size={15}
+                          color="#98A2B3"
                         />
 
                         <Text
                           style={
-                            styles.statusButtonText
+                            styles.locationText
                           }
+                          numberOfLines={1}
                         >
-                          {property.isAvailable
-                            ? "Mark as Occupied"
-                            : "Mark as Available"}
+                          {property.locality},{" "}
+                          {property.city}
                         </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                      </View>
+                    </View>
 
-                  {/* DELETE PROPERTY */}
+                    <View style={styles.rentWrap}>
+                      <Text style={styles.rent}>
+                        ₹{property.monthlyRent}
+                      </Text>
+
+                      <Text
+                        style={styles.rentPeriod}
+                      >
+                        /month
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.badgeRow}>
+                    <View style={styles.badge}>
+                      <Ionicons
+                        name="person-outline"
+                        size={13}
+                        color="#635BFF"
+                      />
+
+                      <Text
+                        style={styles.badgeText}
+                      >
+                        For {property.availableFor}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.divider} />
+
+                  <View style={styles.actionsGrid}>
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      activeOpacity={0.85}
+                      disabled={
+                        isUpdating ||
+                        isDeleting
+                      }
+                      onPress={(event) => {
+                        event.stopPropagation();
+
+                        router.push({
+                          pathname:
+                            "/owner-edit-property",
+                          params: {
+                            propertyId:
+                              property._id,
+                          },
+                        });
+                      }}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={18}
+                        color="#635BFF"
+                      />
+
+                      <Text
+                        style={
+                          styles.editButtonText
+                        }
+                      >
+                        Edit
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.statusButton,
+                        property.isAvailable
+                          ? styles.markOccupiedButton
+                          : styles.markAvailableButton,
+                        isUpdating &&
+                          styles.statusButtonDisabled,
+                      ]}
+                      activeOpacity={0.85}
+                      disabled={
+                        isUpdating ||
+                        isDeleting
+                      }
+                      onPress={(event) => {
+                        event.stopPropagation();
+
+                        updateAvailability(
+                          property._id,
+                          property.isAvailable
+                        );
+                      }}
+                    >
+                      {isUpdating ? (
+                        <ActivityIndicator
+                          size="small"
+                          color="#FFFFFF"
+                        />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name={
+                              property.isAvailable
+                                ? "close-circle-outline"
+                                : "checkmark-circle-outline"
+                            }
+                            size={18}
+                            color="#FFFFFF"
+                          />
+
+                          <Text
+                            style={
+                              styles.statusButtonText
+                            }
+                          >
+                            {property.isAvailable
+                              ? "Occupied"
+                              : "Available"}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
 
                   <TouchableOpacity
                     style={[
@@ -686,14 +823,14 @@ export default function OwnerPropertiesScreen() {
                     {isDeleting ? (
                       <ActivityIndicator
                         size="small"
-                        color={COLORS.error}
+                        color="#F04438"
                       />
                     ) : (
                       <>
                         <Ionicons
                           name="trash-outline"
-                          size={19}
-                          color={COLORS.error}
+                          size={18}
+                          color="#F04438"
                         />
 
                         <Text
@@ -718,257 +855,604 @@ export default function OwnerPropertiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#F8F9FD",
+  },
+
+  glowOne: {
+    position: "absolute",
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    top: -120,
+    right: -120,
+    backgroundColor: "#F1EFFF",
+  },
+
+  glowTwo: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    bottom: 30,
+    left: -155,
+    backgroundColor: "#F5F3FF",
   },
 
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 44,
-    paddingBottom: 50,
+    paddingHorizontal: 20,
+    paddingTop: 26,
+    paddingBottom: 60,
   },
 
   topHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: 20,
+  },
+
+  brandWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  brandLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: "#635BFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    elevation: 4,
   },
 
   brand: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.primary,
+    marginLeft: 11,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#111827",
+  },
+
+  brandCaption: {
+    marginLeft: 11,
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#98A2B3",
   },
 
   logoutButton: {
-    minHeight: 40,
-    flexDirection: "row",
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 12,
+    backgroundColor: "#FFF5F4",
     borderWidth: 1,
-    borderColor: COLORS.error,
-    borderRadius: 12,
-    backgroundColor: COLORS.surface,
+    borderColor: "#FEE4E2",
   },
 
-  logoutButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.error,
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    padding: 22,
+    borderRadius: 26,
+    backgroundColor: "#111827",
+  },
+
+  heroGlow: {
+    position: "absolute",
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    top: -75,
+    right: -70,
+    backgroundColor: "#312E81",
+    opacity: 0.7,
+  },
+
+  heroBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+
+  heroBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    color: "#E9E7FF",
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
+    marginTop: 18,
+    fontSize: 30,
+    lineHeight: 37,
+    fontWeight: "900",
+    letterSpacing: -0.9,
+    color: "#FFFFFF",
   },
 
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.textSecondary,
-    marginTop: 8,
-    marginBottom: 26,
+    marginTop: 11,
+    maxWidth: 305,
+    fontSize: 13,
+    lineHeight: 21,
+    color: "#C7CDD8",
+  },
+
+  heroSummaryRow: {
+    marginTop: 22,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  heroSummaryItem: {
+    flex: 1,
+  },
+
+  heroSummaryNumber: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  heroSummaryLabel: {
+    marginTop: 3,
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#98A2B3",
+  },
+
+  heroSummaryDivider: {
+    width: 1,
+    height: 30,
+    marginHorizontal: 12,
+    backgroundColor: "#344054",
   },
 
   addButton: {
-    height: 56,
+    minHeight: 68,
+    marginTop: 14,
+    paddingHorizontal: 12,
+    borderRadius: 19,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#635BFF",
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.2,
+    shadowRadius: 13,
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    elevation: 4,
+  },
+
+  addButtonIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    marginBottom: 26,
+    backgroundColor: "#FFFFFF",
+  },
+
+  addButtonTextWrap: {
+    flex: 1,
+    marginLeft: 12,
   },
 
   addButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.surface,
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  addButtonSubtext: {
+    marginTop: 3,
+    fontSize: 10,
+    color: "#DDD9FF",
+  },
+
+  sectionHeader: {
+    marginTop: 34,
+    marginBottom: 14,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+
+  sectionEyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.25,
+    color: "#635BFF",
+  },
+
+  sectionTitle: {
+    marginTop: 4,
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: "#111827",
+  },
+
+  countBadge: {
+    minWidth: 34,
+    height: 34,
+    paddingHorizontal: 9,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#635BFF",
   },
 
   centerBox: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 18,
-    padding: 28,
+    padding: 30,
     alignItems: "center",
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    elevation: 2,
+  },
+
+  loadingIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  loadingTitle: {
+    marginTop: 15,
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#111827",
   },
 
   loadingText: {
-    marginTop: 12,
-    color: COLORS.textSecondary,
+    marginTop: 6,
+    fontSize: 11,
+    color: "#98A2B3",
+  },
+
+  errorIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
+
+  errorTitle: {
+    marginTop: 15,
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#111827",
   },
 
   errorText: {
-    marginTop: 10,
+    marginTop: 7,
     textAlign: "center",
-    color: COLORS.error,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#667085",
   },
 
   retryButton: {
-    marginTop: 16,
-    backgroundColor: COLORS.primary,
+    height: 48,
+    marginTop: 18,
     paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: "#635BFF",
   },
 
   retryText: {
-    color: COLORS.surface,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  emptyIconBox: {
+    width: 62,
+    height: 62,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
   },
 
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-    marginTop: 12,
+    marginTop: 15,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#111827",
   },
 
   emptyText: {
     marginTop: 7,
+    maxWidth: 260,
     textAlign: "center",
-    color: COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 19,
+    color: "#98A2B3",
   },
 
   propertyCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 18,
-    overflow: "hidden",
     marginBottom: 18,
+    overflow: "hidden",
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 3,
+  },
+
+  imageWrap: {
+    position: "relative",
   },
 
   propertyImage: {
     width: "100%",
-    height: 180,
+    height: 205,
+    backgroundColor: "#EEF0F6",
   },
 
   noImage: {
-    height: 180,
+    height: 205,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.background,
+    backgroundColor: "#F7F5FF",
+  },
+
+  noImageIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  noImageText: {
+    marginTop: 10,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#98A2B3",
+  },
+
+  typeBadge: {
+    position: "absolute",
+    left: 12,
+    bottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "rgba(17,24,39,0.84)",
+  },
+
+  typeBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    color: "#FFFFFF",
+  },
+
+  statusImageBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  statusImageBadgeAvailable: {
+    backgroundColor: "rgba(236,253,243,0.96)",
+    borderColor: "#ABEFC6",
+  },
+
+  statusImageBadgeOccupied: {
+    backgroundColor: "rgba(255,241,240,0.96)",
+    borderColor: "#FECDCA",
+  },
+
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+
+  availableDot: {
+    backgroundColor: "#12B76A",
+  },
+
+  occupiedDot: {
+    backgroundColor: "#F04438",
+  },
+
+  statusImageBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+  },
+
+  availableStatusText: {
+    color: "#027A48",
+  },
+
+  occupiedStatusText: {
+    color: "#B42318",
   },
 
   propertyContent: {
-    padding: 16,
+    padding: 17,
   },
 
   topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
+    alignItems: "flex-start",
+  },
+
+  titleWrap: {
+    flex: 1,
+    paddingRight: 12,
   },
 
   propertyTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+    color: "#111827",
+  },
+
+  rentWrap: {
+    alignItems: "flex-end",
   },
 
   rent: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: COLORS.primary,
+    fontSize: 19,
+    fontWeight: "900",
+    color: "#635BFF",
+  },
+
+  rentPeriod: {
+    marginTop: 1,
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#98A2B3",
   },
 
   locationRow: {
+    marginTop: 7,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    marginTop: 12,
+    gap: 4,
   },
 
   locationText: {
     flex: 1,
-    color: COLORS.textSecondary,
+    fontSize: 11,
+    color: "#667085",
   },
 
   badgeRow: {
+    marginTop: 14,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 14,
+    gap: 7,
   },
 
   badge: {
-    backgroundColor: COLORS.background,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     borderRadius: 10,
+    backgroundColor: "#F1EFFF",
   },
 
   badgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
-    color: COLORS.textPrimary,
+    color: "#635BFF",
     textTransform: "capitalize",
   },
 
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 10,
+  divider: {
+    height: 1,
+    marginVertical: 15,
+    backgroundColor: "#F0F1F4",
   },
 
-  availableBadge: {
-    backgroundColor: "#DCFCE7",
-  },
-
-  occupiedBadge: {
-    backgroundColor: "#FEE2E2",
-  },
-
-  statusText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
+  actionsGrid: {
+    flexDirection: "row",
+    gap: 9,
   },
 
   editButton: {
-    height: 48,
-    marginTop: 16,
-    borderRadius: 13,
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 6,
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.surface,
+    borderColor: "#D9D6FE",
+    backgroundColor: "#F8F7FF",
   },
 
   editButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#635BFF",
   },
 
   statusButton: {
-    height: 48,
-    marginTop: 10,
-    borderRadius: 13,
+    flex: 1.35,
+    height: 46,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 6,
   },
 
   markOccupiedButton: {
-    backgroundColor: COLORS.error,
+    backgroundColor: "#F79009",
   },
 
   markAvailableButton: {
-    backgroundColor: COLORS.success,
+    backgroundColor: "#12B76A",
   },
 
   statusButtonDisabled: {
@@ -976,22 +1460,22 @@ const styles = StyleSheet.create({
   },
 
   statusButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.surface,
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   deleteButton: {
-    height: 48,
-    marginTop: 10,
-    borderRadius: 13,
+    height: 46,
+    marginTop: 9,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 6,
     borderWidth: 1,
-    borderColor: COLORS.error,
-    backgroundColor: COLORS.surface,
+    borderColor: "#FECDCA",
+    backgroundColor: "#FFF8F7",
   },
 
   deleteButtonDisabled: {
@@ -999,8 +1483,8 @@ const styles = StyleSheet.create({
   },
 
   deleteButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.error,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#F04438",
   },
 });

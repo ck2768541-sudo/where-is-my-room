@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ActivityIndicator,
+  Animated,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -13,7 +14,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { COLORS } from "../constants/colors";
 import {
   getAuthToken,
   getAuthUser,
@@ -24,6 +24,18 @@ export default function HomeScreen() {
 
   const [checkingSession, setCheckingSession] =
     useState(true);
+
+  const fadeAnim = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  const slideAnim = useRef(
+    new Animated.Value(24)
+  ).current;
+
+  const buttonAnim = useRef(
+    new Animated.Value(0)
+  ).current;
 
   const checkExistingSession = async () => {
     try {
@@ -59,6 +71,31 @@ export default function HomeScreen() {
     checkExistingSession();
   }, []);
 
+  useEffect(() => {
+    if (checkingSession) return;
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 650,
+        useNativeDriver: true,
+      }),
+
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 650,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    Animated.timing(buttonAnim, {
+      toValue: 1,
+      duration: 500,
+      delay: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [checkingSession]);
+
   const handleGetStarted = () => {
     router.push("/role-select");
   };
@@ -68,27 +105,27 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container}>
         <StatusBar
           barStyle="dark-content"
-          backgroundColor="#F7F9FC"
+          backgroundColor="#FFFFFF"
         />
 
         <View style={styles.loadingContainer}>
           <View style={styles.loadingLogo}>
             <Ionicons
               name="home"
-              size={28}
+              size={32}
               color="#FFFFFF"
             />
           </View>
 
+          <Text style={styles.loadingBrand}>
+            StayRent
+          </Text>
+
           <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
+            size="small"
+            color="#635BFF"
             style={styles.loader}
           />
-
-          <Text style={styles.loadingText}>
-            Loading StayRent...
-          </Text>
         </View>
       </SafeAreaView>
     );
@@ -98,223 +135,248 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#F7F9FC"
+        backgroundColor="#FFFFFF"
       />
 
-      <View style={styles.backgroundCircleOne} />
-      <View style={styles.backgroundCircleTwo} />
+      <View style={styles.backgroundGlowOne} />
+      <View style={styles.backgroundGlowTwo} />
 
       <View style={styles.content}>
-        <View>
-          <View style={styles.header}>
-            <View style={styles.brandWrap}>
-              <View style={styles.logo}>
+        <Animated.View
+          style={[
+            styles.topArea,
+            {
+              opacity: fadeAnim,
+              transform: [
+                {
+                  translateY: slideAnim,
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.logoContainer}>
+            <View style={styles.logoOuter}>
+              <View style={styles.logoInner}>
                 <Ionicons
                   name="home"
-                  size={22}
+                  size={34}
                   color="#FFFFFF"
                 />
               </View>
-
-              <Text style={styles.brand}>
-                StayRent
-              </Text>
             </View>
 
-            <View style={styles.secureBadge}>
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={15}
-                color={COLORS.primary}
-              />
+            <Text style={styles.brand}>
+              StayRent
+            </Text>
 
-              <Text style={styles.secureText}>
-                Trusted rentals
-              </Text>
+            <Text style={styles.brandTagline}>
+              Find. Rent. Feel at home.
+            </Text>
+          </View>
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.visualArea,
+            {
+              opacity: fadeAnim,
+            },
+          ]}
+        >
+          <View style={styles.visualGlow} />
+
+          <View style={styles.locationPin}>
+            <Ionicons
+              name="location"
+              size={22}
+              color="#FFFFFF"
+            />
+          </View>
+
+          <View style={styles.buildingsRow}>
+            <View
+              style={[
+                styles.building,
+                styles.smallBuilding,
+              ]}
+            >
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.building,
+                styles.tallBuilding,
+              ]}
+            >
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+            </View>
+
+            <View style={styles.mainHome}>
+              <View style={styles.mainHomeIcon}>
+                <Ionicons
+                  name="home"
+                  size={48}
+                  color="#635BFF"
+                />
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.building,
+                styles.mediumBuilding,
+              ]}
+            >
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
+
+              <View style={styles.windowRow}>
+                <View style={styles.window} />
+                <View style={styles.window} />
+              </View>
             </View>
           </View>
 
-          <View style={styles.hero}>
-            <Text style={styles.eyebrow}>
-              FIND YOUR NEXT SPACE
-            </Text>
-
-            <Text style={styles.title}>
-              Rent smarter.
-              {"\n"}
-              Live better.
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Discover rooms, PGs and rental
-              spaces near the places that matter
-              to you.
-            </Text>
+          <View style={styles.road}>
+            <View style={styles.roadLine} />
+            <View style={styles.roadLine} />
+            <View style={styles.roadLine} />
           </View>
 
-          <View style={styles.visualCard}>
-            <View style={styles.visualTop}>
-              <View style={styles.houseIllustration}>
-                <View style={styles.houseRoof}>
-                  <Ionicons
-                    name="business-outline"
-                    size={40}
-                    color="#FFFFFF"
-                  />
-                </View>
-              </View>
+          <View style={styles.floatingChip}>
+            <View style={styles.greenDot} />
 
-              <View style={styles.featureBadge}>
-                <Ionicons
-                  name="location"
-                  size={14}
-                  color={COLORS.primary}
-                />
-
-                <Text style={styles.featureBadgeText}>
-                  Near you
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.visualContent}>
-              <View style={styles.visualTextArea}>
-                <Text style={styles.propertyLabel}>
-                  Rental discovery
-                </Text>
-
-                <Text style={styles.propertyTitle}>
-                  Find spaces that fit your life
-                </Text>
-
-                <View style={styles.metaRow}>
-                  <View style={styles.metaItem}>
-                    <Ionicons
-                      name="home-outline"
-                      size={15}
-                      color={COLORS.textSecondary}
-                    />
-
-                    <Text style={styles.metaText}>
-                      Room
-                    </Text>
-                  </View>
-
-                  <View style={styles.dot} />
-
-                  <View style={styles.metaItem}>
-                    <Ionicons
-                      name="bed-outline"
-                      size={15}
-                      color={COLORS.textSecondary}
-                    />
-
-                    <Text style={styles.metaText}>
-                      PG
-                    </Text>
-                  </View>
-
-                  <View style={styles.dot} />
-
-                  <View style={styles.metaItem}>
-                    <Ionicons
-                      name="business-outline"
-                      size={15}
-                      color={COLORS.textSecondary}
-                    />
-
-                    <Text style={styles.metaText}>
-                      Flat
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.arrowCircle}>
-                <Ionicons
-                  name="arrow-up"
-                  size={20}
-                  color={COLORS.primary}
-                  style={{
-                    transform: [
-                      {
-                        rotate: "45deg",
-                      },
-                    ],
-                  }}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.bottomArea}>
-          <View style={styles.quickInfo}>
-            <View style={styles.quickInfoItem}>
-              <View style={styles.quickIcon}>
-                <Ionicons
-                  name="search-outline"
-                  size={18}
-                  color={COLORS.primary}
-                />
-              </View>
-
-              <Text style={styles.quickText}>
-                Search fast
-              </Text>
-            </View>
-
-            <View style={styles.quickInfoItem}>
-              <View style={styles.quickIcon}>
-                <Ionicons
-                  name="location-outline"
-                  size={18}
-                  color={COLORS.primary}
-                />
-              </View>
-
-              <Text style={styles.quickText}>
-                Explore nearby
-              </Text>
-            </View>
-
-            <View style={styles.quickInfoItem}>
-              <View style={styles.quickIcon}>
-                <Ionicons
-                  name="key-outline"
-                  size={18}
-                  color={COLORS.primary}
-                />
-              </View>
-
-              <Text style={styles.quickText}>
-                List rentals
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={handleGetStarted}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.primaryButtonText}>
-              Get Started
+            <Text style={styles.floatingChipText}>
+              Rentals near you
             </Text>
+          </View>
+        </Animated.View>
 
-            <View style={styles.buttonArrow}>
-              <Ionicons
-                name="arrow-forward"
-                size={19}
-                color={COLORS.primary}
-              />
-            </View>
-          </TouchableOpacity>
-
-          <Text style={styles.footer}>
-            Find it. Rent it. Feel at home.
+        <Animated.View
+          style={[
+            styles.bottomArea,
+            {
+              opacity: fadeAnim,
+              transform: [
+                {
+                  translateY: slideAnim,
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.eyebrow}>
+            YOUR NEXT PLACE STARTS HERE
           </Text>
-        </View>
+
+          <Text style={styles.title}>
+             Find a better place to stay
+            
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Discover rooms, PGs and flats near
+            the places that matter to you.
+          </Text>
+
+          <View style={styles.trustRow}>
+            <View style={styles.trustItem}>
+              <Ionicons
+                name="location-outline"
+                size={17}
+                color="#635BFF"
+              />
+
+              <Text style={styles.trustText}>
+                Nearby
+              </Text>
+            </View>
+
+            <View style={styles.trustDivider} />
+
+            <View style={styles.trustItem}>
+              <Ionicons
+                name="heart-outline"
+                size={17}
+                color="#635BFF"
+              />
+
+              <Text style={styles.trustText}>
+                Save
+              </Text>
+            </View>
+
+            <View style={styles.trustDivider} />
+
+            <View style={styles.trustItem}>
+              <Ionicons
+                name="call-outline"
+                size={17}
+                color="#635BFF"
+              />
+
+              <Text style={styles.trustText}>
+                Connect
+              </Text>
+            </View>
+          </View>
+
+          <Animated.View
+            style={{
+              opacity: buttonAnim,
+              width: "100%",
+            }}
+          >
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleGetStarted}
+              activeOpacity={0.9}
+            >
+              <Text
+                style={styles.primaryButtonText}
+              >
+                Get Started
+              </Text>
+
+              <View style={styles.arrowBox}>
+                <Ionicons
+                  name="arrow-forward"
+                  size={19}
+                  color="#635BFF"
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Text style={styles.footerText}>
+            Simple rentals. Better choices.
+          </Text>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -323,27 +385,34 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7F9FC",
+    backgroundColor: "#FFFFFF",
   },
 
-  backgroundCircleOne: {
+  backgroundGlowOne: {
     position: "absolute",
+    top: -110,
+    right: -100,
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: "#EAF1FF",
-    top: -95,
-    right: -110,
+    backgroundColor: "#F1EFFF",
   },
 
-  backgroundCircleTwo: {
+  backgroundGlowTwo: {
     position: "absolute",
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: "#EEF4FF",
-    bottom: 90,
+    bottom: 120,
     left: -130,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "#F7F5FF",
+  },
+
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 30,
+    paddingBottom: 22,
   },
 
   loadingContainer: {
@@ -353,15 +422,15 @@ const styles = StyleSheet.create({
   },
 
   loadingLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: 21,
-    backgroundColor: COLORS.primary,
+    width: 66,
+    height: 66,
+    borderRadius: 22,
+    backgroundColor: "#635BFF",
     alignItems: "center",
     justifyContent: "center",
 
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.22,
     shadowRadius: 16,
     shadowOffset: {
       width: 0,
@@ -370,45 +439,96 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
 
+  loadingBrand: {
+    marginTop: 15,
+    fontSize: 25,
+    fontWeight: "900",
+    letterSpacing: -0.7,
+    color: "#111827",
+  },
+
   loader: {
-    marginTop: 24,
+    marginTop: 18,
   },
 
-  loadingText: {
-    marginTop: 13,
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-
-  content: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 24,
-    paddingBottom: 22,
-    justifyContent: "space-between",
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  brandWrap: {
-    flexDirection: "row",
+  topArea: {
     alignItems: "center",
   },
 
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    backgroundColor: COLORS.primary,
+  logoContainer: {
+    alignItems: "center",
+  },
+
+  logoOuter: {
+    width: 76,
+    height: 76,
+    borderRadius: 26,
+    backgroundColor: "#F1EFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: "#635BFF",
     alignItems: "center",
     justifyContent: "center",
 
-    shadowColor: COLORS.primary,
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    elevation: 6,
+  },
+
+  brand: {
+    marginTop: 13,
+    fontSize: 29,
+    fontWeight: "900",
+    letterSpacing: -1,
+    color: "#111827",
+  },
+
+  brandTagline: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#635BFF",
+  },
+
+  visualArea: {
+    flex: 1,
+    minHeight: 275,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+
+  visualGlow: {
+    position: "absolute",
+    width: 235,
+    height: 235,
+    borderRadius: 118,
+    backgroundColor: "#F7F5FF",
+  },
+
+  locationPin: {
+    position: "absolute",
+    top: 42,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#635BFF",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 5,
+
+    shadowColor: "#635BFF",
     shadowOpacity: 0.22,
     shadowRadius: 12,
     shadowOffset: {
@@ -418,243 +538,212 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-  brand: {
-    marginLeft: 11,
-    fontSize: 21,
-    fontWeight: "900",
-    letterSpacing: -0.6,
-    color: COLORS.textPrimary,
-  },
-
-  secureBadge: {
+  buildingsRow: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E6EAF0",
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 999,
-  },
-
-  secureText: {
-    marginLeft: 4,
-    fontSize: 10,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
-  },
-
-  hero: {
-    marginTop: 42,
-  },
-
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.8,
-    color: COLORS.primary,
-  },
-
-  title: {
-    marginTop: 13,
-    fontSize: 47,
-    lineHeight: 51,
-    letterSpacing: -2,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
-  },
-
-  subtitle: {
-    marginTop: 17,
-    maxWidth: 330,
-    fontSize: 16,
-    lineHeight: 25,
-    color: COLORS.textSecondary,
-  },
-
-  visualCard: {
-    marginTop: 32,
-    borderRadius: 28,
-    overflow: "hidden",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E8ECF2",
-
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.09,
-    shadowRadius: 20,
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    elevation: 7,
-  },
-
-  visualTop: {
-    height: 142,
-    padding: 18,
-    backgroundColor: "#1958D8",
-    justifyContent: "space-between",
     alignItems: "flex-end",
-  },
-
-  houseIllustration: {
-    position: "absolute",
-    left: 22,
-    bottom: 19,
-    width: 86,
-    height: 86,
-    borderRadius: 26,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    marginTop: 62,
+    zIndex: 2,
   },
 
-  houseRoof: {
-    width: 65,
-    height: 65,
-    borderRadius: 21,
-    backgroundColor: "rgba(255,255,255,0.14)",
-    alignItems: "center",
-    justifyContent: "center",
+  building: {
+    borderRadius: 10,
+    backgroundColor: "#EFEDFF",
+    borderWidth: 1,
+    borderColor: "#E2DEFF",
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    justifyContent: "space-around",
   },
 
-  featureBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 999,
+  smallBuilding: {
+    width: 50,
+    height: 88,
   },
 
-  featureBadgeText: {
-    marginLeft: 4,
-    fontSize: 11,
-    fontWeight: "800",
-    color: COLORS.primary,
+  mediumBuilding: {
+    width: 56,
+    height: 106,
   },
 
-  visualContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 18,
+  tallBuilding: {
+    width: 56,
+    height: 126,
   },
 
-  visualTextArea: {
-    flex: 1,
-  },
-
-  propertyLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: COLORS.primary,
-  },
-
-  propertyTitle: {
-    marginTop: 6,
-    fontSize: 18,
-    lineHeight: 23,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
-  },
-
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-  },
-
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  metaText: {
-    marginLeft: 4,
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "#CBD5E1",
-    marginHorizontal: 8,
-  },
-
-  arrowCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "#EEF4FF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 14,
-  },
-
-  bottomArea: {
-    marginTop: 24,
-  },
-
-  quickInfo: {
+  windowRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
   },
 
-  quickInfoItem: {
-    alignItems: "center",
-    flex: 1,
+  window: {
+    width: 9,
+    height: 11,
+    borderRadius: 3,
+    backgroundColor: "#BBB5FF",
   },
 
-  quickIcon: {
-    width: 39,
-    height: 39,
-    borderRadius: 13,
-    backgroundColor: "#EAF1FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  quickText: {
-    marginTop: 7,
-    fontSize: 10,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
-  },
-
-  primaryButton: {
-    height: 62,
-    borderRadius: 21,
-    backgroundColor: COLORS.primary,
-    flexDirection: "row",
+  mainHome: {
+    width: 96,
+    height: 96,
+    borderRadius: 30,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E6E3FF",
     alignItems: "center",
     justifyContent: "center",
 
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.22,
+    shadowColor: "#111827",
+    shadowOpacity: 0.08,
     shadowRadius: 16,
     shadowOffset: {
       width: 0,
       height: 8,
     },
-    elevation: 7,
+    elevation: 4,
+  },
+
+  mainHomeIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: "#F3F1FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  road: {
+    width: "88%",
+    height: 40,
+    marginTop: -7,
+    borderRadius: 20,
+    backgroundColor: "#F4F4F6",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 17,
+  },
+
+  roadLine: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#D4D4D8",
+  },
+
+  floatingChip: {
+    marginTop: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  greenDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#12B76A",
+  },
+
+  floatingChipText: {
+    marginLeft: 7,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  bottomArea: {
+    alignItems: "center",
+  },
+
+  eyebrow: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    color: "#635BFF",
+  },
+
+  title: {
+    marginTop: 9,
+    textAlign: "center",
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: "900",
+    letterSpacing: -1.2,
+    color: "#111827",
+  },
+
+  subtitle: {
+    marginTop: 11,
+    maxWidth: 320,
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 22,
+    color: "#667085",
+  },
+
+  trustRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 18,
+  },
+
+  trustItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  trustText: {
+    marginLeft: 5,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  trustDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginHorizontal: 13,
+    backgroundColor: "#D0D5DD",
+  },
+
+  primaryButton: {
+    width: "100%",
+    height: 60,
+    marginTop: 22,
+    borderRadius: 18,
+    backgroundColor: "#635BFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#635BFF",
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 6,
   },
 
   primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "900",
+    color: "#FFFFFF",
   },
 
-  buttonArrow: {
+  arrowBox: {
     position: "absolute",
-    right: 10,
+    right: 9,
     width: 42,
     height: 42,
     borderRadius: 14,
@@ -663,11 +752,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  footer: {
-    marginTop: 14,
-    textAlign: "center",
-    fontSize: 11,
+  footerText: {
+    marginTop: 13,
+    fontSize: 10,
     fontWeight: "600",
-    color: "#94A3B8",
+    color: "#98A2B3",
   },
 });

@@ -570,126 +570,256 @@ function App() {
     }
   };
 
+  const getInitials = (name) => {
+    if (!name) return "A";
+
+    return name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("");
+  };
+
+  const renderAdminProfile = () => (
+    <div className="admin-profile">
+      <div className="admin-avatar">
+        {getInitials(adminUser?.name || "Admin")}
+      </div>
+
+      <div className="admin-profile-copy">
+        <p className="admin-name">
+          {adminUser?.name || "StayRent Admin"}
+        </p>
+
+        <p className="admin-email">
+          {adminUser?.email || ""}
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderPageHeader = (
+    eyebrow,
+    title,
+    description
+  ) => (
+    <div className="dashboard-header">
+      <div>
+        <p className="welcome-text">
+          {eyebrow}
+        </p>
+
+        <h1 className="dashboard-title">
+          {title}
+        </h1>
+
+        {description && (
+          <p className="dashboard-description">
+            {description}
+          </p>
+        )}
+      </div>
+
+      {renderAdminProfile()}
+    </div>
+  );
+
   const renderDashboard = () => {
+    const statCards = [
+      {
+        label: "Total Users",
+        value: stats.totalUsers,
+        icon: "U",
+        tone: "indigo",
+        hint: "All registered accounts",
+      },
+      {
+        label: "Total Seekers",
+        value: stats.totalSeekers,
+        icon: "S",
+        tone: "violet",
+        hint: "People finding rentals",
+      },
+      {
+        label: "Total Owners",
+        value: stats.totalOwners,
+        icon: "O",
+        tone: "blue",
+        hint: "Property owners",
+      },
+      {
+        label: "Total Properties",
+        value: stats.totalProperties,
+        icon: "P",
+        tone: "slate",
+        hint: "All rental listings",
+      },
+      {
+        label: "Active Properties",
+        value: stats.activeProperties,
+        icon: "✓",
+        tone: "green",
+        hint: "Visible to seekers",
+      },
+      {
+        label: "Inactive Properties",
+        value: stats.inactiveProperties,
+        icon: "!",
+        tone: "red",
+        hint: "Hidden from discovery",
+      },
+    ];
+
     return (
       <>
-        <div className="dashboard-header">
-          <div>
-            <p className="welcome-text">
-              Welcome back
-            </p>
+        {renderPageHeader(
+          "OVERVIEW",
+          "Admin Dashboard",
+          "Monitor StayRent users, owners and rental listings from one place."
+        )}
 
-            <h1 className="dashboard-title">
-              Admin Dashboard
-            </h1>
+        {statsError && (
+          <div className="inline-alert error-alert">
+            <span className="inline-alert-icon">
+              !
+            </span>
+
+            <span>{statsError}</span>
+          </div>
+        )}
+
+        <section className="hero-panel">
+          <div className="hero-panel-copy">
+            <span className="hero-kicker">
+              STAYRENT MANAGEMENT
+            </span>
+
+            <h2>
+              Your rental marketplace,
+              <br />
+              under control.
+            </h2>
+
+            <p>
+              Review platform activity, manage
+              accounts and moderate property
+              listings with a clean admin workflow.
+            </p>
           </div>
 
-          <div className="admin-profile">
-            <div className="admin-avatar">
-              A
+          <div className="hero-panel-meta">
+            <div className="hero-meta-card">
+              <span className="hero-meta-label">
+                Platform status
+              </span>
+
+              <strong>Operational</strong>
+
+              <span className="status-live">
+                <i />
+                Connected
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <div className="section-heading">
+          <div>
+            <p className="section-eyebrow">
+              LIVE METRICS
+            </p>
+
+            <h2>Platform snapshot</h2>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          {statCards.map((card) => (
+            <article
+              className="stat-card"
+              key={card.label}
+            >
+              <div
+                className={`stat-icon ${card.tone}`}
+              >
+                {card.icon}
+              </div>
+
+              <div className="stat-card-top">
+                <p className="stat-label">
+                  {card.label}
+                </p>
+
+                <span className="stat-mini-dot" />
+              </div>
+
+              <h2 className="stat-value">
+                {statsLoading
+                  ? "..."
+                  : card.value}
+              </h2>
+
+              <p className="stat-hint">
+                {card.hint}
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <section className="overview-grid">
+          <div className="overview-card">
+            <div className="overview-card-icon">
+              SR
             </div>
 
             <div>
-              <p className="admin-name">
-                {adminUser?.name ||
-                  "StayRent Admin"}
+              <p className="overview-card-label">
+                Platform overview
               </p>
 
-              <p className="admin-email">
-                {adminUser?.email || ""}
+              <h3>
+                StayRent backend is connected
+              </h3>
+
+              <p>
+                Dashboard data is loading from
+                your existing StayRent API and
+                MongoDB setup.
               </p>
             </div>
           </div>
-        </div>
 
-        {statsError && (
-          <p className="error-message">
-            {statsError}
-          </p>
-        )}
-
-        <div className="stats-grid">
-          <div className="stat-card">
-            <p className="stat-label">
-              Total Users
+          <div className="overview-card compact-overview">
+            <p className="overview-card-label">
+              Quick moderation
             </p>
 
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.totalUsers}
-            </h2>
+            <h3>
+              Review accounts and listings
+            </h3>
+
+            <div className="quick-actions">
+              <button
+                type="button"
+                onClick={() =>
+                  setActivePage("users")
+                }
+              >
+                Manage Users
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setActivePage("properties")
+                }
+              >
+                Manage Properties
+              </button>
+            </div>
           </div>
-
-          <div className="stat-card">
-            <p className="stat-label">
-              Total Seekers
-            </p>
-
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.totalSeekers}
-            </h2>
-          </div>
-
-          <div className="stat-card">
-            <p className="stat-label">
-              Total Owners
-            </p>
-
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.totalOwners}
-            </h2>
-          </div>
-
-          <div className="stat-card">
-            <p className="stat-label">
-              Total Properties
-            </p>
-
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.totalProperties}
-            </h2>
-          </div>
-
-          <div className="stat-card">
-            <p className="stat-label">
-              Active Properties
-            </p>
-
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.activeProperties}
-            </h2>
-          </div>
-
-          <div className="stat-card">
-            <p className="stat-label">
-              Inactive Properties
-            </p>
-
-            <h2 className="stat-value">
-              {statsLoading
-                ? "..."
-                : stats.inactiveProperties}
-            </h2>
-          </div>
-        </div>
-
-        <div className="dashboard-section">
-          <h2>Platform Overview</h2>
-
-          <p>
-            Dashboard is connected to the
-            StayRent backend and MongoDB.
-          </p>
-        </div>
+        </section>
       </>
     );
   };
@@ -697,71 +827,67 @@ function App() {
   const renderUsers = () => {
     return (
       <>
-        <div className="dashboard-header">
-          <div>
-            <p className="welcome-text">
-              StayRent Management
-            </p>
+        {renderPageHeader(
+          "USER MANAGEMENT",
+          "Users",
+          "Review seekers and property owners registered on StayRent."
+        )}
 
-            <h1 className="dashboard-title">
-              Users
-            </h1>
-          </div>
-
-          <div className="admin-profile">
-            <div className="admin-avatar">
-              A
-            </div>
-
+        <section className="data-card">
+          <div className="data-card-header">
             <div>
-              <p className="admin-name">
-                {adminUser?.name ||
-                  "StayRent Admin"}
+              <p className="section-eyebrow">
+                ACCOUNTS
               </p>
 
-              <p className="admin-email">
-                {adminUser?.email || ""}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="users-section">
-          <div className="users-header">
-            <div>
               <h2>Registered Users</h2>
 
               <p>
-                Seekers and owners registered
-                on StayRent.
+                Activate or deactivate user access
+                without deleting account data.
               </p>
             </div>
 
             {!usersLoading && (
-              <div className="users-count">
+              <div className="count-pill">
                 {users.length}
+                <span>users</span>
               </div>
             )}
           </div>
 
           {usersLoading && (
-            <div className="users-message">
-              Loading users...
+            <div className="empty-state">
+              <div className="spinner" />
+              <h3>Loading users</h3>
+              <p>
+                Fetching registered accounts...
+              </p>
             </div>
           )}
 
           {!usersLoading &&
             usersError && (
-              <div className="users-error">
-                {usersError}
+              <div className="inline-alert error-alert">
+                <span className="inline-alert-icon">
+                  !
+                </span>
+                <span>{usersError}</span>
               </div>
             )}
 
           {!usersLoading &&
             !usersError &&
             users.length === 0 && (
-              <div className="users-message">
-                No users found.
+              <div className="empty-state">
+                <div className="empty-icon">
+                  U
+                </div>
+                <h3>No users found</h3>
+                <p>
+                  Registered users will appear
+                  here.
+                </p>
               </div>
             )}
 
@@ -769,15 +895,17 @@ function App() {
             !usersError &&
             users.length > 0 && (
               <div className="table-wrapper">
-                <table className="users-table">
+                <table className="premium-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Email</th>
+                      <th>User</th>
+                      <th>Contact</th>
                       <th>Phone</th>
                       <th>Role</th>
                       <th>Status</th>
-                      <th>Action</th>
+                      <th className="action-column">
+                        Action
+                      </th>
                     </tr>
                   </thead>
 
@@ -785,25 +913,45 @@ function App() {
                     {users.map((user) => (
                       <tr key={user._id}>
                         <td>
-                          {user.name ||
-                            "-"}
+                          <div className="table-user">
+                            <div className="table-avatar">
+                              {getInitials(
+                                user.name ||
+                                  user.role ||
+                                  "U"
+                              )}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {user.name || "-"}
+                              </strong>
+                              <span>
+                                StayRent account
+                              </span>
+                            </div>
+                          </div>
                         </td>
 
                         <td>
-                          {user.email ||
-                            "-"}
+                          <span className="primary-cell">
+                            {user.email || "-"}
+                          </span>
                         </td>
 
                         <td>
-                          {user.phone ||
-                            "-"}
+                          <span className="muted-cell">
+                            {user.phone || "-"}
+                          </span>
                         </td>
 
                         <td>
                           <span
-                            className={`role-badge ${user.role}`}
+                            className={`role-badge ${
+                              user.role || ""
+                            }`}
                           >
-                            {user.role}
+                            {user.role || "-"}
                           </span>
                         </td>
 
@@ -815,22 +963,24 @@ function App() {
                                 : "status-badge inactive-status"
                             }
                           >
+                            <i />
                             {user.isActive
                               ? "Active"
                               : "Inactive"}
                           </span>
                         </td>
 
-                        <td>
+                        <td className="action-column">
                           <button
                             type="button"
                             className={
                               user.isActive
-                                ? "user-status-button deactivate-user-button"
-                                : "user-status-button activate-user-button"
+                                ? "status-action danger-action"
+                                : "status-action success-action"
                             }
                             disabled={
-                              updatingUserId === user._id
+                              updatingUserId ===
+                              user._id
                             }
                             onClick={() =>
                               updateUserStatus(
@@ -839,7 +989,8 @@ function App() {
                               )
                             }
                           >
-                            {updatingUserId === user._id
+                            {updatingUserId ===
+                            user._id
                               ? "Updating..."
                               : user.isActive
                               ? "Deactivate"
@@ -852,7 +1003,7 @@ function App() {
                 </table>
               </div>
             )}
-        </div>
+        </section>
       </>
     );
   };
@@ -860,38 +1011,19 @@ function App() {
   const renderProperties = () => {
     return (
       <>
-        <div className="dashboard-header">
-          <div>
-            <p className="welcome-text">
-              StayRent Management
-            </p>
+        {renderPageHeader(
+          "PROPERTY MANAGEMENT",
+          "Properties",
+          "Review rental listings and control which properties are active on StayRent."
+        )}
 
-            <h1 className="dashboard-title">
-              Properties
-            </h1>
-          </div>
-
-          <div className="admin-profile">
-            <div className="admin-avatar">
-              A
-            </div>
-
+        <section className="data-card">
+          <div className="data-card-header">
             <div>
-              <p className="admin-name">
-                {adminUser?.name ||
-                  "StayRent Admin"}
+              <p className="section-eyebrow">
+                LISTINGS
               </p>
 
-              <p className="admin-email">
-                {adminUser?.email || ""}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="users-section">
-          <div className="users-header">
-            <div>
               <h2>All Properties</h2>
 
               <p>
@@ -901,30 +1033,45 @@ function App() {
             </div>
 
             {!propertiesLoading && (
-              <div className="users-count">
+              <div className="count-pill">
                 {properties.length}
+                <span>listings</span>
               </div>
             )}
           </div>
 
           {propertiesLoading && (
-            <div className="users-message">
-              Loading properties...
+            <div className="empty-state">
+              <div className="spinner" />
+              <h3>Loading properties</h3>
+              <p>
+                Fetching rental listings...
+              </p>
             </div>
           )}
 
           {!propertiesLoading &&
             propertiesError && (
-              <div className="users-error">
-                {propertiesError}
+              <div className="inline-alert error-alert">
+                <span className="inline-alert-icon">
+                  !
+                </span>
+                <span>{propertiesError}</span>
               </div>
             )}
 
           {!propertiesLoading &&
             !propertiesError &&
             properties.length === 0 && (
-              <div className="users-message">
-                No properties found.
+              <div className="empty-state">
+                <div className="empty-icon">
+                  P
+                </div>
+                <h3>No properties found</h3>
+                <p>
+                  Owner listings will appear
+                  here.
+                </p>
               </div>
             )}
 
@@ -932,17 +1079,19 @@ function App() {
             !propertiesError &&
             properties.length > 0 && (
               <div className="table-wrapper">
-                <table className="users-table properties-table">
+                <table className="premium-table properties-table">
                   <thead>
                     <tr>
-                      <th>Title</th>
+                      <th>Property</th>
                       <th>Owner</th>
                       <th>City</th>
                       <th>Rent</th>
                       <th>Type</th>
                       <th>Availability</th>
                       <th>Status</th>
-                      <th>Action</th>
+                      <th className="action-column">
+                        Action
+                      </th>
                     </tr>
                   </thead>
 
@@ -951,26 +1100,46 @@ function App() {
                       (property) => (
                         <tr key={property._id}>
                           <td>
-                            {property.title || "-"}
+                            <div className="property-cell">
+                              <div className="property-mark">
+                                P
+                              </div>
+
+                              <div>
+                                <strong>
+                                  {property.title ||
+                                    "-"}
+                                </strong>
+                                <span>
+                                  Rental listing
+                                </span>
+                              </div>
+                            </div>
                           </td>
 
                           <td>
-                            {property.owner?.name ||
-                              "-"}
+                            <span className="primary-cell">
+                              {property.owner?.name ||
+                                "-"}
+                            </span>
                           </td>
 
                           <td>
-                            {property.city || "-"}
+                            <span className="muted-cell">
+                              {property.city || "-"}
+                            </span>
                           </td>
 
                           <td>
-                            ₹
-                            {property.monthlyRent ??
-                              0}
+                            <strong className="rent-cell">
+                              ₹
+                              {property.monthlyRent ??
+                                0}
+                            </strong>
                           </td>
 
                           <td>
-                            <span className="role-badge">
+                            <span className="role-badge neutral-role">
                               {property.propertyType ||
                                 "-"}
                             </span>
@@ -980,10 +1149,11 @@ function App() {
                             <span
                               className={
                                 property.isAvailable
-                                  ? "status-badge active-status"
-                                  : "status-badge inactive-status"
+                                  ? "status-badge available-status"
+                                  : "status-badge occupied-status"
                               }
                             >
+                              <i />
                               {property.isAvailable
                                 ? "Available"
                                 : "Occupied"}
@@ -998,19 +1168,20 @@ function App() {
                                   : "status-badge inactive-status"
                               }
                             >
+                              <i />
                               {property.isActive
                                 ? "Active"
                                 : "Inactive"}
                             </span>
                           </td>
 
-                          <td>
+                          <td className="action-column">
                             <button
                               type="button"
                               className={
                                 property.isActive
-                                  ? "property-status-button deactivate-property-button"
-                                  : "property-status-button activate-property-button"
+                                  ? "status-action danger-action"
+                                  : "status-action success-action"
                               }
                               disabled={
                                 updatingPropertyId ===
@@ -1038,7 +1209,7 @@ function App() {
                 </table>
               </div>
             )}
-        </div>
+        </section>
       </>
     );
   };
@@ -1048,74 +1219,121 @@ function App() {
       <div className="dashboard-page">
         <aside className="sidebar">
           <div>
-            <div className="sidebar-brand">
-              StayRent
+            <div className="sidebar-brand-row">
+              <div className="sidebar-logo">
+                SR
+              </div>
+
+              <div>
+                <div className="sidebar-brand">
+                  StayRent
+                </div>
+
+                <p className="sidebar-subtitle">
+                  Admin Console
+                </p>
+              </div>
             </div>
 
-            <p className="sidebar-subtitle">
-              Admin Panel
-            </p>
+            <div className="sidebar-divider" />
+
+            <nav className="sidebar-nav">
+              <button
+                type="button"
+                className={`nav-item ${
+                  activePage === "dashboard"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActivePage("dashboard")
+                }
+              >
+                <span className="nav-icon">
+                  ▦
+                </span>
+
+                <span>Dashboard</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-item ${
+                  activePage === "users"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActivePage("users")
+                }
+              >
+                <span className="nav-icon">
+                  U
+                </span>
+
+                <span>Users</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-item ${
+                  activePage === "properties"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActivePage("properties")
+                }
+              >
+                <span className="nav-icon">
+                  P
+                </span>
+
+                <span>Properties</span>
+              </button>
+            </nav>
           </div>
 
-          <nav className="sidebar-nav">
-            <button
-              className={`nav-item ${
-                activePage === "dashboard"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setActivePage("dashboard")
-              }
-            >
-              Dashboard
-            </button>
+          <div className="sidebar-bottom">
+            <div className="sidebar-admin">
+              <div className="sidebar-admin-avatar">
+                {getInitials(
+                  adminUser?.name || "Admin"
+                )}
+              </div>
+
+              <div className="sidebar-admin-copy">
+                <strong>
+                  {adminUser?.name ||
+                    "StayRent Admin"}
+                </strong>
+
+                <span>Administrator</span>
+              </div>
+            </div>
 
             <button
-              className={`nav-item ${
-                activePage === "users"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setActivePage("users")
-              }
-            >
-              Users
-            </button>
-
-            <button
-              className={`nav-item ${
-                activePage === "properties"
-                  ? "active"
-                  : ""
-              }`}
+              className="logout-button"
               type="button"
-              onClick={() =>
-                setActivePage("properties")
-              }
+              onClick={handleLogout}
             >
-              Properties
+              <span>↪</span>
+              Logout
             </button>
-          </nav>
-
-          <button
-            className="logout-button"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
+          </div>
         </aside>
 
         <main className="dashboard-main">
-          {activePage === "dashboard" &&
-            renderDashboard()}
+          <div className="dashboard-content">
+            {activePage === "dashboard" &&
+              renderDashboard()}
 
-          {activePage === "users" &&
-            renderUsers()}
+            {activePage === "users" &&
+              renderUsers()}
 
-          {activePage === "properties" &&
-            renderProperties()}
+            {activePage === "properties" &&
+              renderProperties()}
+          </div>
         </main>
       </div>
     );
@@ -1123,60 +1341,165 @@ function App() {
 
   return (
     <div className="admin-page">
-      <div className="login-card">
-        <p className="brand">
-          StayRent Admin
-        </p>
+      <div className="login-glow login-glow-one" />
+      <div className="login-glow login-glow-two" />
 
-        <h1>Admin Login</h1>
+      <div className="login-shell">
+        <section className="login-visual">
+          <div className="login-brand-row">
+            <div className="login-logo">
+              SR
+            </div>
 
-        <p className="subtitle">
-          Sign in to manage users, owners and
-          properties.
-        </p>
+            <div>
+              <div className="login-brand">
+                StayRent
+              </div>
+              <div className="login-brand-subtitle">
+                Admin Console
+              </div>
+            </div>
+          </div>
 
-        <form onSubmit={handleLogin}>
-          <label>Email</label>
+          <div className="login-visual-content">
+            <span className="login-kicker">
+              PLATFORM MANAGEMENT
+            </span>
 
-          <input
-            type="email"
-            placeholder="admin@example.com"
-            value={email}
-            autoComplete="username"
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
-            required
-          />
+            <h1>
+              Manage StayRent
+              <br />
+              with confidence.
+            </h1>
 
-          <label>Password</label>
-
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            autoComplete="current-password"
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
-            required
-          />
-
-          {error && (
-            <p className="error-message">
-              {error}
+            <p>
+              Monitor users, owners and property
+              listings from one secure admin
+              workspace.
             </p>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Logging in..."
-              : "Login"}
-          </button>
-        </form>
+            <div className="login-feature-grid">
+              <div>
+                <strong>Users</strong>
+                <span>
+                  Manage account access
+                </span>
+              </div>
+
+              <div>
+                <strong>Properties</strong>
+                <span>
+                  Moderate rental listings
+                </span>
+              </div>
+
+              <div>
+                <strong>Analytics</strong>
+                <span>
+                  See live platform counts
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="login-trust-note">
+            <span className="trust-dot" />
+            StayRent secure administration
+          </div>
+        </section>
+
+        <section className="login-card">
+          <div className="login-card-icon">
+            SR
+          </div>
+
+          <p className="brand">
+            SECURE ADMIN ACCESS
+          </p>
+
+          <h2>Welcome back</h2>
+
+          <p className="subtitle">
+            Sign in with your administrator
+            account to continue.
+          </p>
+
+          <form onSubmit={handleLogin}>
+            <label htmlFor="admin-email">
+              Email address
+            </label>
+
+            <div className="login-input-wrap">
+              <span>@</span>
+
+              <input
+                id="admin-email"
+                type="email"
+                placeholder="admin@example.com"
+                value={email}
+                autoComplete="username"
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                required
+              />
+            </div>
+
+            <label htmlFor="admin-password">
+              Password
+            </label>
+
+            <div className="login-input-wrap">
+              <span>•</span>
+
+              <input
+                id="admin-password"
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                autoComplete="current-password"
+                onChange={(event) =>
+                  setPassword(
+                    event.target.value
+                  )
+                }
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="login-error">
+                <span>!</span>
+                {error}
+              </div>
+            )}
+
+            <button
+              className="login-submit"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="button-spinner" />
+                  Logging in...
+                </>
+              ) : (
+                <>
+                  Login to Dashboard
+                  <span className="login-arrow">
+                    →
+                  </span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="login-security">
+            <span>✓</span>
+            Protected administrator access
+          </div>
+        </section>
       </div>
     </div>
   );
