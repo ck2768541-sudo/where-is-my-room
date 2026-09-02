@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import {
   ActivityIndicator,
+  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -26,6 +27,11 @@ type AvailabilityType =
   | "Male"
   | "Female"
   | "Family";
+
+type DistanceOption = {
+  label: string;
+  value: number | null;
+};
 
 type Property = {
   _id: string;
@@ -106,6 +112,17 @@ export default function SeekerHomeScreen() {
   const [error, setError] =
     useState("");
 
+  const [minRent, setMinRent] =
+    useState("");
+
+  const [maxRent, setMaxRent] =
+    useState("");
+
+  const [
+    selectedDistanceKm,
+    setSelectedDistanceKm,
+  ] = useState<number | null>(null);
+
   const [
     userLatitude,
     setUserLatitude,
@@ -146,6 +163,29 @@ export default function SeekerHomeScreen() {
       "Female",
       "Family",
     ];
+
+  const distanceOptions: DistanceOption[] = [
+    {
+      label: "Any Distance",
+      value: null,
+    },
+    {
+      label: "Within 1 km",
+      value: 1,
+    },
+    {
+      label: "Within 3 km",
+      value: 3,
+    },
+    {
+      label: "Within 5 km",
+      value: 5,
+    },
+    {
+      label: "Within 10 km",
+      value: 10,
+    },
+  ];
 
   const getDistanceInKm = (
     lat1: number,
@@ -294,6 +334,22 @@ export default function SeekerHomeScreen() {
             `availableFor=${availability.toLowerCase()}`
           );
 
+          if (minRent.trim()) {
+            params.push(
+              `minRent=${encodeURIComponent(
+                minRent.trim()
+              )}`
+            );
+          }
+
+          if (maxRent.trim()) {
+            params.push(
+              `maxRent=${encodeURIComponent(
+                maxRent.trim()
+              )}`
+            );
+          }
+
           if (
             params.length >
             0
@@ -333,13 +389,59 @@ export default function SeekerHomeScreen() {
           return;
         }
 
-        setProperties(
-          Array.isArray(
-            data.properties
-          )
+        const fetchedProperties: Property[] =
+          Array.isArray(data.properties)
             ? data.properties
-            : []
-        );
+            : [];
+
+        if (
+          useFilters &&
+          selectedDistanceKm !== null &&
+          userLatitude !== null &&
+          userLongitude !== null
+        ) {
+          const distanceFilteredProperties =
+            fetchedProperties.filter(
+              (property) => {
+                const coordinates =
+                  property.location?.coordinates;
+
+                if (
+                  !coordinates ||
+                  coordinates.length !== 2
+                ) {
+                  return false;
+                }
+
+                const propertyLongitude =
+                  coordinates[0];
+
+                const propertyLatitude =
+                  coordinates[1];
+
+                const distance =
+                  getDistanceInKm(
+                    userLatitude,
+                    userLongitude,
+                    propertyLatitude,
+                    propertyLongitude
+                  );
+
+                return (
+                  distance <=
+                  selectedDistanceKm
+                );
+              }
+            );
+
+          setProperties(
+            distanceFilteredProperties
+          );
+        } else {
+          setProperties(
+            fetchedProperties
+          );
+        }
       } catch (
         error
       ) {
@@ -504,9 +606,65 @@ export default function SeekerHomeScreen() {
 
   const handleSearch =
     () => {
-      fetchProperties(
-        true
-      );
+      const minValue =
+        minRent.trim() === ""
+          ? null
+          : Number(minRent);
+
+      const maxValue =
+        maxRent.trim() === ""
+          ? null
+          : Number(maxRent);
+
+      if (
+        minValue !== null &&
+        (!Number.isFinite(minValue) ||
+          minValue < 0)
+      ) {
+        Alert.alert(
+          "Invalid Minimum Rent",
+          "Please enter a valid minimum rent."
+        );
+        return;
+      }
+
+      if (
+        maxValue !== null &&
+        (!Number.isFinite(maxValue) ||
+          maxValue < 0)
+      ) {
+        Alert.alert(
+          "Invalid Maximum Rent",
+          "Please enter a valid maximum rent."
+        );
+        return;
+      }
+
+      if (
+        minValue !== null &&
+        maxValue !== null &&
+        minValue > maxValue
+      ) {
+        Alert.alert(
+          "Invalid Rent Range",
+          "Minimum rent cannot be greater than maximum rent."
+        );
+        return;
+      }
+
+      if (
+        selectedDistanceKm !== null &&
+        (userLatitude === null ||
+          userLongitude === null)
+      ) {
+        Alert.alert(
+          "Location Required",
+          "Please allow location access and wait for your current location before using the distance filter."
+        );
+        return;
+      }
+
+      fetchProperties(true);
     };
 
   return (
@@ -710,6 +868,133 @@ export default function SeekerHomeScreen() {
                     {
                       item
                     }
+                  </Text>
+                </TouchableOpacity>
+              );
+            }
+          )}
+        </View>
+
+        <Text
+          style={
+            styles.filterTitle
+          }
+        >
+          Monthly Rent Range
+        </Text>
+
+        <View
+          style={
+            styles.rentRangeRow
+          }
+        >
+          <View
+            style={
+              styles.rentInputContainer
+            }
+          >
+            <Text
+              style={
+                styles.currencyText
+              }
+            >
+              ₹
+            </Text>
+
+            <TextInput
+              style={
+                styles.rentInput
+              }
+              placeholder="Min rent"
+              placeholderTextColor={
+                COLORS.textSecondary
+              }
+              keyboardType="numeric"
+              value={minRent}
+              onChangeText={setMinRent}
+              maxLength={7}
+            />
+          </View>
+
+          <Text
+            style={
+              styles.rentRangeSeparator
+            }
+          >
+            to
+          </Text>
+
+          <View
+            style={
+              styles.rentInputContainer
+            }
+          >
+            <Text
+              style={
+                styles.currencyText
+              }
+            >
+              ₹
+            </Text>
+
+            <TextInput
+              style={
+                styles.rentInput
+              }
+              placeholder="Max rent"
+              placeholderTextColor={
+                COLORS.textSecondary
+              }
+              keyboardType="numeric"
+              value={maxRent}
+              onChangeText={setMaxRent}
+              maxLength={7}
+            />
+          </View>
+        </View>
+
+        <Text
+          style={
+            styles.filterTitle
+          }
+        >
+          Distance from You
+        </Text>
+
+        <View
+          style={
+            styles.chipRow
+          }
+        >
+          {distanceOptions.map(
+            (item) => {
+              const selected =
+                selectedDistanceKm ===
+                item.value;
+
+              return (
+                <TouchableOpacity
+                  key={item.label}
+                  style={[
+                    styles.chip,
+                    selected &&
+                      styles.chipSelected,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    setSelectedDistanceKm(
+                      item.value
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected &&
+                        styles.chipTextSelected,
+                    ]}
+                  >
+                    {item.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -1318,6 +1603,44 @@ const styles =
     chipTextSelected: {
       color:
         COLORS.surface,
+    },
+
+    rentRangeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+
+    rentInputContainer: {
+      flex: 1,
+      height: 54,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 14,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: 14,
+      backgroundColor: COLORS.surface,
+    },
+
+    currencyText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: COLORS.textPrimary,
+      marginRight: 5,
+    },
+
+    rentInput: {
+      flex: 1,
+      height: "100%",
+      fontSize: 15,
+      color: COLORS.textPrimary,
+    },
+
+    rentRangeSeparator: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: COLORS.textSecondary,
     },
 
     searchButton: {

@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
@@ -21,4 +21,5 @@ app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/admin", adminRoutes);
 module.exports = app;
