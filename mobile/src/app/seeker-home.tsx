@@ -18,7 +18,7 @@ import {
 
 import { API_BASE_URL } from "../config/api";
 import { COLORS } from "../constants/colors";
-import { getAuthToken } from "../utils/authStorage";
+import { clearAuthSession, getAuthToken } from "../utils/authStorage";
 
 type PropertyType = "Room" | "PG" | "Flat";
 
@@ -667,6 +667,39 @@ export default function SeekerHomeScreen() {
       fetchProperties(true);
     };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await clearAuthSession();
+              router.replace("/seeker-login" as any);
+            } catch (error) {
+              console.error(
+                "Seeker logout error:",
+                error
+              );
+
+              Alert.alert(
+                "Logout Failed",
+                "Unable to logout. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView
       style={
@@ -681,13 +714,27 @@ export default function SeekerHomeScreen() {
           false
         }
       >
-        <Text
-          style={
-            styles.brand
-          }
-        >
-          Where Is My Room
-        </Text>
+        <View style={styles.topHeader}>
+          <Text style={styles.brand}>
+           StayRent
+          </Text>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogout}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color={COLORS.error}
+            />
+
+            <Text style={styles.logoutButtonText}>
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text
           style={
@@ -1496,13 +1543,39 @@ const styles =
       paddingBottom: 50,
     },
 
+    topHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 24,
+    },
+
     brand: {
+      flex: 1,
       fontSize: 18,
       fontWeight:
         "700",
       color:
         COLORS.primary,
-      marginBottom: 24,
+    },
+
+    logoutButton: {
+      minHeight: 40,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: COLORS.error,
+      borderRadius: 12,
+      backgroundColor: COLORS.surface,
+    },
+
+    logoutButtonText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: COLORS.error,
     },
 
     title: {

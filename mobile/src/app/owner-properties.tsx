@@ -17,7 +17,7 @@ import {
 
 import { API_BASE_URL } from "../config/api";
 import { COLORS } from "../constants/colors";
-import { getAuthToken } from "../utils/authStorage";
+import { clearAuthSession, getAuthToken } from "../utils/authStorage";
 
 type Property = {
   _id: string;
@@ -257,6 +257,39 @@ export default function OwnerPropertiesScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await clearAuthSession();
+              router.replace("/owner-login" as any);
+            } catch (error) {
+              console.error(
+                "Owner logout error:",
+                error
+              );
+
+              Alert.alert(
+                "Logout Failed",
+                "Unable to logout. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchOwnerProperties();
@@ -269,9 +302,27 @@ export default function OwnerPropertiesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.brand}>
-          Where Is My Room
-        </Text>
+        <View style={styles.topHeader}>
+          <Text style={styles.brand}>
+         StayRent
+          </Text>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogout}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color={COLORS.error}
+            />
+
+            <Text style={styles.logoutButtonText}>
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.title}>
           My Properties
@@ -676,11 +727,37 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
 
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+
   brand: {
+    flex: 1,
     fontSize: 18,
     fontWeight: "700",
     color: COLORS.primary,
-    marginBottom: 18,
+  },
+
+  logoutButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+  },
+
+  logoutButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.error,
   },
 
   title: {

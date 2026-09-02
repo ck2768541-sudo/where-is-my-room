@@ -343,7 +343,7 @@ export default function OwnerEditPropertyScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.brand}>
-            Where Is My Room
+            StayRent
           </Text>
 
           <Text style={styles.title}>

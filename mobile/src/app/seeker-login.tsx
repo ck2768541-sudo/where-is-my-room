@@ -89,7 +89,7 @@ router.replace("/seeker-home");
       >
         <View style={styles.content}>
           <Text style={styles.brand}>
-            Where Is My Room
+            StayRent
           </Text>
 
           <Text style={styles.title}>

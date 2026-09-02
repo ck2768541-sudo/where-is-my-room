@@ -172,7 +172,7 @@ export default function PropertyDetailsScreen() {
 
       const message =
         `Hi, I am interested in your property ` +
-        `"${property?.title}" listed on Where Is My Room.`;
+        `"${property?.title}" listed on StayRent.`;
 
       const whatsappUrl =
         `https://wa.me/${cleanPhone}?text=` +

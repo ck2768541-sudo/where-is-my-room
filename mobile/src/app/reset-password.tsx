@@ -103,7 +103,7 @@ export default function ResetPasswordScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.brand}>Where Is My Room</Text>
+        <Text style={styles.brand}>StayRent</Text>
 
         <Text style={styles.title}>Create new password</Text>
 

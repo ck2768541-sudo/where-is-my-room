@@ -126,7 +126,7 @@ export default function SeekerRegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.brand}>Where Is My Room</Text>
+          <Text style={styles.brand}>StayRent</Text>
 
           <Text style={styles.title}>Create your account</Text>
 
