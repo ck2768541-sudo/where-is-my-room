@@ -19,6 +19,7 @@ import {
 import { API_BASE_URL } from "../config/api";
 import { COLORS } from "../constants/colors";
 import { clearAuthSession, getAuthToken } from "../utils/authStorage";
+import SeekerBottomNav from "../components/SeekerBottomNav";
 
 type PropertyType = "Room" | "PG" | "Flat";
 
@@ -1477,6 +1478,8 @@ export default function SeekerHomeScreen() {
             );
           })}
       </ScrollView>
+
+      <SeekerBottomNav />
     </SafeAreaView>
   );
 }
@@ -1490,7 +1493,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 26,
-    paddingBottom: 60,
+    paddingBottom: 125,
   },
 
   topHeader: {

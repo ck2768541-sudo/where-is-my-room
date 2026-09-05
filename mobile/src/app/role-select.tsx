@@ -109,9 +109,9 @@ export default function RoleSelectScreen() {
                 animatePressOut(seekerScale)
               }
               onPress={() =>
-                router.push(
-                  "/seeker-login"
-                )
+              router.replace(
+  "/seeker-login"
+)
               }
             >
               <View style={styles.primaryIconBox}>

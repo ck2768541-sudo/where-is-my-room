@@ -16,6 +16,7 @@ import { WebView } from "react-native-webview";
 
 import { API_BASE_URL } from "../config/api";
 import { getAuthToken } from "../utils/authStorage";
+import SeekerBottomNav from "../components/SeekerBottomNav";
 
 type Property = {
   _id: string;
@@ -512,6 +513,8 @@ export default function SeekerMapScreen() {
           </Text>
         </View>
       </View>
+
+      <SeekerBottomNav />
     </SafeAreaView>
   );
 }
@@ -647,7 +650,7 @@ const styles = StyleSheet.create({
   mapInfoPill: {
     position: "absolute",
     left: 16,
-    bottom: 18,
+    bottom: 95,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 13,

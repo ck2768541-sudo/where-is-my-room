@@ -17,6 +17,7 @@ import {
 
 import { API_BASE_URL } from "../config/api";
 import { clearAuthSession, getAuthToken } from "../utils/authStorage";
+import OwnerBottomNav from "../components/OwnerBottomNav";
 
 type Property = {
   _id: string;
@@ -848,6 +849,8 @@ export default function OwnerPropertiesScreen() {
             );
           })}
       </ScrollView>
+
+      <OwnerBottomNav />
     </SafeAreaView>
   );
 }
@@ -881,7 +884,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 26,
-    paddingBottom: 60,
+    paddingBottom: 125,
   },
 
   topHeader: {

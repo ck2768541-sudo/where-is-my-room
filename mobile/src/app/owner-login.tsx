@@ -101,7 +101,7 @@ export default function OwnerLoginScreen() {
         data.user
       );
 
-      router.replace("/owner-properties");
+     router.replace("/owner-home" as any);
     } catch (error) {
       console.error(
         "Owner login error:",

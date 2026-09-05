@@ -96,9 +96,9 @@ export default function HomeScreen() {
     }).start();
   }, [checkingSession]);
 
-  const handleGetStarted = () => {
-    router.push("/role-select");
-  };
+ const handleGetStarted = () => {
+  router.replace("/role-select");
+};
 
   if (checkingSession) {
     return (

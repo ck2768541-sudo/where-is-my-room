@@ -16,6 +16,7 @@ import {
 
 import { API_BASE_URL } from "../config/api";
 import { getAuthToken } from "../utils/authStorage";
+import SeekerBottomNav from "../components/SeekerBottomNav";
 
 type Property = {
   _id: string;
@@ -519,6 +520,8 @@ export default function SeekerFavoritesScreen() {
             );
           })}
       </ScrollView>
+
+      <SeekerBottomNav />
     </SafeAreaView>
   );
 }
@@ -552,7 +555,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 26,
-    paddingBottom: 56,
+    paddingBottom: 125,
   },
 
   header: {
