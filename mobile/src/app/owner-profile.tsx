@@ -564,6 +564,47 @@ export default function OwnerProfileScreen() {
                   color="#98A2B3"
                 />
               </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={styles.actionRow}
+                activeOpacity={0.8}
+                onPress={() =>
+                  router.push(
+                    "/owner-support" as any
+                  )
+                }
+              >
+                <View
+                  style={[
+                    styles.actionIcon,
+                    styles.supportIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={22}
+                    color="#F79009"
+                  />
+                </View>
+
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>
+                    Help & Support
+                  </Text>
+
+                  <Text style={styles.actionText}>
+                    Report a problem or contact StayRent support
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={19}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
             </View>
 
             {/* SESSION */}
@@ -926,6 +967,10 @@ const styles = StyleSheet.create({
 
   addIcon: {
     backgroundColor: "#ECFDF3",
+  },
+
+  supportIcon: {
+    backgroundColor: "#FFFAEB",
   },
 
   actionContent: {

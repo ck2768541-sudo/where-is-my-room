@@ -60,6 +60,18 @@ function App() {
   const [updatingPropertyId, setUpdatingPropertyId] =
     useState(null);
 
+  const [supportTickets, setSupportTickets] =
+    useState([]);
+
+  const [supportLoading, setSupportLoading] =
+    useState(false);
+
+  const [supportError, setSupportError] =
+    useState("");
+
+  const [updatingSupportId, setUpdatingSupportId] =
+    useState(null);
+
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
@@ -76,11 +88,14 @@ function App() {
     setStatsError("");
     setUsersError("");
     setPropertiesError("");
+    setSupportError("");
 
     setUsers([]);
     setProperties([]);
+    setSupportTickets([]);
     setUpdatingUserId(null);
     setUpdatingPropertyId(null);
+    setUpdatingSupportId(null);
 
     setStats({
       totalUsers: 0,
@@ -472,6 +487,173 @@ function App() {
     }
   };
 
+  const fetchSupportTickets = async () => {
+    try {
+      setSupportLoading(true);
+      setSupportError("");
+
+      const token =
+        localStorage.getItem("adminToken");
+
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/support`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          handleLogout();
+          return;
+        }
+
+        setSupportError(
+          data?.message ||
+            "Unable to load support requests."
+        );
+
+        return;
+      }
+
+      setSupportTickets(
+        Array.isArray(data?.tickets)
+          ? data.tickets
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "Admin support requests error:",
+        error
+      );
+
+      setSupportError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  const updateSupportStatus = async (
+    ticketId,
+    status
+  ) => {
+    try {
+      setUpdatingSupportId(ticketId);
+      setSupportError("");
+
+      const token =
+        localStorage.getItem("adminToken");
+
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/support/${ticketId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          handleLogout();
+          return;
+        }
+
+        setSupportError(
+          data?.message ||
+            "Unable to update support request."
+        );
+
+        return;
+      }
+
+      setSupportTickets((currentTickets) =>
+        currentTickets.map((ticket) =>
+          ticket._id === ticketId
+            ? data.ticket
+            : ticket
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Admin support status error:",
+        error
+      );
+
+      setSupportError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setUpdatingSupportId(null);
+    }
+  };
+
+  const openWhatsApp = (phone) => {
+    if (!phone) return;
+
+    const cleanPhone = String(phone).replace(
+      /\D/g,
+      ""
+    );
+
+    const whatsappNumber =
+      cleanPhone.length === 10
+        ? `91${cleanPhone}`
+        : cleanPhone;
+
+    window.open(
+      `https://wa.me/${whatsappNumber}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const callUser = (phone) => {
+    if (!phone) return;
+
+    window.location.href =
+      `tel:${String(phone).trim()}`;
+  };
+
+  const emailUser = (emailAddress) => {
+    if (!emailAddress) return;
+
+    window.location.href =
+      `mailto:${emailAddress}?subject=${encodeURIComponent(
+        "StayRent Support"
+      )}`;
+  };
+
   useEffect(() => {
     if (
       isLoggedIn &&
@@ -492,6 +674,13 @@ function App() {
       activePage === "properties"
     ) {
       fetchProperties();
+    }
+
+    if (
+      isLoggedIn &&
+      activePage === "support"
+    ) {
+      fetchSupportTickets();
     }
   }, [isLoggedIn, activePage]);
 
@@ -1214,6 +1403,259 @@ function App() {
     );
   };
 
+  const renderSupport = () => {
+    return (
+      <>
+        {renderPageHeader(
+          "CUSTOMER SUPPORT",
+          "Support Requests",
+          "Review owner and seeker issues, contact users directly, and keep every request moving toward resolution."
+        )}
+
+        <section className="data-card">
+          <div className="data-card-header">
+            <div>
+              <p className="section-eyebrow">
+                HELP DESK
+              </p>
+
+              <h2>All Support Requests</h2>
+
+              <p>
+                View submitted problems and update
+                their support status.
+              </p>
+            </div>
+
+            {!supportLoading && (
+              <div className="count-pill">
+                {supportTickets.length}
+                <span>requests</span>
+              </div>
+            )}
+          </div>
+
+          {supportLoading && (
+            <div className="empty-state">
+              <div className="spinner" />
+              <h3>Loading support requests</h3>
+              <p>
+                Fetching customer support tickets...
+              </p>
+            </div>
+          )}
+
+          {!supportLoading &&
+            supportError && (
+              <div className="inline-alert error-alert">
+                <span className="inline-alert-icon">
+                  !
+                </span>
+                <span>{supportError}</span>
+              </div>
+            )}
+
+          {!supportLoading &&
+            !supportError &&
+            supportTickets.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  ?
+                </div>
+                <h3>No support requests</h3>
+                <p>
+                  New owner and seeker support
+                  requests will appear here.
+                </p>
+              </div>
+            )}
+
+          {!supportLoading &&
+            !supportError &&
+            supportTickets.length > 0 && (
+              <div className="table-wrapper">
+                <table className="premium-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Problem</th>
+                      <th>Message</th>
+                      <th>Status</th>
+                      <th>Contact</th>
+                      <th className="action-column">
+                        Update
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {supportTickets.map(
+                      (ticket) => (
+                        <tr key={ticket._id}>
+                          <td>
+                            <div className="table-user">
+                              <div className="table-avatar">
+                                {getInitials(
+                                  ticket.user?.name ||
+                                    ticket.role ||
+                                    "U"
+                                )}
+                              </div>
+
+                              <div>
+                                <strong>
+                                  {ticket.user?.name ||
+                                    "Unknown User"}
+                                </strong>
+                                <span>
+                                  {ticket.role || "-"}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td>
+                            <span className="role-badge neutral-role">
+                              {ticket.problemType ||
+                                "-"}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span className="primary-cell">
+                              {ticket.message || "-"}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span
+                              className={
+                                ticket.status ===
+                                "resolved"
+                                  ? "status-badge active-status"
+                                  : ticket.status ===
+                                    "in-progress"
+                                  ? "status-badge available-status"
+                                  : "status-badge inactive-status"
+                              }
+                            >
+                              <i />
+                              {ticket.status ===
+                              "in-progress"
+                                ? "In Progress"
+                                : ticket.status ===
+                                  "resolved"
+                                ? "Resolved"
+                                : "Open"}
+                            </span>
+                          </td>
+
+                          <td>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "6px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="status-action success-action"
+                                onClick={() =>
+                                  openWhatsApp(
+                                    ticket.user?.phone
+                                  )
+                                }
+                                disabled={
+                                  !ticket.user?.phone
+                                }
+                              >
+                                WhatsApp
+                              </button>
+
+                              <button
+                                type="button"
+                                className="status-action"
+                                onClick={() =>
+                                  callUser(
+                                    ticket.user?.phone
+                                  )
+                                }
+                                disabled={
+                                  !ticket.user?.phone
+                                }
+                              >
+                                Call
+                              </button>
+
+                              <button
+                                type="button"
+                                className="status-action"
+                                onClick={() =>
+                                  emailUser(
+                                    ticket.user?.email
+                                  )
+                                }
+                                disabled={
+                                  !ticket.user?.email
+                                }
+                              >
+                                Email
+                              </button>
+                            </div>
+                          </td>
+
+                          <td className="action-column">
+                            <select
+                              value={
+                                ticket.status ||
+                                "open"
+                              }
+                              disabled={
+                                updatingSupportId ===
+                                ticket._id
+                              }
+                              onChange={(event) =>
+                                updateSupportStatus(
+                                  ticket._id,
+                                  event.target.value
+                                )
+                              }
+                              style={{
+                                minWidth: "130px",
+                                padding: "9px 10px",
+                                borderRadius: "10px",
+                                border:
+                                  "1px solid #E8EAF2",
+                                background:
+                                  "#FFFFFF",
+                                fontWeight: 700,
+                                color: "#344054",
+                              }}
+                            >
+                              <option value="open">
+                                Open
+                              </option>
+                              <option value="in-progress">
+                                In Progress
+                              </option>
+                              <option value="resolved">
+                                Resolved
+                              </option>
+                            </select>
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+        </section>
+      </>
+    );
+  };
+
   if (isLoggedIn) {
     return (
       <div className="dashboard-page">
@@ -1291,6 +1733,24 @@ function App() {
 
                 <span>Properties</span>
               </button>
+
+              <button
+                type="button"
+                className={`nav-item ${
+                  activePage === "support"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActivePage("support")
+                }
+              >
+                <span className="nav-icon">
+                  ?
+                </span>
+
+                <span>Support Requests</span>
+              </button>
             </nav>
           </div>
 
@@ -1333,6 +1793,9 @@ function App() {
 
             {activePage === "properties" &&
               renderProperties()}
+
+            {activePage === "support" &&
+              renderSupport()}
           </div>
         </main>
       </div>

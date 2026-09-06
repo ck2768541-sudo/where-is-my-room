@@ -511,6 +511,42 @@ export default function SeekerProfileScreen() {
               color="#98A2B3"
             />
           </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.toolRow}
+            activeOpacity={0.85}
+            onPress={() =>
+              router.push(
+                "/seeker-support" as any
+              )
+            }
+          >
+            <View style={styles.supportIconBox}>
+              <Ionicons
+                name="help-circle-outline"
+                size={21}
+                color="#F79009"
+              />
+            </View>
+
+            <View style={styles.toolTextWrap}>
+              <Text style={styles.toolTitle}>
+                Help & Support
+              </Text>
+
+              <Text style={styles.toolText}>
+                Contact StayRent support or report a problem
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={19}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
         </View>
 
         {/* LOGOUT */}
@@ -789,6 +825,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F1EFFF",
+  },
+
+  supportIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFAEB",
   },
 
   toolTextWrap: {
