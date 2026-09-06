@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
   uploadPropertyImages,
+  uploadProfilePhoto,
 } = require("../controllers/uploadController");
 
 const {
@@ -19,6 +20,14 @@ router.post(
   allowRoles("owner"),
   upload.array("images", 5),
   uploadPropertyImages
+);
+
+router.post(
+  "/profile-photo",
+  protect,
+  allowRoles("owner", "seeker"),
+  upload.single("image"),
+  uploadProfilePhoto
 );
 
 module.exports = router;

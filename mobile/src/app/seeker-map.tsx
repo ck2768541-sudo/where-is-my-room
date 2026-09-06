@@ -21,7 +21,12 @@ import SeekerBottomNav from "../components/SeekerBottomNav";
 type Property = {
   _id: string;
   title: string;
+  propertyType: "room" | "pg" | "flat" | "hotel";
   monthlyRent: number;
+  acAvailable?: boolean;
+  acPricePerDay?: number | null;
+  nonAcAvailable?: boolean;
+  nonAcPricePerDay?: number | null;
   locality: string;
   city: string;
 
@@ -173,6 +178,24 @@ export default function SeekerMapScreen() {
               "\\'"
             );
 
+          const priceHtml =
+            property.propertyType === "hotel"
+              ? [
+                  property.acAvailable &&
+                  property.acPricePerDay !== null &&
+                  property.acPricePerDay !== undefined
+                    ? `<span style="color:#635BFF;font-weight:700;">AC ₹${property.acPricePerDay}/day</span>`
+                    : "",
+                  property.nonAcAvailable &&
+                  property.nonAcPricePerDay !== null &&
+                  property.nonAcPricePerDay !== undefined
+                    ? `<span style="color:#635BFF;font-weight:700;">Non-AC ₹${property.nonAcPricePerDay}/day</span>`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join("<br/>")
+              : `<span style="color:#635BFF;font-weight:700;">₹${property.monthlyRent}/month</span>`;
+
           return `
             L.marker([
               ${propertyLatitude},
@@ -182,7 +205,7 @@ export default function SeekerMapScreen() {
             .bindPopup(
               '<div style="font-family: Arial; min-width: 170px;">' +
               '<b style="font-size: 15px;">${safeTitle}</b><br/>' +
-              '<span style="color:#635BFF;font-weight:700;">₹${property.monthlyRent}/month</span><br/>' +
+              '${priceHtml}<br/>' +
               '<span style="font-size:12px;color:#667085;">${safeLocality}, ${safeCity}</span><br/>' +
               '<button onclick="openProperty(\\'${property._id}\\')" style="margin-top:8px;padding:7px 10px;border:0;border-radius:7px;background:#635BFF;color:white;font-weight:700;">View Details</button>' +
               '</div>'

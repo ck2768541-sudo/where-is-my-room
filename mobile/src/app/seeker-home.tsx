@@ -21,7 +21,7 @@ import { COLORS } from "../constants/colors";
 import { clearAuthSession, getAuthToken } from "../utils/authStorage";
 import SeekerBottomNav from "../components/SeekerBottomNav";
 
-type PropertyType = "Room" | "PG" | "Flat";
+type PropertyType = "Room" | "PG" | "Flat" | "Hotel";
 
 type AvailabilityType =
   | "Anyone"
@@ -42,9 +42,15 @@ type Property = {
   propertyType:
     | "room"
     | "pg"
-    | "flat";
+    | "flat"
+    | "hotel";
 
   monthlyRent: number;
+
+  acAvailable?: boolean;
+  acPricePerDay?: number | null;
+  nonAcAvailable?: boolean;
+  nonAcPricePerDay?: number | null;
 
   securityDeposit?: number;
 
@@ -155,6 +161,7 @@ export default function SeekerHomeScreen() {
       "Room",
       "PG",
       "Flat",
+      "Hotel",
     ];
 
   const availabilityOptions: AvailabilityType[] =
@@ -331,9 +338,11 @@ export default function SeekerHomeScreen() {
             `propertyType=${propertyType.toLowerCase()}`
           );
 
-          params.push(
-            `availableFor=${availability.toLowerCase()}`
-          );
+          if (propertyType !== "Hotel") {
+            params.push(
+              `availableFor=${availability.toLowerCase()}`
+            );
+          }
 
           if (minRent.trim()) {
             params.push(
@@ -623,8 +632,12 @@ export default function SeekerHomeScreen() {
           minValue < 0)
       ) {
         Alert.alert(
-          "Invalid Minimum Rent",
-          "Please enter a valid minimum rent."
+          propertyType === "Hotel"
+            ? "Invalid Minimum Price"
+            : "Invalid Minimum Rent",
+          propertyType === "Hotel"
+            ? "Please enter a valid minimum per-day price."
+            : "Please enter a valid minimum rent."
         );
         return;
       }
@@ -635,8 +648,12 @@ export default function SeekerHomeScreen() {
           maxValue < 0)
       ) {
         Alert.alert(
-          "Invalid Maximum Rent",
-          "Please enter a valid maximum rent."
+          propertyType === "Hotel"
+            ? "Invalid Maximum Price"
+            : "Invalid Maximum Rent",
+          propertyType === "Hotel"
+            ? "Please enter a valid maximum per-day price."
+            : "Please enter a valid maximum rent."
         );
         return;
       }
@@ -647,8 +664,12 @@ export default function SeekerHomeScreen() {
         minValue > maxValue
       ) {
         Alert.alert(
-          "Invalid Rent Range",
-          "Minimum rent cannot be greater than maximum rent."
+          propertyType === "Hotel"
+            ? "Invalid Price Range"
+            : "Invalid Rent Range",
+          propertyType === "Hotel"
+            ? "Minimum per-day price cannot be greater than maximum per-day price."
+            : "Minimum rent cannot be greater than maximum rent."
         );
         return;
       }
@@ -772,8 +793,8 @@ export default function SeekerHomeScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Search rooms, PGs and flats by location,
-            budget and distance.
+            Search rooms, PGs, flats and hotels by
+            location, budget and distance.
           </Text>
 
           <View style={styles.heroStatsRow}>
@@ -896,6 +917,8 @@ export default function SeekerHomeScreen() {
                         ? "home-outline"
                         : item === "PG"
                         ? "bed-outline"
+                        : item === "Hotel"
+                        ? "business-outline"
                         : "business-outline"
                     }
                     size={15}
@@ -920,40 +943,46 @@ export default function SeekerHomeScreen() {
             })}
           </View>
 
+          {propertyType !== "Hotel" && (
+            <>
+              <Text style={styles.filterTitle}>
+                Available for
+              </Text>
+
+              <View style={styles.chipRow}>
+                {availabilityOptions.map((item) => {
+                  const selected = availability === item;
+
+                  return (
+                    <TouchableOpacity
+                      key={item}
+                      style={[
+                        styles.chip,
+                        selected && styles.chipSelected,
+                      ]}
+                      activeOpacity={0.8}
+                      onPress={() => setAvailability(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selected &&
+                            styles.chipTextSelected,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
           <Text style={styles.filterTitle}>
-            Available for
-          </Text>
-
-          <View style={styles.chipRow}>
-            {availabilityOptions.map((item) => {
-              const selected = availability === item;
-
-              return (
-                <TouchableOpacity
-                  key={item}
-                  style={[
-                    styles.chip,
-                    selected && styles.chipSelected,
-                  ]}
-                  activeOpacity={0.8}
-                  onPress={() => setAvailability(item)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected &&
-                        styles.chipTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Text style={styles.filterTitle}>
-            Monthly rent
+            {propertyType === "Hotel"
+              ? "Per-day price"
+              : "Monthly rent"}
           </Text>
 
           <View style={styles.rentRangeRow}>
@@ -961,7 +990,7 @@ export default function SeekerHomeScreen() {
               <Text style={styles.currencyText}>₹</Text>
               <TextInput
                 style={styles.rentInput}
-                placeholder="Min rent"
+                placeholder={propertyType === "Hotel" ? "Min price" : "Min rent"}
                 placeholderTextColor="#98A2B3"
                 keyboardType="numeric"
                 value={minRent}
@@ -980,7 +1009,7 @@ export default function SeekerHomeScreen() {
               <Text style={styles.currencyText}>₹</Text>
               <TextInput
                 style={styles.rentInput}
-                placeholder="Max rent"
+                placeholder={propertyType === "Hotel" ? "Max price" : "Max rent"}
                 placeholderTextColor="#98A2B3"
                 keyboardType="numeric"
                 value={maxRent}
@@ -1381,22 +1410,60 @@ export default function SeekerHomeScreen() {
                         styles.rentBlock
                       }
                     >
-                      <Text
-                        style={
-                          styles.propertyRent
-                        }
-                      >
-                        ₹
-                        {property.monthlyRent}
-                      </Text>
+                      {property.propertyType === "hotel" ? (
+                        <>
+                          {property.acAvailable &&
+                          property.acPricePerDay !== null &&
+                          property.acPricePerDay !== undefined ? (
+                            <View style={styles.hotelPriceLine}>
+                              <Text style={styles.hotelPriceLabel}>
+                                AC
+                              </Text>
+                              <Text style={styles.propertyRent}>
+                                ₹{property.acPricePerDay}
+                              </Text>
+                              <Text style={styles.rentPeriod}>
+                                /day
+                              </Text>
+                            </View>
+                          ) : null}
 
-                      <Text
-                        style={
-                          styles.rentPeriod
-                        }
-                      >
-                        /month
-                      </Text>
+                          {property.nonAcAvailable &&
+                          property.nonAcPricePerDay !== null &&
+                          property.nonAcPricePerDay !== undefined ? (
+                            <View style={styles.hotelPriceLine}>
+                              <Text style={styles.hotelPriceLabel}>
+                                Non-AC
+                              </Text>
+                              <Text style={styles.propertyRent}>
+                                ₹{property.nonAcPricePerDay}
+                              </Text>
+                              <Text style={styles.rentPeriod}>
+                                /day
+                              </Text>
+                            </View>
+                          ) : null}
+                        </>
+                      ) : (
+                        <>
+                          <Text
+                            style={
+                              styles.propertyRent
+                            }
+                          >
+                            ₹
+                            {property.monthlyRent}
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.rentPeriod
+                            }
+                          >
+                            /month
+                          </Text>
+                        </>
+                      )}
                     </View>
                   </View>
 
@@ -1412,23 +1479,53 @@ export default function SeekerHomeScreen() {
                         styles.propertyInfoRow
                       }
                     >
-                      <View
-                        style={styles.smallBadge}
-                      >
-                        <Ionicons
-                          name="person-outline"
-                          size={13}
-                          color="#635BFF"
-                        />
+                      {property.propertyType === "hotel" ? (
+                        <>
+                          {property.acAvailable ? (
+                            <View style={styles.smallBadge}>
+                              <Ionicons
+                                name="snow-outline"
+                                size={13}
+                                color="#635BFF"
+                              />
+                              <Text style={styles.smallBadgeText}>
+                                AC
+                              </Text>
+                            </View>
+                          ) : null}
 
-                        <Text
-                          style={
-                            styles.smallBadgeText
-                          }
+                          {property.nonAcAvailable ? (
+                            <View style={styles.smallBadge}>
+                              <Ionicons
+                                name="bed-outline"
+                                size={13}
+                                color="#635BFF"
+                              />
+                              <Text style={styles.smallBadgeText}>
+                                Non-AC
+                              </Text>
+                            </View>
+                          ) : null}
+                        </>
+                      ) : (
+                        <View
+                          style={styles.smallBadge}
                         >
-                          {property.availableFor}
-                        </Text>
-                      </View>
+                          <Ionicons
+                            name="person-outline"
+                            size={13}
+                            color="#635BFF"
+                          />
+
+                          <Text
+                            style={
+                              styles.smallBadgeText
+                            }
+                          >
+                            {property.availableFor}
+                          </Text>
+                        </View>
+                      )}
 
                       {distance !== null && (
                         <View
@@ -2175,6 +2272,20 @@ const styles = StyleSheet.create({
 
   rentBlock: {
     alignItems: "flex-end",
+  },
+
+  hotelPriceLine: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginBottom: 3,
+  },
+
+  hotelPriceLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#667085",
   },
 
   propertyRent: {

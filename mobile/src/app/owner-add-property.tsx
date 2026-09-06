@@ -26,7 +26,7 @@ import {
 import { API_BASE_URL } from "../config/api";
 import { getAuthToken } from "../utils/authStorage";
 
-type PropertyType = "room" | "pg" | "flat";
+type PropertyType = "room" | "pg" | "flat" | "hotel";
 type AvailableFor = "anyone" | "male" | "female" | "family";
 type Furnishing =
   | "furnished"
@@ -37,6 +37,7 @@ export default function OwnerAddPropertyScreen() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
   const [propertyType, setPropertyType] =
     useState<PropertyType>("room");
@@ -51,6 +52,12 @@ export default function OwnerAddPropertyScreen() {
 
   const [furnishing, setFurnishing] =
     useState<Furnishing>("unfurnished");
+
+  const [acAvailable, setAcAvailable] = useState(true);
+  const [acPricePerDay, setAcPricePerDay] = useState("");
+  const [nonAcAvailable, setNonAcAvailable] = useState(true);
+  const [nonAcPricePerDay, setNonAcPricePerDay] = useState("");
+  const [amenitiesText, setAmenitiesText] = useState("");
 
   const [address, setAddress] = useState("");
   const [locality, setLocality] = useState("");
@@ -74,6 +81,10 @@ const [longitude, setLongitude] = useState<number | null>(null);
     {
       label: "Flat",
       value: "flat" as PropertyType,
+    },
+    {
+      label: "Hotel",
+      value: "hotel" as PropertyType,
     },
   ];
 
@@ -113,11 +124,17 @@ const [longitude, setLongitude] = useState<number | null>(null);
 
   const resetForm = () => {
     setTitle("");
+    setDescription("");
     setPropertyType("room");
     setMonthlyRent("");
     setSecurityDeposit("");
     setAvailableFor("anyone");
     setFurnishing("unfurnished");
+    setAcAvailable(true);
+    setAcPricePerDay("");
+    setNonAcAvailable(true);
+    setNonAcPricePerDay("");
+    setAmenitiesText("");
     setAddress("");
     setLocality("");
     setCity("");
@@ -193,7 +210,6 @@ const getCurrentLocation = async () => {
   try {
     if (
       !title.trim() ||
-      !monthlyRent.trim() ||
       !address.trim() ||
       !locality.trim() ||
       !city.trim() ||
@@ -215,26 +231,89 @@ const getCurrentLocation = async () => {
       return;
     }
 
-    const rent = Number(monthlyRent);
+    let rent = 0;
+    let deposit = 0;
+    let acDailyPrice = 0;
+    let nonAcDailyPrice = 0;
 
-    if (Number.isNaN(rent) || rent <= 0) {
-      Alert.alert(
-        "Invalid rent",
-        "Please enter a valid monthly rent."
-      );
-      return;
-    }
+    if (propertyType === "hotel") {
+      if (!acAvailable && !nonAcAvailable) {
+        Alert.alert(
+          "Room type required",
+          "Please enable at least one hotel room type."
+        );
+        return;
+      }
 
-    const deposit = securityDeposit.trim()
-      ? Number(securityDeposit)
-      : 0;
+      if (acAvailable) {
+        if (!acPricePerDay.trim()) {
+          Alert.alert(
+            "AC room price required",
+            "Please enter the AC room per day charge."
+          );
+          return;
+        }
 
-    if (Number.isNaN(deposit) || deposit < 0) {
-      Alert.alert(
-        "Invalid deposit",
-        "Please enter a valid security deposit."
-      );
-      return;
+        acDailyPrice = Number(acPricePerDay);
+
+        if (Number.isNaN(acDailyPrice) || acDailyPrice <= 0) {
+          Alert.alert(
+            "Invalid AC room price",
+            "Please enter a valid AC room per day charge."
+          );
+          return;
+        }
+      }
+
+      if (nonAcAvailable) {
+        if (!nonAcPricePerDay.trim()) {
+          Alert.alert(
+            "Non-AC room price required",
+            "Please enter the Non-AC room per day charge."
+          );
+          return;
+        }
+
+        nonAcDailyPrice = Number(nonAcPricePerDay);
+
+        if (Number.isNaN(nonAcDailyPrice) || nonAcDailyPrice <= 0) {
+          Alert.alert(
+            "Invalid Non-AC room price",
+            "Please enter a valid Non-AC room per day charge."
+          );
+          return;
+        }
+      }
+    } else {
+      if (!monthlyRent.trim()) {
+        Alert.alert(
+          "Missing rent",
+          "Please enter the monthly rent."
+        );
+        return;
+      }
+
+      rent = Number(monthlyRent);
+
+      if (Number.isNaN(rent) || rent <= 0) {
+        Alert.alert(
+          "Invalid rent",
+          "Please enter a valid monthly rent."
+        );
+        return;
+      }
+
+      deposit = securityDeposit.trim()
+        ? Number(securityDeposit)
+        : 0;
+
+      if (Number.isNaN(deposit) || deposit < 0) {
+        Alert.alert(
+          "Invalid deposit",
+          "Please enter a valid security deposit."
+        );
+        return;
+      }
     }
 
     if (selectedPhotos.length === 0) {
@@ -315,11 +394,40 @@ const uploadResponse = await expoFetch(
         },
         body: JSON.stringify({
           title: title.trim(),
+          description:
+            propertyType === "hotel"
+              ? description.trim()
+              : "",
           propertyType,
-          monthlyRent: rent,
-          securityDeposit: deposit,
-          availableFor,
-          furnishing,
+          monthlyRent:
+            propertyType === "hotel" ? 0 : rent,
+          securityDeposit:
+            propertyType === "hotel" ? 0 : deposit,
+          availableFor:
+            propertyType === "hotel"
+              ? "anyone"
+              : availableFor,
+          furnishing:
+            propertyType === "hotel"
+              ? "unfurnished"
+              : furnishing,
+
+          acAvailable:
+            propertyType === "hotel"
+              ? acAvailable
+              : undefined,
+          acPricePerDay:
+            propertyType === "hotel" && acAvailable
+              ? acDailyPrice
+              : null,
+          nonAcAvailable:
+            propertyType === "hotel"
+              ? nonAcAvailable
+              : undefined,
+          nonAcPricePerDay:
+            propertyType === "hotel" && nonAcAvailable
+              ? nonAcDailyPrice
+              : null,
 
           address: address.trim(),
           locality: locality.trim(),
@@ -327,9 +435,16 @@ const uploadResponse = await expoFetch(
           state: state.trim(),
           pincode: pincode.trim(),
           latitude,
-longitude,
+          longitude,
 
-          amenities: [],
+          amenities:
+            propertyType === "hotel"
+              ? amenitiesText
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+                  .slice(0, 30)
+              : [],
           photos: uploadedPhotoUrls,
         }),
       }
@@ -347,8 +462,12 @@ longitude,
     }
 
     Alert.alert(
-      "Property Added",
-      "Your property and photos have been added successfully."
+      propertyType === "hotel"
+        ? "Hotel Added"
+        : "Property Added",
+      propertyType === "hotel"
+        ? "Your hotel and photos have been added successfully."
+        : "Your property and photos have been added successfully."
     );
 
     resetForm();
@@ -472,7 +591,9 @@ longitude,
             </View>
 
             <Text style={styles.label}>
-              Property title
+              {propertyType === "hotel"
+                ? "Hotel name"
+                : "Property title"}
             </Text>
 
             <View style={styles.inputBox}>
@@ -484,7 +605,11 @@ longitude,
 
               <TextInput
                 style={styles.input}
-                placeholder="Comfortable room near university"
+                placeholder={
+                  propertyType === "hotel"
+                    ? "Example: StayRent Grand Hotel"
+                    : "Comfortable room near university"
+                }
                 placeholderTextColor="#98A2B3"
                 value={title}
                 onChangeText={setTitle}
@@ -519,6 +644,8 @@ longitude,
                           ? "home-outline"
                           : item.value === "pg"
                           ? "bed-outline"
+                          : item.value === "hotel"
+                          ? "business"
                           : "business-outline"
                       }
                       size={15}
@@ -543,121 +670,295 @@ longitude,
               })}
             </View>
 
-            <View style={styles.twoColumnRow}>
-              <View style={styles.halfField}>
+            {propertyType === "hotel" ? (
+              <>
                 <Text style={styles.label}>
-                  Monthly rent
+                  Description
+                </Text>
+
+                <View
+                  style={[
+                    styles.inputBox,
+                    styles.multilineBox,
+                  ]}
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color="#98A2B3"
+                    style={styles.multilineIcon}
+                  />
+
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.multilineInput,
+                    ]}
+                    placeholder="Describe the hotel, nearby places and important details"
+                    placeholderTextColor="#98A2B3"
+                    multiline
+                    value={description}
+                    onChangeText={setDescription}
+                  />
+                </View>
+
+                <Text style={styles.label}>
+                  Hotel room types & per day charge
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.hotelRateCard,
+                    acAvailable &&
+                      styles.hotelRateCardSelected,
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setAcAvailable((value) => !value)
+                  }
+                >
+                  <View style={styles.hotelRateHeader}>
+                    <View style={styles.hotelRateLabelWrap}>
+                      <Ionicons
+                        name="snow-outline"
+                        size={18}
+                        color="#635BFF"
+                      />
+
+                      <Text style={styles.hotelRateTitle}>
+                        AC Room
+                      </Text>
+                    </View>
+
+                    <Ionicons
+                      name={
+                        acAvailable
+                          ? "checkmark-circle"
+                          : "ellipse-outline"
+                      }
+                      size={22}
+                      color={
+                        acAvailable
+                          ? "#635BFF"
+                          : "#98A2B3"
+                      }
+                    />
+                  </View>
+
+                  {acAvailable && (
+                    <View style={styles.hotelRateInput}>
+                      <Text style={styles.currency}>
+                        ₹
+                      </Text>
+
+                      <TextInput
+                        style={styles.input}
+                        placeholder="1500 per day"
+                        placeholderTextColor="#98A2B3"
+                        keyboardType="number-pad"
+                        value={acPricePerDay}
+                        onChangeText={setAcPricePerDay}
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.hotelRateCard,
+                    nonAcAvailable &&
+                      styles.hotelRateCardSelected,
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setNonAcAvailable((value) => !value)
+                  }
+                >
+                  <View style={styles.hotelRateHeader}>
+                    <View style={styles.hotelRateLabelWrap}>
+                      <Ionicons
+                        name="bed-outline"
+                        size={18}
+                        color="#635BFF"
+                      />
+
+                      <Text style={styles.hotelRateTitle}>
+                        Non-AC Room
+                      </Text>
+                    </View>
+
+                    <Ionicons
+                      name={
+                        nonAcAvailable
+                          ? "checkmark-circle"
+                          : "ellipse-outline"
+                      }
+                      size={22}
+                      color={
+                        nonAcAvailable
+                          ? "#635BFF"
+                          : "#98A2B3"
+                      }
+                    />
+                  </View>
+
+                  {nonAcAvailable && (
+                    <View style={styles.hotelRateInput}>
+                      <Text style={styles.currency}>
+                        ₹
+                      </Text>
+
+                      <TextInput
+                        style={styles.input}
+                        placeholder="900 per day"
+                        placeholderTextColor="#98A2B3"
+                        keyboardType="number-pad"
+                        value={nonAcPricePerDay}
+                        onChangeText={setNonAcPricePerDay}
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <Text style={styles.label}>
+                  Amenities
                 </Text>
 
                 <View style={styles.inputBox}>
-                  <Text style={styles.currency}>
-                    ₹
-                  </Text>
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
 
                   <TextInput
                     style={styles.input}
-                    placeholder="5000"
+                    placeholder="WiFi, Parking, TV, Hot Water"
                     placeholderTextColor="#98A2B3"
-                    keyboardType="number-pad"
-                    value={monthlyRent}
-                    onChangeText={setMonthlyRent}
+                    value={amenitiesText}
+                    onChangeText={setAmenitiesText}
                   />
                 </View>
-              </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.twoColumnRow}>
+                  <View style={styles.halfField}>
+                    <Text style={styles.label}>
+                      Monthly rent
+                    </Text>
 
-              <View style={styles.halfField}>
+                    <View style={styles.inputBox}>
+                      <Text style={styles.currency}>
+                        ₹
+                      </Text>
+
+                      <TextInput
+                        style={styles.input}
+                        placeholder="5000"
+                        placeholderTextColor="#98A2B3"
+                        keyboardType="number-pad"
+                        value={monthlyRent}
+                        onChangeText={setMonthlyRent}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.halfField}>
+                    <Text style={styles.label}>
+                      Security deposit
+                    </Text>
+
+                    <View style={styles.inputBox}>
+                      <Text style={styles.currency}>
+                        ₹
+                      </Text>
+
+                      <TextInput
+                        style={styles.input}
+                        placeholder="5000"
+                        placeholderTextColor="#98A2B3"
+                        keyboardType="number-pad"
+                        value={securityDeposit}
+                        onChangeText={setSecurityDeposit}
+                      />
+                    </View>
+                  </View>
+                </View>
+
                 <Text style={styles.label}>
-                  Security deposit
+                  Available for
                 </Text>
 
-                <View style={styles.inputBox}>
-                  <Text style={styles.currency}>
-                    ₹
-                  </Text>
+                <View style={styles.chipRow}>
+                  {availableOptions.map((item) => {
+                    const selected =
+                      availableFor === item.value;
 
-                  <TextInput
-                    style={styles.input}
-                    placeholder="5000"
-                    placeholderTextColor="#98A2B3"
-                    keyboardType="number-pad"
-                    value={securityDeposit}
-                    onChangeText={setSecurityDeposit}
-                  />
+                    return (
+                      <TouchableOpacity
+                        key={item.value}
+                        style={[
+                          styles.chip,
+                          selected &&
+                            styles.chipSelected,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          setAvailableFor(item.value)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            selected &&
+                              styles.chipTextSelected,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
-              </View>
-            </View>
 
-            <Text style={styles.label}>
-              Available for
-            </Text>
+                <Text style={styles.label}>
+                  Furnishing
+                </Text>
 
-            <View style={styles.chipRow}>
-              {availableOptions.map((item) => {
-                const selected =
-                  availableFor === item.value;
+                <View style={styles.chipRow}>
+                  {furnishingOptions.map((item) => {
+                    const selected =
+                      furnishing === item.value;
 
-                return (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={[
-                      styles.chip,
-                      selected &&
-                        styles.chipSelected,
-                    ]}
-                    activeOpacity={0.8}
-                    onPress={() =>
-                      setAvailableFor(item.value)
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        selected &&
-                          styles.chipTextSelected,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Text style={styles.label}>
-              Furnishing
-            </Text>
-
-            <View style={styles.chipRow}>
-              {furnishingOptions.map((item) => {
-                const selected =
-                  furnishing === item.value;
-
-                return (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={[
-                      styles.chip,
-                      selected &&
-                        styles.chipSelected,
-                    ]}
-                    activeOpacity={0.8}
-                    onPress={() =>
-                      setFurnishing(item.value)
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        selected &&
-                          styles.chipTextSelected,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                    return (
+                      <TouchableOpacity
+                        key={item.value}
+                        style={[
+                          styles.chip,
+                          selected &&
+                            styles.chipSelected,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          setFurnishing(item.value)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            selected &&
+                              styles.chipTextSelected,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
           </View>
 
           <View style={styles.formCard}>
@@ -986,7 +1287,9 @@ longitude,
                 />
 
                 <Text style={styles.buttonText}>
-                  Add Property
+                  {propertyType === "hotel"
+                    ? "Add Hotel"
+                    : "Add Property"}
                 </Text>
 
                 <View style={styles.buttonArrow}>
@@ -1269,6 +1572,50 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
     color: "#635BFF",
+  },
+
+  hotelRateCard: {
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FBFCFE",
+  },
+
+  hotelRateCardSelected: {
+    borderColor: "#C7C3FF",
+    backgroundColor: "#F8F7FF",
+  },
+
+  hotelRateHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  hotelRateLabelWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  hotelRateTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#344054",
+  },
+
+  hotelRateInput: {
+    minHeight: 52,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    backgroundColor: "#FFFFFF",
   },
 
   locationButton: {

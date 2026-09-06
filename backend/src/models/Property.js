@@ -11,6 +11,28 @@ const locationSchema = new mongoose.Schema(
     coordinates: {
       type: [Number],
       required: true,
+
+      validate: {
+        validator: function (value) {
+          if (!Array.isArray(value) || value.length !== 2) {
+            return false;
+          }
+
+          const [longitude, latitude] = value;
+
+          return (
+            Number.isFinite(longitude) &&
+            Number.isFinite(latitude) &&
+            longitude >= -180 &&
+            longitude <= 180 &&
+            latitude >= -90 &&
+            latitude <= 90
+          );
+        },
+
+        message:
+          "Coordinates must contain valid longitude and latitude values",
+      },
     },
   },
   {
@@ -43,7 +65,7 @@ const propertySchema = new mongoose.Schema(
 
     propertyType: {
       type: String,
-      enum: ["room", "pg", "flat"],
+      enum: ["room", "pg", "flat", "hotel"],
       required: true,
       index: true,
     },
@@ -52,12 +74,14 @@ const propertySchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      max: 10000000,
     },
 
     securityDeposit: {
       type: Number,
       default: 0,
       min: 0,
+      max: 10000000,
     },
 
     availableFor: {
@@ -77,16 +101,43 @@ const propertySchema = new mongoose.Schema(
       default: "unfurnished",
     },
 
+    // HOTEL ONLY
+    acAvailable: {
+      type: Boolean,
+      default: false,
+    },
+
+    acPricePerDay: {
+      type: Number,
+      min: 0,
+      max: 1000000,
+      default: null,
+    },
+
+    nonAcAvailable: {
+      type: Boolean,
+      default: false,
+    },
+
+    nonAcPricePerDay: {
+      type: Number,
+      min: 0,
+      max: 1000000,
+      default: null,
+    },
+
     address: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 300,
     },
 
     locality: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 120,
       index: true,
     },
 
@@ -94,6 +145,7 @@ const propertySchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 120,
       index: true,
     },
 
@@ -101,16 +153,24 @@ const propertySchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 120,
     },
 
     pincode: {
       type: String,
       required: true,
       trim: true,
+
+      validate: {
+        validator: function (value) {
+          return /^[1-9][0-9]{5}$/.test(value);
+        },
+
+        message:
+          "Please enter a valid 6-digit Indian pincode",
+      },
     },
 
-    // Map coordinates abhi optional rahenge.
-    // Google Maps step me latitude/longitude add karenge.
     location: {
       type: locationSchema,
       default: undefined,
@@ -119,11 +179,29 @@ const propertySchema = new mongoose.Schema(
     amenities: {
       type: [String],
       default: [],
+
+      validate: {
+        validator: function (value) {
+          return Array.isArray(value) && value.length <= 30;
+        },
+
+        message:
+          "Maximum 30 amenities are allowed",
+      },
     },
 
     photos: {
       type: [String],
       default: [],
+
+      validate: {
+        validator: function (value) {
+          return Array.isArray(value) && value.length <= 5;
+        },
+
+        message:
+          "Maximum 5 property photos are allowed",
+      },
     },
 
     isAvailable: {

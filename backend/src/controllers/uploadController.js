@@ -47,6 +47,55 @@ const uploadPropertyImages = async (req, res) => {
   }
 };
 
+const uploadProfilePhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a profile photo",
+      });
+    }
+
+    const imageUrl = await new Promise(
+      (resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "where-is-my-room/profile-photos",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            resolve(result.secure_url);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile photo uploaded successfully",
+      image: imageUrl,
+    });
+  } catch (error) {
+    console.error(
+      "Profile photo upload error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to upload profile photo",
+    });
+  }
+};
+
 module.exports = {
   uploadPropertyImages,
+  uploadProfilePhoto,
 };

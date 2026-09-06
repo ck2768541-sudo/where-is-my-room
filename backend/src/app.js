@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
 
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -45,10 +47,37 @@ const corsOptions = {
   ],
 };
 
+// Security headers
+app.use(helmet());
+
+// CORS
 app.use(cors(corsOptions));
 
-app.use(express.json());
+// JSON body parser with request size protection
+app.use(
+  express.json({
+    limit: "1mb",
+  })
+);
 
+// MongoDB injection protection for request body
+app.use((req, res, next) => {
+  if (
+    req.body &&
+    typeof req.body === "object"
+  ) {
+    mongoSanitize.sanitize(
+      req.body,
+      {
+        replaceWith: "_",
+      }
+    );
+  }
+
+  next();
+});
+
+// Health check
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -56,6 +85,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/uploads", uploadRoutes);

@@ -2,11 +2,27 @@ const PasswordReset = require("../models/PasswordReset");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
+const { sendOTPEmail } = require("../services/emailService");
+const crypto = require("crypto");
+
 const registerUser = async (req, res) => {
   try {
-    const { name, email, phone, password, role, seekerType } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      role,
+      seekerType,
+    } = req.body;
 
-    if (!name || !email || !phone || !password || !role) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !password ||
+      !role
+    ) {
       return res.status(400).json({
         success: false,
         message: "Please fill all required fields",
@@ -29,15 +45,22 @@ const registerUser = async (req, res) => {
 
     const existingUser = await User.findOne({
       $or: [
-        { email: email.toLowerCase().trim() },
-        { phone: phone.trim() },
+        {
+          email: email
+            .toLowerCase()
+            .trim(),
+        },
+        {
+          phone: phone.trim(),
+        },
       ],
     });
 
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email or phone number already registered",
+        message:
+          "Email or phone number already registered",
       });
     }
 
@@ -47,10 +70,16 @@ const registerUser = async (req, res) => {
       phone: phone.trim(),
       password,
       role,
-      seekerType: role === "seeker" ? seekerType : null,
+      seekerType:
+        role === "seeker"
+          ? seekerType
+          : null,
     });
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(
+      user._id,
+      user.role
+    );
 
     return res.status(201).json({
       success: true,
@@ -63,51 +92,68 @@ const registerUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         seekerType: user.seekerType,
+        profilePhoto: user.profilePhoto || "",
       },
     });
   } catch (error) {
-    console.error("Register error:", error);
+    console.error(
+      "Register error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Server error while creating account",
+      message:
+        "Server error while creating account",
     });
   }
 };
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+    } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message:
+          "Email and password are required",
       });
     }
 
     const user = await User.findOne({
-      email: email.toLowerCase().trim(),
+      email: email
+        .toLowerCase()
+        .trim(),
       isActive: true,
     }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message:
+          "Invalid email or password",
       });
     }
 
-    const isPasswordCorrect = await user.comparePassword(password);
+    const isPasswordCorrect =
+      await user.comparePassword(password);
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message:
+          "Invalid email or password",
       });
     }
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(
+      user._id,
+      user.role
+    );
 
     return res.status(200).json({
       success: true,
@@ -120,24 +166,110 @@ const loginUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         seekerType: user.seekerType,
+        profilePhoto: user.profilePhoto || "",
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(
+      "Login error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Server error while logging in",
+      message:
+        "Server error while logging in",
     });
   }
 };
 
-const { sendOTPEmail } = require("../services/emailService");
-const crypto = require("crypto");
-
-const forgotPassword = async (req, res) => {
+const updateProfilePhoto = async (
+  req,
+  res
+) => {
   try {
-    const { email } = req.body;
+    const {
+      profilePhoto,
+    } = req.body;
+
+    if (
+      !profilePhoto ||
+      typeof profilePhoto !== "string" ||
+      !profilePhoto.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Profile photo URL is required",
+      });
+    }
+
+    const user = await User.findOneAndUpdate(
+      {
+        _id: req.user.userId,
+        role: {
+          $in: [
+            "owner",
+            "seeker",
+          ],
+        },
+        isActive: true,
+      },
+      {
+        profilePhoto:
+          profilePhoto.trim(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "User account not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Profile photo updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        seekerType: user.seekerType,
+        profilePhoto:
+          user.profilePhoto || "",
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Update profile photo error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to update profile photo",
+    });
+  }
+};
+
+const forgotPassword = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      email,
+    } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -146,7 +278,10 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
 
     const user = await User.findOne({
       email: normalizedEmail,
@@ -156,25 +291,36 @@ const forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No account found with this email",
+        message:
+          "No account found with this email",
       });
     }
 
-    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otp =
+      crypto
+        .randomInt(
+          100000,
+          1000000
+        )
+        .toString();
 
     const expiryMinutes =
-      Number(process.env.OTP_EXPIRES_MINUTES) || 10;
+      Number(
+        process.env
+          .OTP_EXPIRES_MINUTES
+      ) || 10;
 
     const expiresAt = new Date(
-      Date.now() + expiryMinutes * 60 * 1000
+      Date.now() +
+        expiryMinutes *
+          60 *
+          1000
     );
 
-    // Purana reset request remove karo
     await PasswordReset.deleteMany({
       email: normalizedEmail,
     });
 
-    // Fresh OTP save karo
     await PasswordReset.create({
       email: normalizedEmail,
       otp,
@@ -182,66 +328,96 @@ const forgotPassword = async (req, res) => {
       verified: false,
     });
 
-    await sendOTPEmail(normalizedEmail, otp);
+    await sendOTPEmail(
+      normalizedEmail,
+      otp
+    );
 
     return res.status(200).json({
       success: true,
-      message: "OTP sent successfully",
+      message:
+        "OTP sent successfully",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error(
+      "Forgot password error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Unable to send OTP",
+      message:
+        "Unable to send OTP",
     });
   }
 };
-const resetPassword = async (req, res) => {
+
+const resetPassword = async (
+  req,
+  res
+) => {
   try {
-    const { email, newPassword } = req.body;
+    const {
+      email,
+      newPassword,
+    } = req.body;
 
-    if (!email || !newPassword) {
+    if (
+      !email ||
+      !newPassword
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Email and new password are required",
+        message:
+          "Email and new password are required",
       });
     }
 
-    if (newPassword.length < 6) {
+    if (
+      newPassword.length < 6
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters",
+        message:
+          "Password must be at least 6 characters",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
 
-    const user = await User.findOne({
-      email: normalizedEmail,
-      isActive: true,
-    }).select("+password");
+    const user =
+      await User.findOne({
+        email: normalizedEmail,
+        isActive: true,
+      }).select("+password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Account not found",
+        message:
+          "Account not found",
       });
     }
 
-    const resetRequest = await PasswordReset.findOne({
-      email: normalizedEmail,
-      verified: true,
-    });
+    const resetRequest =
+      await PasswordReset.findOne({
+        email: normalizedEmail,
+        verified: true,
+      });
 
     if (!resetRequest) {
       return res.status(403).json({
         success: false,
-        message: "Please verify OTP first",
+        message:
+          "Please verify OTP first",
       });
     }
 
-    user.password = newPassword;
+    user.password =
+      newPassword;
 
     await user.save();
 
@@ -251,54 +427,78 @@ const resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successfully",
+      message:
+        "Password reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    console.error(
+      "Reset password error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Unable to reset password",
+      message:
+        "Unable to reset password",
     });
   }
 };
 
-const verifyResetOTP = async (req, res) => {
+const verifyResetOTP = async (
+  req,
+  res
+) => {
   try {
-    const { email, otp } = req.body;
+    const {
+      email,
+      otp,
+    } = req.body;
 
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Email and OTP are required",
+        message:
+          "Email and OTP are required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
 
-    const resetRequest = await PasswordReset.findOne({
-      email: normalizedEmail,
-    });
+    const resetRequest =
+      await PasswordReset.findOne({
+        email: normalizedEmail,
+      });
 
     if (!resetRequest) {
       return res.status(400).json({
         success: false,
-        message: "No active OTP found. Please request a new OTP.",
+        message:
+          "No active OTP found. Please request a new OTP.",
       });
     }
 
-    if (new Date() > resetRequest.expiresAt) {
+    if (
+      new Date() >
+      resetRequest.expiresAt
+    ) {
       await PasswordReset.deleteOne({
         _id: resetRequest._id,
       });
 
       return res.status(400).json({
         success: false,
-        message: "OTP has expired. Please request a new OTP.",
+        message:
+          "OTP has expired. Please request a new OTP.",
       });
     }
 
-    if (resetRequest.otp !== otp.toString().trim()) {
+    if (
+      resetRequest.otp !==
+      otp.toString().trim()
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP",
@@ -311,14 +511,19 @@ const verifyResetOTP = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP verified successfully",
+      message:
+        "OTP verified successfully",
     });
   } catch (error) {
-    console.error("Verify OTP error:", error);
+    console.error(
+      "Verify OTP error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Unable to verify OTP",
+      message:
+        "Unable to verify OTP",
     });
   }
 };
@@ -326,6 +531,7 @@ const verifyResetOTP = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  updateProfilePhoto,
   forgotPassword,
   verifyResetOTP,
   resetPassword,

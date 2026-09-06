@@ -20,8 +20,12 @@ import { getAuthToken } from "../utils/authStorage";
 type Property = {
   _id: string;
   title: string;
-  propertyType: "room" | "pg" | "flat";
+  propertyType: "room" | "pg" | "flat" | "hotel";
   monthlyRent: number;
+  acAvailable?: boolean;
+  acPricePerDay?: number | null;
+  nonAcAvailable?: boolean;
+  nonAcPricePerDay?: number | null;
   availableFor: "anyone" | "male" | "female" | "family";
   locality: string;
   city: string;
@@ -614,24 +618,66 @@ export default function OwnerHomeScreen() {
                           styles.priceWrap
                         }
                       >
-                        <Text
-                          style={
-                            styles.price
-                          }
-                        >
-                          ₹
-                          {
-                            property.monthlyRent
-                          }
-                        </Text>
+                        {property.propertyType === "hotel" ? (
+                          <>
+                            {property.acAvailable &&
+                            property.acPricePerDay !== null &&
+                            property.acPricePerDay !== undefined ? (
+                              <View style={styles.hotelPriceLine}>
+                                <Text style={styles.hotelPriceLabel}>
+                                  AC
+                                </Text>
 
-                        <Text
-                          style={
-                            styles.pricePeriod
-                          }
-                        >
-                          /month
-                        </Text>
+                                <Text style={styles.price}>
+                                  ₹{property.acPricePerDay}
+                                </Text>
+
+                                <Text style={styles.pricePeriod}>
+                                  /day
+                                </Text>
+                              </View>
+                            ) : null}
+
+                            {property.nonAcAvailable &&
+                            property.nonAcPricePerDay !== null &&
+                            property.nonAcPricePerDay !== undefined ? (
+                              <View style={styles.hotelPriceLine}>
+                                <Text style={styles.hotelPriceLabel}>
+                                  Non-AC
+                                </Text>
+
+                                <Text style={styles.price}>
+                                  ₹{property.nonAcPricePerDay}
+                                </Text>
+
+                                <Text style={styles.pricePeriod}>
+                                  /day
+                                </Text>
+                              </View>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <Text
+                              style={
+                                styles.price
+                              }
+                            >
+                              ₹
+                              {
+                                property.monthlyRent
+                              }
+                            </Text>
+
+                            <Text
+                              style={
+                                styles.pricePeriod
+                              }
+                            >
+                              /month
+                            </Text>
+                          </>
+                        )}
                       </View>
                     </View>
 
@@ -1090,6 +1136,20 @@ const styles = StyleSheet.create({
 
   priceWrap: {
     alignItems: "flex-end",
+  },
+
+  hotelPriceLine: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginBottom: 2,
+  },
+
+  hotelPriceLabel: {
+    fontSize: 8,
+    fontWeight: "800",
+    color: "#667085",
   },
 
   price: {

@@ -25,7 +25,7 @@ type Property = {
   title: string;
   description?: string;
 
-  propertyType: "room" | "pg" | "flat";
+  propertyType: "room" | "pg" | "flat" | "hotel";
 
   monthlyRent: number;
   securityDeposit?: number;
@@ -33,6 +33,12 @@ type Property = {
   availableFor: "anyone" | "male" | "female" | "family";
 
   furnishing?: string;
+
+  // Hotel fields
+  acAvailable?: boolean;
+  acPricePerDay?: number | null;
+  nonAcAvailable?: boolean;
+  nonAcPricePerDay?: number | null;
 
   address: string;
   locality: string;
@@ -386,15 +392,59 @@ export default function PropertyDetailsScreen() {
             {property.title}
           </Text>
 
-          <View style={styles.priceRow}>
-            <Text style={styles.rent}>
-              ₹{property.monthlyRent}
-            </Text>
+          {property.propertyType === "hotel" ? (
+            <View style={styles.hotelPriceSummary}>
+              {property.acAvailable &&
+              property.acPricePerDay !== null &&
+              property.acPricePerDay !== undefined ? (
+                <View style={styles.hotelPriceChip}>
+                  <Ionicons
+                    name="snow-outline"
+                    size={15}
+                    color="#635BFF"
+                  />
 
-            <Text style={styles.rentPeriod}>
-              / month
-            </Text>
-          </View>
+                  <Text style={styles.hotelPriceChipLabel}>
+                    AC
+                  </Text>
+
+                  <Text style={styles.hotelPriceChipValue}>
+                    ₹{property.acPricePerDay}/day
+                  </Text>
+                </View>
+              ) : null}
+
+              {property.nonAcAvailable &&
+              property.nonAcPricePerDay !== null &&
+              property.nonAcPricePerDay !== undefined ? (
+                <View style={styles.hotelPriceChip}>
+                  <Ionicons
+                    name="bed-outline"
+                    size={15}
+                    color="#635BFF"
+                  />
+
+                  <Text style={styles.hotelPriceChipLabel}>
+                    Non-AC
+                  </Text>
+
+                  <Text style={styles.hotelPriceChipValue}>
+                    ₹{property.nonAcPricePerDay}/day
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.priceRow}>
+              <Text style={styles.rent}>
+                ₹{property.monthlyRent}
+              </Text>
+
+              <Text style={styles.rentPeriod}>
+                / month
+              </Text>
+            </View>
+          )}
 
           <View style={styles.locationRow}>
             <View style={styles.locationIconBox}>
@@ -410,33 +460,35 @@ export default function PropertyDetailsScreen() {
             </Text>
           </View>
 
-          <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Ionicons
-                name="person-outline"
-                size={14}
-                color="#635BFF"
-              />
-
-              <Text style={styles.badgeText}>
-                For {property.availableFor}
-              </Text>
-            </View>
-
-            {property.furnishing && (
+          {property.propertyType !== "hotel" ? (
+            <View style={styles.badgeRow}>
               <View style={styles.badge}>
                 <Ionicons
-                  name="bed-outline"
+                  name="person-outline"
                   size={14}
                   color="#635BFF"
                 />
 
                 <Text style={styles.badgeText}>
-                  {property.furnishing}
+                  For {property.availableFor}
                 </Text>
               </View>
-            )}
-          </View>
+
+              {property.furnishing && (
+                <View style={styles.badge}>
+                  <Ionicons
+                    name="bed-outline"
+                    size={14}
+                    color="#635BFF"
+                  />
+
+                  <Text style={styles.badgeText}>
+                    {property.furnishing}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : null}
 
           <View style={styles.sectionHeader}>
             <View>
@@ -457,49 +509,110 @@ export default function PropertyDetailsScreen() {
             </View>
           </View>
 
-          <View style={styles.detailCard}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailLabelWrap}>
-                <View style={styles.detailMiniIcon}>
-                  <Ionicons
-                    name="calendar-outline"
-                    size={16}
-                    color="#635BFF"
-                  />
+          {property.propertyType === "hotel" ? (
+            <View style={styles.detailCard}>
+              {property.acAvailable &&
+              property.acPricePerDay !== null &&
+              property.acPricePerDay !== undefined ? (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLabelWrap}>
+                    <View style={styles.detailMiniIcon}>
+                      <Ionicons
+                        name="snow-outline"
+                        size={16}
+                        color="#635BFF"
+                      />
+                    </View>
+
+                    <Text style={styles.detailLabel}>
+                      AC price per day
+                    </Text>
+                  </View>
+
+                  <Text style={styles.detailValue}>
+                    ₹{property.acPricePerDay}
+                  </Text>
+                </View>
+              ) : null}
+
+              {property.acAvailable &&
+              property.acPricePerDay !== null &&
+              property.acPricePerDay !== undefined &&
+              property.nonAcAvailable &&
+              property.nonAcPricePerDay !== null &&
+              property.nonAcPricePerDay !== undefined ? (
+                <View style={styles.divider} />
+              ) : null}
+
+              {property.nonAcAvailable &&
+              property.nonAcPricePerDay !== null &&
+              property.nonAcPricePerDay !== undefined ? (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLabelWrap}>
+                    <View style={styles.detailMiniIcon}>
+                      <Ionicons
+                        name="bed-outline"
+                        size={16}
+                        color="#635BFF"
+                      />
+                    </View>
+
+                    <Text style={styles.detailLabel}>
+                      Non-AC price per day
+                    </Text>
+                  </View>
+
+                  <Text style={styles.detailValue}>
+                    ₹{property.nonAcPricePerDay}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.detailCard}>
+              <View style={styles.detailRow}>
+                <View style={styles.detailLabelWrap}>
+                  <View style={styles.detailMiniIcon}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color="#635BFF"
+                    />
+                  </View>
+
+                  <Text style={styles.detailLabel}>
+                    Monthly rent
+                  </Text>
                 </View>
 
-                <Text style={styles.detailLabel}>
-                  Monthly rent
+                <Text style={styles.detailValue}>
+                  ₹{property.monthlyRent}
                 </Text>
               </View>
 
-              <Text style={styles.detailValue}>
-                ₹{property.monthlyRent}
-              </Text>
-            </View>
+              <View style={styles.divider} />
 
-            <View style={styles.divider} />
+              <View style={styles.detailRow}>
+                <View style={styles.detailLabelWrap}>
+                  <View style={styles.detailMiniIcon}>
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={16}
+                      color="#635BFF"
+                    />
+                  </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailLabelWrap}>
-                <View style={styles.detailMiniIcon}>
-                  <Ionicons
-                    name="shield-checkmark-outline"
-                    size={16}
-                    color="#635BFF"
-                  />
+                  <Text style={styles.detailLabel}>
+                    Security deposit
+                  </Text>
                 </View>
 
-                <Text style={styles.detailLabel}>
-                  Security deposit
+                <Text style={styles.detailValue}>
+                  ₹{property.securityDeposit || 0}
                 </Text>
               </View>
-
-              <Text style={styles.detailValue}>
-                ₹{property.securityDeposit || 0}
-              </Text>
             </View>
-          </View>
+          )}
 
           <View style={styles.sectionHeader}>
             <View>
@@ -985,6 +1098,38 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.8,
     color: "#111827",
+  },
+
+  hotelPriceSummary: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  hotelPriceChip: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+  },
+
+  hotelPriceChipLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#475467",
+  },
+
+  hotelPriceChipValue: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#635BFF",
   },
 
   priceRow: {

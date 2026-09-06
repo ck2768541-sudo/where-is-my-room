@@ -39,8 +39,21 @@ const userSchema = new mongoose.Schema(
 
     seekerType: {
       type: String,
-      enum: ["student", "professional", "family", "other"],
+      enum: [
+        "student",
+        "professional",
+        "family",
+        "other",
+      ],
       default: null,
+    },
+
+    // OWNER + SEEKER PROFILE PHOTO
+    profilePhoto: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 1000,
     },
 
     favorites: [

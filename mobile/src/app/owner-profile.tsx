@@ -1,10 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import { fetch } from "expo/fetch";
+import { File } from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 
 import {
   ActivityIndicator,
   Alert,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,9 +18,12 @@ import {
 } from "react-native";
 
 import OwnerBottomNav from "../components/OwnerBottomNav";
+import { API_BASE_URL } from "../config/api";
 import {
   clearAuthSession,
+  getAuthToken,
   getAuthUser,
+  saveAuthUser,
 } from "../utils/authStorage";
 
 type OwnerUser = {
@@ -26,6 +33,7 @@ type OwnerUser = {
   email?: string;
   phone?: string;
   role?: string;
+  profilePhoto?: string;
 };
 
 export default function OwnerProfileScreen() {
@@ -36,6 +44,9 @@ export default function OwnerProfileScreen() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [uploadingPhoto, setUploadingPhoto] =
+    useState(false);
 
   const loadUser = async () => {
     try {
@@ -60,6 +71,139 @@ export default function OwnerProfileScreen() {
       loadUser();
     }, [])
   );
+
+  const handleProfilePhoto = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please allow photo access to choose a profile picture."
+        );
+        return;
+      }
+
+      const pickerResult =
+        await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+
+      if (pickerResult.canceled) {
+        return;
+      }
+
+      const asset = pickerResult.assets[0];
+
+      if (!asset?.uri) {
+        Alert.alert(
+          "Photo Error",
+          "Unable to read the selected photo."
+        );
+        return;
+      }
+
+      const token = await getAuthToken();
+
+      if (!token) {
+        Alert.alert(
+          "Login required",
+          "Please login again."
+        );
+        return;
+      }
+
+      setUploadingPhoto(true);
+
+      const imageFile = new File(asset.uri);
+
+      const formData = new FormData();
+
+      formData.append(
+        "image",
+        imageFile
+      );
+
+      const uploadResponse = await fetch(
+        `${API_BASE_URL}/uploads/profile-photo`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const uploadData =
+        await uploadResponse.json();
+
+      if (
+        !uploadResponse.ok ||
+        !uploadData?.image
+      ) {
+        Alert.alert(
+          "Upload failed",
+          uploadData?.message ||
+            "Unable to upload profile photo."
+        );
+        return;
+      }
+
+      const saveResponse = await fetch(
+        `${API_BASE_URL}/auth/profile-photo`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            profilePhoto: uploadData.image,
+          }),
+        }
+      );
+
+      const saveData =
+        await saveResponse.json();
+
+      if (
+        !saveResponse.ok ||
+        !saveData?.user
+      ) {
+        Alert.alert(
+          "Save failed",
+          saveData?.message ||
+            "Photo uploaded, but profile could not be updated."
+        );
+        return;
+      }
+
+      await saveAuthUser(saveData.user);
+      setUser(saveData.user);
+
+      Alert.alert(
+        "Profile Updated",
+        "Your profile photo has been updated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Owner profile photo error:",
+        error
+      );
+
+      Alert.alert(
+        "Upload Error",
+        "Unable to update profile photo. Please try again."
+      );
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -157,11 +301,57 @@ export default function OwnerProfileScreen() {
             <View style={styles.profileHero}>
               <View style={styles.heroGlow} />
 
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {firstLetter}
+              <TouchableOpacity
+                style={styles.avatarButton}
+                activeOpacity={0.85}
+                disabled={uploadingPhoto}
+                onPress={handleProfilePhoto}
+              >
+                <View style={styles.avatar}>
+                  {user?.profilePhoto ? (
+                    <Image
+                      source={{
+                        uri: user.profilePhoto,
+                      }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {firstLetter}
+                    </Text>
+                  )}
+
+                  {uploadingPhoto ? (
+                    <View style={styles.avatarLoadingOverlay}>
+                      <ActivityIndicator
+                        size="small"
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  ) : null}
+                </View>
+
+                <View style={styles.cameraBadge}>
+                  <Ionicons
+                    name="camera"
+                    size={15}
+                    color="#635BFF"
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={uploadingPhoto}
+                onPress={handleProfilePhoto}
+              >
+                <Text style={styles.changePhotoText}>
+                  {user?.profilePhoto
+                    ? "Change photo"
+                    : "Add profile photo"}
                 </Text>
-              </View>
+              </TouchableOpacity>
 
               <Text style={styles.ownerName}>
                 {displayName}
@@ -534,16 +724,55 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
 
+  avatarButton: {
+    position: "relative",
+  },
+
   avatar: {
-    width: 74,
-    height: 74,
-    borderRadius: 26,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#635BFF",
     borderWidth: 4,
     borderColor:
       "rgba(255,255,255,0.15)",
+  },
+
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  avatarLoadingOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor:
+      "rgba(17,24,39,0.55)",
+  },
+
+  cameraBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 29,
+    height: 29,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#111827",
+  },
+
+  changePhotoText: {
+    marginTop: 10,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#D9D6FE",
   },
 
   avatarText: {

@@ -21,8 +21,12 @@ import SeekerBottomNav from "../components/SeekerBottomNav";
 type Property = {
   _id: string;
   title: string;
-  propertyType: "room" | "pg" | "flat";
+  propertyType: "room" | "pg" | "flat" | "hotel";
   monthlyRent: number;
+  acAvailable?: boolean;
+  acPricePerDay?: number | null;
+  nonAcAvailable?: boolean;
+  nonAcPricePerDay?: number | null;
   availableFor: "anyone" | "male" | "female" | "family";
   locality: string;
   city: string;
@@ -476,13 +480,51 @@ export default function SeekerFavoritesScreen() {
                     </View>
 
                     <View style={styles.rentWrap}>
-                      <Text style={styles.rent}>
-                        ₹{property.monthlyRent}
-                      </Text>
+                      {property.propertyType === "hotel" ? (
+                        <>
+                          {property.acAvailable &&
+                          property.acPricePerDay !== null &&
+                          property.acPricePerDay !== undefined ? (
+                            <View style={styles.hotelPriceLine}>
+                              <Text style={styles.hotelPriceLabel}>
+                                AC
+                              </Text>
+                              <Text style={styles.rent}>
+                                ₹{property.acPricePerDay}
+                              </Text>
+                              <Text style={styles.rentPeriod}>
+                                /day
+                              </Text>
+                            </View>
+                          ) : null}
 
-                      <Text style={styles.rentPeriod}>
-                        /month
-                      </Text>
+                          {property.nonAcAvailable &&
+                          property.nonAcPricePerDay !== null &&
+                          property.nonAcPricePerDay !== undefined ? (
+                            <View style={styles.hotelPriceLine}>
+                              <Text style={styles.hotelPriceLabel}>
+                                Non-AC
+                              </Text>
+                              <Text style={styles.rent}>
+                                ₹{property.nonAcPricePerDay}
+                              </Text>
+                              <Text style={styles.rentPeriod}>
+                                /day
+                              </Text>
+                            </View>
+                          ) : null}
+                        </>
+                      ) : (
+                        <>
+                          <Text style={styles.rent}>
+                            ₹{property.monthlyRent}
+                          </Text>
+
+                          <Text style={styles.rentPeriod}>
+                            /month
+                          </Text>
+                        </>
+                      )}
                     </View>
                   </View>
 
@@ -490,17 +532,47 @@ export default function SeekerFavoritesScreen() {
 
                   <View style={styles.bottomRow}>
                     <View style={styles.badgeRow}>
-                      <View style={styles.badge}>
-                        <Ionicons
-                          name="person-outline"
-                          size={13}
-                          color="#635BFF"
-                        />
+                      {property.propertyType === "hotel" ? (
+                        <>
+                          {property.acAvailable ? (
+                            <View style={styles.badge}>
+                              <Ionicons
+                                name="snow-outline"
+                                size={13}
+                                color="#635BFF"
+                              />
+                              <Text style={styles.badgeText}>
+                                AC
+                              </Text>
+                            </View>
+                          ) : null}
 
-                        <Text style={styles.badgeText}>
-                          For {property.availableFor}
-                        </Text>
-                      </View>
+                          {property.nonAcAvailable ? (
+                            <View style={styles.badge}>
+                              <Ionicons
+                                name="bed-outline"
+                                size={13}
+                                color="#635BFF"
+                              />
+                              <Text style={styles.badgeText}>
+                                Non-AC
+                              </Text>
+                            </View>
+                          ) : null}
+                        </>
+                      ) : (
+                        <View style={styles.badge}>
+                          <Ionicons
+                            name="person-outline"
+                            size={13}
+                            color="#635BFF"
+                          />
+
+                          <Text style={styles.badgeText}>
+                            For {property.availableFor}
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     <View style={styles.viewButton}>
@@ -881,6 +953,20 @@ const styles = StyleSheet.create({
 
   rentWrap: {
     alignItems: "flex-end",
+  },
+
+  hotelPriceLine: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginBottom: 3,
+  },
+
+  hotelPriceLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#667085",
   },
 
   rent: {
