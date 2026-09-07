@@ -2,6 +2,7 @@ import { useRef } from "react";
 
 import {
   Animated,
+  Image,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -60,10 +61,10 @@ export default function RoleSelectScreen() {
         <View>
           <View style={styles.brandRow}>
             <View style={styles.logoBox}>
-              <Ionicons
-                name="home"
-                size={22}
-                color="#FFFFFF"
+              <Image
+                source={require("../../assets/stayrent-logo.jpeg")}
+                style={styles.logoImage}
+                resizeMode="contain"
               />
             </View>
 
@@ -282,6 +283,12 @@ const styles = StyleSheet.create({
       height: 6,
     },
     elevation: 5,
+  },
+
+  logoImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
   },
 
   brand: {

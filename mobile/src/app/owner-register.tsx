@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -209,10 +210,10 @@ export default function OwnerRegisterScreen() {
 
               <View style={styles.brandRow}>
                 <View style={styles.brandLogo}>
-                  <Ionicons
-                    name="home"
-                    size={17}
-                    color="#FFFFFF"
+                  <Image
+                    source={require("../../assets/stayrent-logo.jpeg")}
+                    style={styles.brandLogoImage}
+                    resizeMode="contain"
                   />
                 </View>
 
@@ -584,6 +585,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#635BFF",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  brandLogoImage: {
+    width: 31,
+    height: 31,
+    borderRadius: 10,
   },
 
   brand: {

@@ -45,6 +45,9 @@ export default function OwnerHomeScreen() {
   const [error, setError] =
     useState("");
 
+  const [unreadNotificationCount, setUnreadNotificationCount] =
+    useState(0);
+
   const fetchOwnerProperties = async () => {
     try {
       setLoading(true);
@@ -96,9 +99,51 @@ export default function OwnerHomeScreen() {
     }
   };
 
+  const fetchUnreadNotificationCount =
+    async () => {
+      try {
+        const token =
+          await getAuthToken();
+
+        if (!token) {
+          setUnreadNotificationCount(0);
+          return;
+        }
+
+        const response =
+          await fetch(
+            `${API_BASE_URL}/notifications`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          return;
+        }
+
+        setUnreadNotificationCount(
+          Number(data?.unreadCount) || 0
+        );
+      } catch (error) {
+        console.error(
+          "Owner notification count error:",
+          error
+        );
+      }
+    };
+
   useFocusEffect(
     useCallback(() => {
       fetchOwnerProperties();
+      fetchUnreadNotificationCount();
     }, [])
   );
 
@@ -142,21 +187,52 @@ export default function OwnerHomeScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.profileButton}
-            activeOpacity={0.85}
-            onPress={() =>
-              router.push(
-                "/owner-profile" as any
-              )
-            }
-          >
-            <Ionicons
-              name="person-outline"
-              size={21}
-              color="#635BFF"
-            />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[
+                styles.profileButton,
+                styles.notificationButton,
+              ]}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push(
+                  "/owner-notifications" as any
+                )
+              }
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={21}
+                color="#635BFF"
+              />
+
+              {unreadNotificationCount > 0 ? (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationCount > 99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileButton}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push(
+                  "/owner-profile" as any
+                )
+              }
+            >
+              <Ionicons
+                name="person-outline"
+                size={21}
+                color="#635BFF"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* HERO */}
@@ -794,6 +870,37 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.6,
     color: "#111827",
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+
+  notificationButton: {
+    position: "relative",
+  },
+
+  notificationBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    minWidth: 19,
+    height: 19,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F04438",
+    borderWidth: 2,
+    borderColor: "#F8F9FD",
+  },
+
+  notificationBadgeText: {
+    fontSize: 8,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   profileButton: {

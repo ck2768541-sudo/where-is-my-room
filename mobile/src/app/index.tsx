@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Image,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -110,10 +111,10 @@ export default function HomeScreen() {
 
         <View style={styles.loadingContainer}>
           <View style={styles.loadingLogo}>
-            <Ionicons
-              name="home"
-              size={32}
-              color="#FFFFFF"
+            <Image
+              source={require("../../assets/stayrent-logo.jpeg")}
+              style={styles.loadingLogoImage}
+              resizeMode="contain"
             />
           </View>
 
@@ -157,13 +158,11 @@ export default function HomeScreen() {
         >
           <View style={styles.logoContainer}>
             <View style={styles.logoOuter}>
-              <View style={styles.logoInner}>
-                <Ionicons
-                  name="home"
-                  size={34}
-                  color="#FFFFFF"
-                />
-              </View>
+              <Image
+                source={require("../../assets/stayrent-logo.jpeg")}
+                style={styles.brandLogoImage}
+                resizeMode="contain"
+              />
             </View>
 
             <Text style={styles.brand}>
@@ -439,6 +438,12 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
 
+  loadingLogoImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+  },
+
   loadingBrand: {
     marginTop: 15,
     fontSize: 25,
@@ -468,22 +473,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  logoInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
-    backgroundColor: "#635BFF",
-    alignItems: "center",
-    justifyContent: "center",
-
-    shadowColor: "#635BFF",
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    shadowOffset: {
-      width: 0,
-      height: 7,
-    },
-    elevation: 6,
+  brandLogoImage: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
   },
 
   brand: {

@@ -1,4 +1,5 @@
 const SupportTicket = require("../models/SupportTicket");
+const Notification = require("../models/Notification");
 
 const getAllSupportTickets = async (req, res) => {
   try {
@@ -73,6 +74,21 @@ const updateSupportTicketStatus = async (
           "Support request not found",
       });
     }
+
+    const statusLabel =
+      status === "in-progress"
+        ? "In Progress"
+        : status === "resolved"
+        ? "Resolved"
+        : "Open";
+
+    await Notification.create({
+      user: ticket.user._id,
+      title: "Support Request Updated",
+      message: `Your support request status is now ${statusLabel}.`,
+      type: "support",
+      relatedId: ticket._id,
+    });
 
     return res.status(200).json({
       success: true,

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -155,6 +155,9 @@ export default function SeekerHomeScreen() {
     updatingFavoriteId,
     setUpdatingFavoriteId,
   ] = useState<string | null>(null);
+
+  const [unreadNotificationCount, setUnreadNotificationCount] =
+    useState(0);
 
   const propertyTypes: PropertyType[] =
     [
@@ -526,6 +529,47 @@ export default function SeekerHomeScreen() {
       }
     };
 
+  const fetchUnreadNotificationCount =
+    async () => {
+      try {
+        const token =
+          await getAuthToken();
+
+        if (!token) {
+          setUnreadNotificationCount(0);
+          return;
+        }
+
+        const response =
+          await fetch(
+            `${API_BASE_URL}/notifications`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          return;
+        }
+
+        setUnreadNotificationCount(
+          Number(data?.unreadCount) || 0
+        );
+      } catch (error) {
+        console.error(
+          "Fetch notification count error:",
+          error
+        );
+      }
+    };
+
   const toggleFavorite =
     async (
       propertyId: string
@@ -613,6 +657,12 @@ export default function SeekerHomeScreen() {
 
     fetchFavorites();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadNotificationCount();
+    }, [])
+  );
 
   const handleSearch =
     () => {
@@ -764,15 +814,30 @@ export default function SeekerHomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.logoutIconButton}
+              style={[
+                styles.headerIconButton,
+                styles.notificationButton,
+              ]}
               activeOpacity={0.8}
-              onPress={handleLogout}
+              onPress={() =>
+                router.push("/seeker-notifications" as any)
+              }
             >
               <Ionicons
-                name="log-out-outline"
+                name="notifications-outline"
                 size={21}
-                color="#F04438"
+                color="#635BFF"
               />
+
+              {unreadNotificationCount > 0 ? (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationCount > 99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
           </View>
         </View>
@@ -1653,6 +1718,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E8EAF2",
+  },
+
+  notificationButton: {
+    position: "relative",
+  },
+
+  notificationBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    minWidth: 19,
+    height: 19,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F04438",
+    borderWidth: 2,
+    borderColor: "#F8F9FD",
+  },
+
+  notificationBadgeText: {
+    fontSize: 8,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   logoutIconButton: {

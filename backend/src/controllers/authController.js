@@ -1,9 +1,19 @@
 const PasswordReset = require("../models/PasswordReset");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
-
 const { sendOTPEmail } = require("../services/emailService");
 const crypto = require("crypto");
+
+const OTP_EXPIRY_MINUTES = 5;
+const RESET_WINDOW_MINUTES = 10;
+const MAX_OTP_ATTEMPTS = 5;
+
+const hashOTP = (otp) => {
+  return crypto
+    .createHash("sha256")
+    .update(String(otp))
+    .digest("hex");
+};
 
 const registerUser = async (req, res) => {
   try {
@@ -17,11 +27,15 @@ const registerUser = async (req, res) => {
     } = req.body;
 
     if (
-      !name ||
-      !email ||
-      !phone ||
-      !password ||
-      !role
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof phone !== "string" ||
+      typeof password !== "string" ||
+      typeof role !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password
     ) {
       return res.status(400).json({
         success: false,
@@ -36,22 +50,30 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (role === "seeker" && !seekerType) {
+    if (
+      role === "seeker" &&
+      (typeof seekerType !== "string" ||
+        !seekerType.trim())
+    ) {
       return res.status(400).json({
         success: false,
         message: "Please select seeker type",
       });
     }
 
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
+
+    const normalizedPhone = phone.trim();
+
     const existingUser = await User.findOne({
       $or: [
         {
-          email: email
-            .toLowerCase()
-            .trim(),
+          email: normalizedEmail,
         },
         {
-          phone: phone.trim(),
+          phone: normalizedPhone,
         },
       ],
     });
@@ -66,13 +88,13 @@ const registerUser = async (req, res) => {
 
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone,
       password,
       role,
       seekerType:
         role === "seeker"
-          ? seekerType
+          ? seekerType.trim()
           : null,
     });
 
@@ -116,7 +138,12 @@ const loginUser = async (req, res) => {
       password,
     } = req.body;
 
-    if (!email || !password) {
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -124,10 +151,12 @@ const loginUser = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
+
     const user = await User.findOne({
-      email: email
-        .toLowerCase()
-        .trim(),
+      email: normalizedEmail,
       isActive: true,
     }).select("+password");
 
@@ -193,7 +222,6 @@ const updateProfilePhoto = async (
     } = req.body;
 
     if (
-      !profilePhoto ||
       typeof profilePhoto !== "string" ||
       !profilePhoto.trim()
     ) {
@@ -271,48 +299,51 @@ const forgotPassword = async (
       email,
     } = req.body;
 
-    if (!email) {
+    if (
+      typeof email !== "string" ||
+      !email.trim()
+    ) {
       return res.status(400).json({
         success: false,
         message: "Email is required",
       });
     }
 
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
 
     const user = await User.findOne({
       email: normalizedEmail,
       isActive: true,
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | USER ENUMERATION PROTECTION
+    |--------------------------------------------------------------------------
+    | Email registered hai ya nahi, public response same rahega.
+    */
     if (!user) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message:
-          "No account found with this email",
+          "If an active account exists with this email, an OTP has been sent.",
       });
     }
 
-    const otp =
-      crypto
-        .randomInt(
-          100000,
-          1000000
-        )
-        .toString();
+    const otp = crypto
+      .randomInt(
+        100000,
+        1000000
+      )
+      .toString();
 
-    const expiryMinutes =
-      Number(
-        process.env
-          .OTP_EXPIRES_MINUTES
-      ) || 10;
+    const otpHash = hashOTP(otp);
 
     const expiresAt = new Date(
       Date.now() +
-        expiryMinutes *
+        OTP_EXPIRY_MINUTES *
           60 *
           1000
     );
@@ -321,17 +352,28 @@ const forgotPassword = async (
       email: normalizedEmail,
     });
 
-    await PasswordReset.create({
-      email: normalizedEmail,
-      otp,
-      expiresAt,
-      verified: false,
-    });
+    const resetRequest =
+      await PasswordReset.create({
+        email: normalizedEmail,
+        otp: otpHash,
+        expiresAt,
+        verified: false,
+        verifiedAt: null,
+        failedAttempts: 0,
+      });
 
-    await sendOTPEmail(
-      normalizedEmail,
-      otp
-    );
+    try {
+      await sendOTPEmail(
+        normalizedEmail,
+        otp
+      );
+    } catch (emailError) {
+      await PasswordReset.deleteOne({
+        _id: resetRequest._id,
+      });
+
+      throw emailError;
+    }
 
     return res.status(200).json({
       success: true,
@@ -352,98 +394,6 @@ const forgotPassword = async (
   }
 };
 
-const resetPassword = async (
-  req,
-  res
-) => {
-  try {
-    const {
-      email,
-      newPassword,
-    } = req.body;
-
-    if (
-      !email ||
-      !newPassword
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Email and new password are required",
-      });
-    }
-
-    if (
-      newPassword.length < 6
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Password must be at least 6 characters",
-      });
-    }
-
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
-
-    const user =
-      await User.findOne({
-        email: normalizedEmail,
-        isActive: true,
-      }).select("+password");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Account not found",
-      });
-    }
-
-    const resetRequest =
-      await PasswordReset.findOne({
-        email: normalizedEmail,
-        verified: true,
-      });
-
-    if (!resetRequest) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Please verify OTP first",
-      });
-    }
-
-    user.password =
-      newPassword;
-
-    await user.save();
-
-    await PasswordReset.deleteMany({
-      email: normalizedEmail,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Password reset successfully",
-    });
-  } catch (error) {
-    console.error(
-      "Reset password error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to reset password",
-    });
-  }
-};
-
 const verifyResetOTP = async (
   req,
   res
@@ -454,7 +404,13 @@ const verifyResetOTP = async (
       otp,
     } = req.body;
 
-    if (!email || !otp) {
+    if (
+      typeof email !== "string" ||
+      !email.trim() ||
+      otp === undefined ||
+      otp === null ||
+      !String(otp).trim()
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -462,14 +418,28 @@ const verifyResetOTP = async (
       });
     }
 
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
+
+    const enteredOTP =
+      String(otp).trim();
+
+    if (
+      !/^\d{6}$/.test(
+        enteredOTP
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
 
     const resetRequest =
       await PasswordReset.findOne({
         email: normalizedEmail,
+        verified: false,
       });
 
     if (!resetRequest) {
@@ -496,16 +466,99 @@ const verifyResetOTP = async (
     }
 
     if (
-      resetRequest.otp !==
-      otp.toString().trim()
+      resetRequest.failedAttempts >=
+      MAX_OTP_ATTEMPTS
     ) {
+      await PasswordReset.deleteOne({
+        _id: resetRequest._id,
+      });
+
+      return res.status(429).json({
+        success: false,
+        message:
+          "Too many invalid OTP attempts. Please request a new OTP.",
+      });
+    }
+
+    const enteredOTPHash =
+      hashOTP(enteredOTP);
+
+    let otpMatches = false;
+
+    try {
+      const storedBuffer =
+        Buffer.from(
+          resetRequest.otp,
+          "hex"
+        );
+
+      const enteredBuffer =
+        Buffer.from(
+          enteredOTPHash,
+          "hex"
+        );
+
+      if (
+        storedBuffer.length ===
+        enteredBuffer.length
+      ) {
+        otpMatches =
+          crypto.timingSafeEqual(
+            storedBuffer,
+            enteredBuffer
+          );
+      }
+    } catch (error) {
+      otpMatches = false;
+    }
+
+    if (!otpMatches) {
+      resetRequest.failedAttempts += 1;
+
+      if (
+        resetRequest.failedAttempts >=
+        MAX_OTP_ATTEMPTS
+      ) {
+        await PasswordReset.deleteOne({
+          _id: resetRequest._id,
+        });
+
+        return res.status(429).json({
+          success: false,
+          message:
+            "Too many invalid OTP attempts. Please request a new OTP.",
+        });
+      }
+
+      await resetRequest.save();
+
       return res.status(400).json({
         success: false,
         message: "Invalid OTP",
       });
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | VERIFIED RESET WINDOW
+    |--------------------------------------------------------------------------
+    | OTP verify hone ke baad user ko password change karne ke liye
+    | limited 10-minute window milega.
+    */
+
     resetRequest.verified = true;
+    resetRequest.verifiedAt =
+      new Date();
+
+    resetRequest.failedAttempts = 0;
+
+    resetRequest.expiresAt =
+      new Date(
+        Date.now() +
+          RESET_WINDOW_MINUTES *
+            60 *
+            1000
+      );
 
     await resetRequest.save();
 
@@ -524,6 +577,126 @@ const verifyResetOTP = async (
       success: false,
       message:
         "Unable to verify OTP",
+    });
+  }
+};
+
+const resetPassword = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      email,
+      newPassword,
+    } = req.body;
+
+    if (
+      typeof email !== "string" ||
+      typeof newPassword !== "string" ||
+      !email.trim() ||
+      !newPassword
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email and new password are required",
+      });
+    }
+
+    if (
+      newPassword.length < 6
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 6 characters",
+      });
+    }
+
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
+
+    const resetRequest =
+      await PasswordReset.findOne({
+        email: normalizedEmail,
+        verified: true,
+      });
+
+    if (!resetRequest) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify OTP first",
+      });
+    }
+
+    if (
+      !resetRequest.verifiedAt ||
+      new Date() >
+        resetRequest.expiresAt
+    ) {
+      await PasswordReset.deleteOne({
+        _id: resetRequest._id,
+      });
+
+      return res.status(403).json({
+        success: false,
+        message:
+          "Password reset session has expired. Please request a new OTP.",
+      });
+    }
+
+    const user =
+      await User.findOne({
+        email: normalizedEmail,
+        isActive: true,
+      }).select("+password");
+
+    if (!user) {
+      await PasswordReset.deleteMany({
+        email: normalizedEmail,
+      });
+
+      return res.status(404).json({
+        success: false,
+        message:
+          "Account not found",
+      });
+    }
+
+    user.password =
+      newPassword;
+
+    await user.save();
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONE-TIME RESET
+    |--------------------------------------------------------------------------
+    | Password change hone ke baad reset request destroy.
+    */
+
+    await PasswordReset.deleteMany({
+      email: normalizedEmail,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Password reset successfully",
+    });
+  } catch (error) {
+    console.error(
+      "Reset password error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to reset password",
     });
   }
 };

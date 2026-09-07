@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -30,6 +31,9 @@ export default function VerifyResetOTPScreen() {
   const [loading, setLoading] =
     useState(false);
 
+  const [secondsLeft, setSecondsLeft] =
+    useState(5 * 60);
+
   const fadeAnim = useRef(
     new Animated.Value(0)
   ).current;
@@ -53,6 +57,35 @@ export default function VerifyResetOTPScreen() {
       }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setSecondsLeft(
+        (current) =>
+          current > 0
+            ? current - 1
+            : 0
+      );
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [secondsLeft]);
+
+  const formattedTime = `${Math.floor(
+    secondsLeft / 60
+  )
+    .toString()
+    .padStart(2, "0")}:${(
+    secondsLeft % 60
+  )
+    .toString()
+    .padStart(2, "0")}`;
 
   const handleVerifyOTP = async () => {
     if (otp.trim().length !== 6) {
@@ -174,10 +207,10 @@ export default function VerifyResetOTPScreen() {
             <View
               style={styles.brandLogo}
             >
-              <Ionicons
-                name="home"
-                size={17}
-                color="#FFFFFF"
+              <Image
+                source={require("../../assets/stayrent-logo.jpeg")}
+                style={styles.brandLogoImage}
+                resizeMode="contain"
               />
             </View>
 
@@ -314,8 +347,9 @@ export default function VerifyResetOTPScreen() {
             />
 
             <Text style={styles.infoText}>
-              If the code does not work,
-              go back and request a new OTP.
+              {secondsLeft > 0
+                ? `OTP expires in ${formattedTime}`
+                : "OTP expired. Go back and request a new OTP."}
             </Text>
           </View>
         </View>
@@ -418,6 +452,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#635BFF",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  brandLogoImage: {
+    width: 31,
+    height: 31,
+    borderRadius: 10,
   },
 
   brand: {

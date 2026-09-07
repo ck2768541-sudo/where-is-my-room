@@ -24,10 +24,26 @@ const passwordResetSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
+
+    failedAttempts: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
   }
+);
+
+passwordResetSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0 }
 );
 
 module.exports = mongoose.model(
