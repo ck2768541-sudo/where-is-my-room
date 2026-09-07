@@ -8,6 +8,7 @@ import {
   Animated,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -20,6 +21,9 @@ import {
 } from "react-native";
 
 import { API_BASE_URL } from "../config/api";
+
+const PRIVACY_POLICY_URL = "https://stayrent.in/privacy-policy";
+const TERMS_OF_USE_URL = "https://stayrent.in/terms-of-use";
 
 export default function OwnerRegisterScreen() {
   const router = useRouter();
@@ -432,6 +436,39 @@ export default function OwnerRegisterScreen() {
                 </TouchableOpacity>
               </View>
 
+              <View style={styles.legalRow}>
+                <Text style={styles.legalText}>
+                  By creating an account, you agree to StayRent&apos;s{" "}
+                </Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    Linking.openURL(TERMS_OF_USE_URL)
+                  }
+                >
+                  <Text style={styles.legalLink}>
+                    Terms of Use
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.legalText}>
+                  {" "}and{" "}
+                </Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    Linking.openURL(PRIVACY_POLICY_URL)
+                  }
+                >
+                  <Text style={styles.legalLink}>
+                    Privacy Policy
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.legalText}>.</Text>
+              </View>
+
               <TouchableOpacity
                 style={[
                   styles.createButton,
@@ -732,6 +769,30 @@ const styles = StyleSheet.create({
     marginBottom: 17,
     fontSize: 10,
     color: "#98A2B3",
+  },
+
+  legalRow: {
+    marginTop: 4,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    flexWrap: "wrap",
+    paddingHorizontal: 4,
+  },
+
+  legalText: {
+    fontSize: 11,
+    lineHeight: 17,
+    color: "#667085",
+    textAlign: "center",
+  },
+
+  legalLink: {
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight: "800",
+    color: "#635BFF",
   },
 
   createButton: {

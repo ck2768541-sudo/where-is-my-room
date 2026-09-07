@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,11 @@ import {
   getAuthUser,
   saveAuthUser,
 } from "../utils/authStorage";
+
+const PRIVACY_POLICY_URL = "https://stayrent.in/privacy-policy";
+const TERMS_OF_USE_URL = "https://stayrent.in/terms-of-use";
+const ACCOUNT_DELETION_URL = "https://stayrent.in/account-deletion";
+const CONTACT_URL = "https://stayrent.in/contact";
 
 type AuthUser = {
   name?: string;
@@ -549,6 +555,153 @@ export default function SeekerProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* LEGAL & SUPPORT */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.eyebrow}>
+            LEGAL & SUPPORT
+          </Text>
+
+          <Text style={styles.sectionTitle}>
+            Policies and account help
+          </Text>
+        </View>
+
+        <View style={styles.toolsCard}>
+          <TouchableOpacity
+            style={styles.toolRow}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL(PRIVACY_POLICY_URL)
+            }
+          >
+            <View style={styles.privacyIconBox}>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={21}
+                color="#635BFF"
+              />
+            </View>
+
+            <View style={styles.toolTextWrap}>
+              <Text style={styles.toolTitle}>
+                Privacy Policy
+              </Text>
+
+              <Text style={styles.toolText}>
+                See how StayRent handles your information
+              </Text>
+            </View>
+
+            <Ionicons
+              name="open-outline"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.toolRow}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL(TERMS_OF_USE_URL)
+            }
+          >
+            <View style={styles.termsIconBox}>
+              <Ionicons
+                name="document-text-outline"
+                size={21}
+                color="#1570EF"
+              />
+            </View>
+
+            <View style={styles.toolTextWrap}>
+              <Text style={styles.toolTitle}>
+                Terms of Use
+              </Text>
+
+              <Text style={styles.toolText}>
+                Read the rules for using StayRent
+              </Text>
+            </View>
+
+            <Ionicons
+              name="open-outline"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.toolRow}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL(ACCOUNT_DELETION_URL)
+            }
+          >
+            <View style={styles.deleteAccountIconBox}>
+              <Ionicons
+                name="trash-outline"
+                size={21}
+                color="#F04438"
+              />
+            </View>
+
+            <View style={styles.toolTextWrap}>
+              <Text style={styles.toolTitle}>
+                Account Deletion
+              </Text>
+
+              <Text style={styles.toolText}>
+                Learn how to request account deletion
+              </Text>
+            </View>
+
+            <Ionicons
+              name="open-outline"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.toolRow}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL(CONTACT_URL)
+            }
+          >
+            <View style={styles.contactIconBox}>
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={21}
+                color="#F79009"
+              />
+            </View>
+
+            <View style={styles.toolTextWrap}>
+              <Text style={styles.toolTitle}>
+                Contact StayRent
+              </Text>
+
+              <Text style={styles.toolText}>
+                Open StayRent contact information
+              </Text>
+            </View>
+
+            <Ionicons
+              name="open-outline"
+              size={18}
+              color="#98A2B3"
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* LOGOUT */}
         <TouchableOpacity
           style={styles.logoutButton}
@@ -828,6 +981,42 @@ const styles = StyleSheet.create({
   },
 
   supportIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFAEB",
+  },
+
+  privacyIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1EFFF",
+  },
+
+  termsIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF8FF",
+  },
+
+  deleteAccountIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1F0",
+  },
+
+  contactIconBox: {
     width: 44,
     height: 44,
     borderRadius: 15,

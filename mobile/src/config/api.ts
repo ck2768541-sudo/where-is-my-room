@@ -1,1 +1,2 @@
-export const API_BASE_URL = "http://172.20.94.236:5000/api";
+export const API_BASE_URL =
+  "https://where-is-my-room-6moe.onrender.com/api";

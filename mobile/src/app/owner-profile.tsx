@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,11 @@ import {
   getAuthUser,
   saveAuthUser,
 } from "../utils/authStorage";
+
+const PRIVACY_POLICY_URL = "https://stayrent.in/privacy-policy";
+const TERMS_OF_USE_URL = "https://stayrent.in/terms-of-use";
+const ACCOUNT_DELETION_URL = "https://stayrent.in/account-deletion";
+const CONTACT_URL = "https://stayrent.in/contact";
 
 type OwnerUser = {
   _id?: string;
@@ -607,6 +613,174 @@ export default function OwnerProfileScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* LEGAL & SUPPORT */}
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionEyebrow}>
+                LEGAL & SUPPORT
+              </Text>
+
+              <Text style={styles.sectionTitle}>
+                Policies and account help
+              </Text>
+            </View>
+
+            <View style={styles.actionsCard}>
+              <TouchableOpacity
+                style={styles.actionRow}
+                activeOpacity={0.8}
+                onPress={() =>
+                  Linking.openURL(PRIVACY_POLICY_URL)
+                }
+              >
+                <View
+                  style={[
+                    styles.actionIcon,
+                    styles.privacyIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={22}
+                    color="#635BFF"
+                  />
+                </View>
+
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>
+                    Privacy Policy
+                  </Text>
+
+                  <Text style={styles.actionText}>
+                    See how StayRent handles your information
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="open-outline"
+                  size={18}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={styles.actionRow}
+                activeOpacity={0.8}
+                onPress={() =>
+                  Linking.openURL(TERMS_OF_USE_URL)
+                }
+              >
+                <View
+                  style={[
+                    styles.actionIcon,
+                    styles.termsIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={22}
+                    color="#1570EF"
+                  />
+                </View>
+
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>
+                    Terms of Use
+                  </Text>
+
+                  <Text style={styles.actionText}>
+                    Read the rules for using StayRent
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="open-outline"
+                  size={18}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={styles.actionRow}
+                activeOpacity={0.8}
+                onPress={() =>
+                  Linking.openURL(ACCOUNT_DELETION_URL)
+                }
+              >
+                <View
+                  style={[
+                    styles.actionIcon,
+                    styles.deleteAccountIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color="#F04438"
+                  />
+                </View>
+
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>
+                    Account Deletion
+                  </Text>
+
+                  <Text style={styles.actionText}>
+                    Learn how to request account deletion
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="open-outline"
+                  size={18}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={styles.actionRow}
+                activeOpacity={0.8}
+                onPress={() =>
+                  Linking.openURL(CONTACT_URL)
+                }
+              >
+                <View
+                  style={[
+                    styles.actionIcon,
+                    styles.contactIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={22}
+                    color="#F79009"
+                  />
+                </View>
+
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>
+                    Contact StayRent
+                  </Text>
+
+                  <Text style={styles.actionText}>
+                    Open StayRent contact information
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="open-outline"
+                  size={18}
+                  color="#98A2B3"
+                />
+              </TouchableOpacity>
+            </View>
+
             {/* SESSION */}
 
             <View style={styles.sectionHeader}>
@@ -970,6 +1144,22 @@ const styles = StyleSheet.create({
   },
 
   supportIcon: {
+    backgroundColor: "#FFFAEB",
+  },
+
+  privacyIcon: {
+    backgroundColor: "#F1EFFF",
+  },
+
+  termsIcon: {
+    backgroundColor: "#EFF8FF",
+  },
+
+  deleteAccountIcon: {
+    backgroundColor: "#FFF1F0",
+  },
+
+  contactIcon: {
     backgroundColor: "#FFFAEB",
   },
 
