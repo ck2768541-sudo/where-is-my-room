@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -43,6 +44,12 @@ type AuthUser = {
 
 export default function SeekerProfileScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [user, setUser] =
     useState<AuthUser | null>(null);
@@ -249,9 +256,24 @@ export default function SeekerProfileScreen() {
       <View style={styles.glowTwo} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 26,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.brandWrap}>
@@ -284,7 +306,12 @@ export default function SeekerProfileScreen() {
         </View>
 
         {/* PROFILE CARD */}
-        <View style={styles.profileCard}>
+        <View
+          style={[
+            styles.profileCard,
+            isSmallScreen && styles.profileCardSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.avatarButton}
             activeOpacity={0.85}
@@ -339,7 +366,12 @@ export default function SeekerProfileScreen() {
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.name}>
+          <Text
+            style={[
+              styles.name,
+              isSmallScreen && styles.nameSmall,
+            ]}
+          >
             {displayName}
           </Text>
 
@@ -367,7 +399,12 @@ export default function SeekerProfileScreen() {
           </Text>
         </View>
 
-        <View style={styles.detailsCard}>
+        <View
+          style={[
+            styles.detailsCard,
+            isSmallScreen && styles.cardSmall,
+          ]}
+        >
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}>
               <Ionicons
@@ -447,7 +484,12 @@ export default function SeekerProfileScreen() {
           </Text>
         </View>
 
-        <View style={styles.toolsCard}>
+        <View
+          style={[
+            styles.toolsCard,
+            isSmallScreen && styles.cardSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.toolRow}
             activeOpacity={0.85}
@@ -566,7 +608,12 @@ export default function SeekerProfileScreen() {
           </Text>
         </View>
 
-        <View style={styles.toolsCard}>
+        <View
+          style={[
+            styles.toolsCard,
+            isSmallScreen && styles.cardSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.toolRow}
             activeOpacity={0.85}
@@ -718,6 +765,7 @@ export default function SeekerProfileScreen() {
             Logout
           </Text>
         </TouchableOpacity>
+        </View>
       </ScrollView>
 
       <SeekerBottomNav />
@@ -751,10 +799,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 26,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -765,6 +822,8 @@ const styles = StyleSheet.create({
   },
 
   brandWrap: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -809,6 +868,12 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: "#111827",
     marginBottom: 28,
+  },
+
+  profileCardSmall: {
+    padding: 20,
+    borderRadius: 22,
+    marginBottom: 24,
   },
 
   avatarButton: {
@@ -864,6 +929,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
     color: "#FFFFFF",
+  },
+
+  nameSmall: {
+    fontSize: 20,
   },
 
   roleBadge: {
@@ -927,6 +996,7 @@ const styles = StyleSheet.create({
 
   detailTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -939,6 +1009,7 @@ const styles = StyleSheet.create({
   detailValue: {
     marginTop: 3,
     fontSize: 13,
+    flexShrink: 1,
     fontWeight: "800",
     color: "#111827",
   },
@@ -1027,11 +1098,13 @@ const styles = StyleSheet.create({
 
   toolTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
   toolTitle: {
     fontSize: 13,
+    flexShrink: 1,
     fontWeight: "800",
     color: "#111827",
   },
@@ -1039,7 +1112,14 @@ const styles = StyleSheet.create({
   toolText: {
     marginTop: 3,
     fontSize: 10,
+    lineHeight: 15,
+    flexShrink: 1,
     color: "#98A2B3",
+  },
+
+  cardSmall: {
+    padding: 14,
+    borderRadius: 18,
   },
 
   logoutButton: {

@@ -10,11 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -23,6 +25,12 @@ import { saveAuthSession } from "../utils/authStorage";
 
 export default function SeekerLoginScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 380 ? 16 : width < 430 ? 20 : 24;
+  const contentMaxWidth = 520;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -139,23 +147,36 @@ export default function SeekerLoginScreen() {
         behavior={
           Platform.OS === "ios"
             ? "padding"
-            : undefined
+            : "height"
         }
       >
-        <Animated.View
-          style={[
-            styles.content,
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
             {
-              opacity: fadeAnim,
-              transform: [
-                {
-                  translateY:
-                    slideAnim,
-                },
-              ],
+              paddingHorizontal: horizontalPadding,
+              paddingTop: isSmallScreen ? 12 : 18,
+              paddingBottom: isSmallScreen ? 20 : 28,
             },
           ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                maxWidth: contentMaxWidth,
+                opacity: fadeAnim,
+                transform: [
+                  {
+                    translateY: slideAnim,
+                  },
+                ],
+              },
+            ]}
+          >
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -192,7 +213,14 @@ export default function SeekerLoginScreen() {
             </View>
           </View>
 
-          <View style={styles.hero}>
+          <View
+            style={[
+              styles.hero,
+              {
+                marginTop: isSmallScreen ? 24 : 36,
+              },
+            ]}
+          >
             <View style={styles.heroIcon}>
               <Ionicons
                 name="search-outline"
@@ -205,20 +233,35 @@ export default function SeekerLoginScreen() {
               WELCOME BACK
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Find your next
               {"\n"}
               place to stay.
             </Text>
 
-            <Text style={styles.subtitle}>
+            <Text
+              style={[
+                styles.subtitle,
+                isSmallScreen && styles.subtitleSmall,
+              ]}
+            >
               Sign in to explore rooms,
               PGs and flats near your
               preferred location.
             </Text>
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <Text style={styles.formTitle}>
               Sign in to StayRent
             </Text>
@@ -380,7 +423,8 @@ export default function SeekerLoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </Animated.View>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -394,6 +438,16 @@ const styles = StyleSheet.create({
 
   keyboardView: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   glowOne: {
@@ -417,22 +471,15 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 28,
-    justifyContent: "center",
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
-    position: "absolute",
-    top: 18,
-    left: 22,
-    right: 22,
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent:
-      "space-between",
+    justifyContent: "space-between",
   },
 
   backButton: {
@@ -475,7 +522,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    marginTop: 70,
+    width: "100%",
   },
 
   heroIcon: {
@@ -504,15 +551,27 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 29,
+    lineHeight: 35,
+    letterSpacing: -0.8,
+  },
+
   subtitle: {
     marginTop: 12,
-    maxWidth: 330,
+    maxWidth: 360,
     fontSize: 14,
     lineHeight: 22,
     color: "#667085",
   },
 
+  subtitleSmall: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
   formCard: {
+    width: "100%",
     marginTop: 28,
     padding: 20,
     borderRadius: 26,
@@ -528,6 +587,12 @@ const styles = StyleSheet.create({
       height: 8,
     },
     elevation: 3,
+  },
+
+  formCardSmall: {
+    marginTop: 22,
+    padding: 16,
+    borderRadius: 22,
   },
 
   formTitle: {
@@ -619,13 +684,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flexWrap: "wrap",
+    paddingHorizontal: 4,
   },
 
   secureNoteText: {
+    flexShrink: 1,
     marginLeft: 6,
     fontSize: 10,
+    lineHeight: 15,
     fontWeight: "600",
     color: "#667085",
+    textAlign: "center",
   },
 
   signupRow: {
@@ -633,6 +703,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    flexWrap: "wrap",
   },
 
   signupText: {

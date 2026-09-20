@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -22,6 +23,12 @@ import {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 16 : width < 430 ? 20 : 24;
+  const contentMaxWidth = 520;
 
   const [checkingSession, setCheckingSession] =
     useState(true);
@@ -142,7 +149,24 @@ export default function HomeScreen() {
       <View style={styles.backgroundGlowOne} />
       <View style={styles.backgroundGlowTwo} />
 
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 20 : 30,
+            paddingBottom: isSmallScreen ? 16 : 22,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         <Animated.View
           style={[
             styles.topArea,
@@ -160,12 +184,20 @@ export default function HomeScreen() {
             <View style={styles.logoOuter}>
               <Image
                 source={require("../../assets/stayrent-logo.jpeg")}
-                style={styles.brandLogoImage}
+                style={[
+                  styles.brandLogoImage,
+                  isSmallScreen && styles.brandLogoImageSmall,
+                ]}
                 resizeMode="contain"
               />
             </View>
 
-            <Text style={styles.brand}>
+            <Text
+              style={[
+                styles.brand,
+                isSmallScreen && styles.brandSmall,
+              ]}
+            >
               StayRent
             </Text>
 
@@ -183,9 +215,19 @@ export default function HomeScreen() {
             },
           ]}
         >
-          <View style={styles.visualGlow} />
+          <View
+            style={[
+              styles.visualGlow,
+              isSmallScreen && styles.visualGlowSmall,
+            ]}
+          />
 
-          <View style={styles.locationPin}>
+          <View
+            style={[
+              styles.locationPin,
+              isSmallScreen && styles.locationPinSmall,
+            ]}
+          >
             <Ionicons
               name="location"
               size={22}
@@ -198,6 +240,7 @@ export default function HomeScreen() {
               style={[
                 styles.building,
                 styles.smallBuilding,
+                isSmallScreen && styles.smallBuildingSmall,
               ]}
             >
               <View style={styles.windowRow}>
@@ -215,6 +258,7 @@ export default function HomeScreen() {
               style={[
                 styles.building,
                 styles.tallBuilding,
+                isSmallScreen && styles.tallBuildingSmall,
               ]}
             >
               <View style={styles.windowRow}>
@@ -233,8 +277,18 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={styles.mainHome}>
-              <View style={styles.mainHomeIcon}>
+            <View
+              style={[
+                styles.mainHome,
+                isSmallScreen && styles.mainHomeSmall,
+              ]}
+            >
+              <View
+                style={[
+                  styles.mainHomeIcon,
+                  isSmallScreen && styles.mainHomeIconSmall,
+                ]}
+              >
                 <Ionicons
                   name="home"
                   size={48}
@@ -247,6 +301,7 @@ export default function HomeScreen() {
               style={[
                 styles.building,
                 styles.mediumBuilding,
+                isSmallScreen && styles.mediumBuildingSmall,
               ]}
             >
               <View style={styles.windowRow}>
@@ -293,7 +348,12 @@ export default function HomeScreen() {
             YOUR NEXT PLACE STARTS HERE
           </Text>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
              Find a better place to stay
             
           </Text>
@@ -303,7 +363,12 @@ export default function HomeScreen() {
             the places that matter to you.
           </Text>
 
-          <View style={styles.trustRow}>
+          <View
+            style={[
+              styles.trustRow,
+              isSmallScreen && styles.trustRowSmall,
+            ]}
+          >
             <View style={styles.trustItem}>
               <Ionicons
                 name="location-outline"
@@ -352,7 +417,10 @@ export default function HomeScreen() {
             }}
           >
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                isSmallScreen && styles.primaryButtonSmall,
+              ]}
               onPress={handleGetStarted}
               activeOpacity={0.9}
             >
@@ -376,6 +444,7 @@ export default function HomeScreen() {
             Simple rentals. Better choices.
           </Text>
         </Animated.View>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -409,9 +478,13 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 30,
-    paddingBottom: 22,
+    alignItems: "center",
+  },
+
+  pageContent: {
+    flex: 1,
+    width: "100%",
+    alignSelf: "center",
   },
 
   loadingContainer: {
@@ -473,10 +546,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  logoOuterSmall: {
+    width: 68,
+    height: 68,
+    borderRadius: 23,
+  },
+
   brandLogoImage: {
     width: 68,
     height: 68,
     borderRadius: 22,
+  },
+
+  brandLogoImageSmall: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
   },
 
   brand: {
@@ -485,6 +570,11 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -1,
     color: "#111827",
+  },
+
+  brandSmall: {
+    fontSize: 25,
+    letterSpacing: -0.8,
   },
 
   brandTagline: {
@@ -510,6 +600,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F5FF",
   },
 
+  visualGlowSmall: {
+    width: 205,
+    height: 205,
+    borderRadius: 103,
+  },
+
   locationPin: {
     position: "absolute",
     top: 42,
@@ -529,6 +625,13 @@ const styles = StyleSheet.create({
       height: 6,
     },
     elevation: 5,
+  },
+
+  locationPinSmall: {
+    top: 34,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
 
   buildingsRow: {
@@ -555,14 +658,29 @@ const styles = StyleSheet.create({
     height: 88,
   },
 
+  smallBuildingSmall: {
+    width: 44,
+    height: 78,
+  },
+
   mediumBuilding: {
     width: 56,
     height: 106,
   },
 
+  mediumBuildingSmall: {
+    width: 48,
+    height: 94,
+  },
+
   tallBuilding: {
     width: 56,
     height: 126,
+  },
+
+  tallBuildingSmall: {
+    width: 48,
+    height: 112,
   },
 
   windowRow: {
@@ -597,6 +715,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  mainHomeSmall: {
+    width: 84,
+    height: 84,
+    borderRadius: 26,
+  },
+
   mainHomeIcon: {
     width: 72,
     height: 72,
@@ -604,6 +728,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F1FF",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  mainHomeIconSmall: {
+    width: 64,
+    height: 64,
+    borderRadius: 21,
   },
 
   road: {
@@ -672,6 +802,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 29,
+    lineHeight: 35,
+    letterSpacing: -0.9,
+  },
+
   subtitle: {
     marginTop: 11,
     maxWidth: 320,
@@ -686,6 +822,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 18,
+    flexWrap: "wrap",
+  },
+
+  trustRowSmall: {
+    marginTop: 14,
   },
 
   trustItem: {
@@ -726,6 +867,12 @@ const styles = StyleSheet.create({
       height: 8,
     },
     elevation: 6,
+  },
+
+  primaryButtonSmall: {
+    height: 56,
+    marginTop: 18,
+    borderRadius: 16,
   },
 
   primaryButtonText: {

@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -35,6 +36,12 @@ type Property = {
 
 export default function OwnerHomeScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [properties, setProperties] =
     useState<Property[]>([]);
@@ -171,18 +178,43 @@ export default function OwnerHomeScreen() {
       <View style={styles.glowTwo} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 26,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         {/* TOP HEADER */}
 
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            isSmallScreen && styles.headerSmall,
+          ]}
+        >
           <View>
             <Text style={styles.greeting}>
               Welcome back
             </Text>
 
-            <Text style={styles.brand}>
+            <Text
+              style={[
+                styles.brand,
+                isSmallScreen && styles.brandSmall,
+              ]}
+            >
               StayRent Owner
             </Text>
           </View>
@@ -237,7 +269,12 @@ export default function OwnerHomeScreen() {
 
         {/* HERO */}
 
-        <View style={styles.heroCard}>
+        <View
+          style={[
+            styles.heroCard,
+            isSmallScreen && styles.heroCardSmall,
+          ]}
+        >
           <View style={styles.heroGlow} />
 
           <View style={styles.heroBadge}>
@@ -252,7 +289,12 @@ export default function OwnerHomeScreen() {
             </Text>
           </View>
 
-          <Text style={styles.heroTitle}>
+          <Text
+            style={[
+              styles.heroTitle,
+              isSmallScreen && styles.heroTitleSmall,
+            ]}
+          >
             Manage rentals{"\n"}
             with confidence.
           </Text>
@@ -299,8 +341,18 @@ export default function OwnerHomeScreen() {
           Your portfolio
         </Text>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
+        <View
+          style={[
+            styles.statsRow,
+            isSmallScreen && styles.statsRowSmall,
+          ]}
+        >
+          <View
+            style={[
+              styles.statCard,
+              isSmallScreen && styles.statCardSmall,
+            ]}
+          >
             <View
               style={[
                 styles.statIcon,
@@ -323,7 +375,12 @@ export default function OwnerHomeScreen() {
             </Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View
+            style={[
+              styles.statCard,
+              isSmallScreen && styles.statCardSmall,
+            ]}
+          >
             <View
               style={[
                 styles.statIcon,
@@ -346,7 +403,12 @@ export default function OwnerHomeScreen() {
             </Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View
+            style={[
+              styles.statCard,
+              isSmallScreen && styles.statCardSmall,
+            ]}
+          >
             <View
               style={[
                 styles.statIcon,
@@ -372,7 +434,12 @@ export default function OwnerHomeScreen() {
 
         {/* QUICK ACTIONS */}
 
-        <View style={styles.sectionHeader}>
+        <View
+          style={[
+            styles.sectionHeader,
+            isSmallScreen && styles.sectionHeaderSmall,
+          ]}
+        >
           <View>
             <Text style={styles.sectionEyebrow}>
               QUICK ACTIONS
@@ -384,9 +451,17 @@ export default function OwnerHomeScreen() {
           </View>
         </View>
 
-        <View style={styles.quickGrid}>
+        <View
+          style={[
+            styles.quickGrid,
+            isSmallScreen && styles.quickGridSmall,
+          ]}
+        >
           <TouchableOpacity
-            style={styles.quickCard}
+            style={[
+              styles.quickCard,
+              isSmallScreen && styles.quickCardSmall,
+            ]}
             activeOpacity={0.88}
             onPress={() =>
               router.push(
@@ -417,7 +492,10 @@ export default function OwnerHomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.quickCard}
+            style={[
+              styles.quickCard,
+              isSmallScreen && styles.quickCardSmall,
+            ]}
             activeOpacity={0.88}
             onPress={() =>
               router.push(
@@ -450,7 +528,12 @@ export default function OwnerHomeScreen() {
 
         {/* RECENT LISTINGS */}
 
-        <View style={styles.sectionHeader}>
+        <View
+          style={[
+            styles.sectionHeader,
+            isSmallScreen && styles.sectionHeaderSmall,
+          ]}
+        >
           <View>
             <Text style={styles.sectionEyebrow}>
               RECENT
@@ -623,9 +706,10 @@ export default function OwnerHomeScreen() {
                     />
                   ) : (
                     <View
-                      style={
-                        styles.noImage
-                      }
+                      style={[
+                        styles.noImage,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
                     >
                       <Ionicons
                         name="image-outline"
@@ -641,14 +725,16 @@ export default function OwnerHomeScreen() {
                     }
                   >
                     <View
-                      style={
-                        styles.propertyTopRow
-                      }
+                      style={[
+                        styles.propertyTopRow,
+                        isSmallScreen && styles.propertyTopRowSmall,
+                      ]}
                     >
                       <View
-                        style={
-                          styles.propertyInfo
-                        }
+                        style={[
+                          styles.propertyInfo,
+                          isSmallScreen && styles.propertyInfoSmall,
+                        ]}
                       >
                         <Text
                           style={
@@ -690,9 +776,10 @@ export default function OwnerHomeScreen() {
                       </View>
 
                       <View
-                        style={
-                          styles.priceWrap
-                        }
+                        style={[
+                          styles.priceWrap,
+                          isSmallScreen && styles.priceWrapSmall,
+                        ]}
                       >
                         {property.propertyType === "hotel" ? (
                           <>
@@ -758,9 +845,10 @@ export default function OwnerHomeScreen() {
                     </View>
 
                     <View
-                      style={
-                        styles.propertyBottom
-                      }
+                      style={[
+                        styles.propertyBottom,
+                        isSmallScreen && styles.propertyBottomSmall,
+                      ]}
                     >
                       <View
                         style={
@@ -812,6 +900,7 @@ export default function OwnerHomeScreen() {
               );
             }
           )}
+        </View>
       </ScrollView>
 
       <OwnerBottomNav />
@@ -845,10 +934,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 26,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -856,6 +954,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 22,
+    gap: 12,
+  },
+
+  headerSmall: {
+    alignItems: "flex-start",
   },
 
   greeting: {
@@ -870,6 +973,11 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.6,
     color: "#111827",
+  },
+
+  brandSmall: {
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
 
   headerActions: {
@@ -926,6 +1034,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
   },
 
+  heroCardSmall: {
+    padding: 18,
+    borderRadius: 23,
+  },
+
   heroGlow: {
     position: "absolute",
     width: 210,
@@ -963,6 +1076,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.9,
     color: "#FFFFFF",
+  },
+
+  heroTitleSmall: {
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: -0.7,
   },
 
   heroSubtitle: {
@@ -1013,14 +1132,26 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  statsRowSmall: {
+    flexWrap: "wrap",
+  },
+
   statCard: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: 15,
     alignItems: "center",
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E8EAF2",
+  },
+
+  statCardSmall: {
+    minWidth: "30%",
+    paddingHorizontal: 8,
+    paddingVertical: 13,
+    borderRadius: 17,
   },
 
   statIcon: {
@@ -1063,11 +1194,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  sectionHeaderSmall: {
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
 
   quickGrid: {
     flexDirection: "row",
     gap: 12,
+  },
+
+  quickGridSmall: {
+    flexDirection: "column",
   },
 
   quickCard: {
@@ -1082,6 +1223,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 12,
     elevation: 2,
+  },
+
+  quickCardSmall: {
+    minHeight: 112,
+    padding: 14,
+    borderRadius: 18,
   },
 
   quickIcon: {
@@ -1200,6 +1347,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF0F6",
   },
 
+  propertyImageSmall: {
+    height: 145,
+  },
+
   noImage: {
     width: "100%",
     height: 160,
@@ -1217,9 +1368,19 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
 
+  propertyTopRowSmall: {
+    flexDirection: "column",
+  },
+
   propertyInfo: {
     flex: 1,
+    minWidth: 0,
     paddingRight: 10,
+  },
+
+  propertyInfoSmall: {
+    width: "100%",
+    paddingRight: 0,
   },
 
   propertyTitle: {
@@ -1243,6 +1404,11 @@ const styles = StyleSheet.create({
 
   priceWrap: {
     alignItems: "flex-end",
+  },
+
+  priceWrapSmall: {
+    marginTop: 10,
+    alignItems: "flex-start",
   },
 
   hotelPriceLine: {
@@ -1276,6 +1442,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  propertyBottomSmall: {
+    flexWrap: "wrap",
   },
 
   propertyTypeBadge: {

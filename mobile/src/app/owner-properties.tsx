@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -37,6 +38,12 @@ type Property = {
 
 export default function OwnerPropertiesScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -306,11 +313,31 @@ export default function OwnerPropertiesScreen() {
       <View style={styles.glowTwo} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 26,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         {/* HEADER */}
-        <View style={styles.topHeader}>
+        <View
+          style={[
+            styles.topHeader,
+            isSmallScreen && styles.topHeaderSmall,
+          ]}
+        >
           <View style={styles.brandWrap}>
             <View style={styles.brandLogo}>
               <Ionicons
@@ -345,7 +372,12 @@ export default function OwnerPropertiesScreen() {
         </View>
 
         {/* HERO */}
-        <View style={styles.heroCard}>
+        <View
+          style={[
+            styles.heroCard,
+            isSmallScreen && styles.heroCardSmall,
+          ]}
+        >
           <View style={styles.heroGlow} />
 
           <View style={styles.heroBadge}>
@@ -360,7 +392,12 @@ export default function OwnerPropertiesScreen() {
             </Text>
           </View>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
             Manage your{"\n"}
             rental properties.
           </Text>
@@ -417,7 +454,10 @@ export default function OwnerPropertiesScreen() {
 
         {/* ADD PROPERTY */}
         <TouchableOpacity
-          style={styles.addButton}
+          style={[
+            styles.addButton,
+            isSmallScreen && styles.addButtonSmall,
+          ]}
           activeOpacity={0.9}
           onPress={() =>
             router.push("/owner-add-property")
@@ -449,7 +489,12 @@ export default function OwnerPropertiesScreen() {
         </TouchableOpacity>
 
         {/* SECTION */}
-        <View style={styles.sectionHeader}>
+        <View
+          style={[
+            styles.sectionHeader,
+            isSmallScreen && styles.sectionHeaderSmall,
+          ]}
+        >
           <View>
             <Text style={styles.sectionEyebrow}>
               YOUR LISTINGS
@@ -584,7 +629,10 @@ export default function OwnerPropertiesScreen() {
                   {imageUrl ? (
                     <Image
                       source={{ uri: imageUrl }}
-                      style={styles.propertyImage}
+                      style={[
+                        styles.propertyImage,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
                       resizeMode="cover"
                     />
                   ) : (
@@ -926,6 +974,7 @@ export default function OwnerPropertiesScreen() {
               </TouchableOpacity>
             );
           })}
+        </View>
       </ScrollView>
 
       <OwnerBottomNav />
@@ -959,10 +1008,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 26,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   topHeader: {
@@ -970,9 +1028,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+    gap: 12,
+  },
+
+  topHeaderSmall: {
+    alignItems: "flex-start",
   },
 
   brandWrap: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -1029,6 +1094,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
   },
 
+  heroCardSmall: {
+    padding: 18,
+    borderRadius: 22,
+  },
+
   heroGlow: {
     position: "absolute",
     width: 200,
@@ -1065,6 +1135,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.9,
     color: "#FFFFFF",
+  },
+
+  titleSmall: {
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: -0.7,
   },
 
   subtitle: {
@@ -1123,6 +1199,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  addButtonSmall: {
+    minHeight: 62,
+    borderRadius: 17,
+  },
+
   addButtonIcon: {
     width: 44,
     height: 44,
@@ -1134,6 +1215,7 @@ const styles = StyleSheet.create({
 
   addButtonTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -1155,6 +1237,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  sectionHeaderSmall: {
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
 
   sectionEyebrow: {
@@ -1321,6 +1409,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF0F6",
   },
 
+  propertyImageSmall: {
+    height: 175,
+  },
+
   noImage: {
     height: 205,
     alignItems: "center",
@@ -1415,14 +1507,28 @@ const styles = StyleSheet.create({
     padding: 17,
   },
 
+  propertyContentSmall: {
+    padding: 14,
+  },
+
   topRow: {
     flexDirection: "row",
     alignItems: "flex-start",
   },
 
+  topRowSmall: {
+    flexDirection: "column",
+  },
+
   titleWrap: {
     flex: 1,
+    minWidth: 0,
     paddingRight: 12,
+  },
+
+  titleWrapSmall: {
+    width: "100%",
+    paddingRight: 0,
   },
 
   propertyTitle: {
@@ -1435,6 +1541,11 @@ const styles = StyleSheet.create({
 
   rentWrap: {
     alignItems: "flex-end",
+  },
+
+  rentWrapSmall: {
+    marginTop: 10,
+    alignItems: "flex-start",
   },
 
   hotelPriceLine: {
@@ -1513,6 +1624,10 @@ const styles = StyleSheet.create({
     gap: 9,
   },
 
+  actionsGridSmall: {
+    flexDirection: "column",
+  },
+
   editButton: {
     flex: 1,
     height: 46,
@@ -1540,6 +1655,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+  },
+
+  actionButtonSmall: {
+    width: "100%",
+    flex: 0,
   },
 
   markOccupiedButton: {

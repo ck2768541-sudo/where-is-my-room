@@ -14,6 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -50,6 +51,12 @@ type Property = {
 export default function OwnerEditPropertyScreen() {
 
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const { propertyId } = useLocalSearchParams<{
     propertyId: string;
@@ -457,7 +464,12 @@ export default function OwnerEditPropertyScreen() {
         <View style={styles.glowTwo} />
 
         <TouchableOpacity
-          style={styles.errorBackButton}
+          style={[
+            styles.errorBackButton,
+            {
+              left: horizontalPadding,
+            },
+          ]}
           activeOpacity={0.8}
        onPress={() => {
   if (router.canGoBack()) {
@@ -530,11 +542,31 @@ export default function OwnerEditPropertyScreen() {
         }
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingTop: isSmallScreen ? 14 : 18,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <View
+            style={[
+              styles.pageContent,
+              {
+                maxWidth: contentMaxWidth,
+              },
+            ]}
+          >
+          <View
+            style={[
+              styles.header,
+              isSmallScreen && styles.headerSmall,
+            ]}
+          >
             <TouchableOpacity
               style={styles.backButton}
               activeOpacity={0.8}
@@ -569,7 +601,12 @@ export default function OwnerEditPropertyScreen() {
             </View>
           </View>
 
-          <View style={styles.hero}>
+          <View
+            style={[
+              styles.hero,
+              isSmallScreen && styles.heroSmall,
+            ]}
+          >
             <View style={styles.heroIcon}>
               <Ionicons
                 name="create-outline"
@@ -582,7 +619,12 @@ export default function OwnerEditPropertyScreen() {
               UPDATE LISTING
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Edit your{"\n"}
               property.
             </Text>
@@ -594,7 +636,12 @@ export default function OwnerEditPropertyScreen() {
             </Text>
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <View style={styles.formHeader}>
               <View>
                 <Text style={styles.formEyebrow}>
@@ -669,7 +716,12 @@ export default function OwnerEditPropertyScreen() {
               Property type
             </Text>
 
-            <View style={styles.chipRow}>
+            <View
+              style={[
+                styles.chipRow,
+                isSmallScreen && styles.chipRowSmall,
+              ]}
+            >
               {propertyTypes.map((item) => {
                 const selected =
                   propertyType === item.value;
@@ -725,7 +777,12 @@ export default function OwnerEditPropertyScreen() {
                   Hotel room options
                 </Text>
 
-                <View style={styles.chipRow}>
+                <View
+                  style={[
+                    styles.chipRow,
+                    isSmallScreen && styles.chipRowSmall,
+                  ]}
+                >
                   <TouchableOpacity
                     style={[
                       styles.chip,
@@ -837,7 +894,12 @@ export default function OwnerEditPropertyScreen() {
               </>
             ) : (
               <>
-                <View style={styles.twoColumnRow}>
+                <View
+                  style={[
+                    styles.twoColumnRow,
+                    isSmallScreen && styles.twoColumnRowSmall,
+                  ]}
+                >
                   <View style={styles.halfField}>
                     <Text style={styles.label}>
                       Monthly rent
@@ -885,7 +947,12 @@ export default function OwnerEditPropertyScreen() {
                   Available for
                 </Text>
 
-                <View style={styles.chipRow}>
+                <View
+                  style={[
+                    styles.chipRow,
+                    isSmallScreen && styles.chipRowSmall,
+                  ]}
+                >
                   {availableOptions.map((item) => {
                     const selected =
                       availableFor === item.value;
@@ -921,7 +988,12 @@ export default function OwnerEditPropertyScreen() {
                   Furnishing
                 </Text>
 
-                <View style={styles.chipRow}>
+                <View
+                  style={[
+                    styles.chipRow,
+                    isSmallScreen && styles.chipRowSmall,
+                  ]}
+                >
                   {furnishingOptions.map((item) => {
                     const selected =
                       furnishing === item.value;
@@ -956,7 +1028,12 @@ export default function OwnerEditPropertyScreen() {
             )}
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <View style={styles.formHeader}>
               <View>
                 <Text style={styles.formEyebrow}>
@@ -1098,6 +1175,7 @@ export default function OwnerEditPropertyScreen() {
           <TouchableOpacity
             style={[
               styles.saveButton,
+              isSmallScreen && styles.saveButtonSmall,
               saving &&
                 styles.saveButtonDisabled,
             ]}
@@ -1146,7 +1224,10 @@ export default function OwnerEditPropertyScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={[
+              styles.cancelButton,
+              isSmallScreen && styles.cancelButtonSmall,
+            ]}
             activeOpacity={0.8}
             onPress={() => {
   if (router.canGoBack()) {
@@ -1182,6 +1263,7 @@ export default function OwnerEditPropertyScreen() {
               only. Existing photos and GPS location
               remain unchanged.
             </Text>
+          </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1223,7 +1305,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
   },
 
   loadingIconBox: {
@@ -1253,7 +1335,6 @@ const styles = StyleSheet.create({
   errorBackButton: {
     position: "absolute",
     top: 18,
-    left: 20,
     zIndex: 5,
     width: 44,
     height: 44,
@@ -1308,16 +1389,30 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 56,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
+  },
+
+  headerSmall: {
+    alignItems: "flex-start",
   },
 
   backButton: {
@@ -1334,6 +1429,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
   },
 
   brandLogo: {
@@ -1356,6 +1452,11 @@ const styles = StyleSheet.create({
   hero: {
     marginTop: 30,
     marginBottom: 24,
+  },
+
+  heroSmall: {
+    marginTop: 22,
+    marginBottom: 20,
   },
 
   heroIcon: {
@@ -1384,6 +1485,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+  },
+
   subtitle: {
     marginTop: 11,
     maxWidth: 330,
@@ -1409,11 +1516,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  formCardSmall: {
+    padding: 14,
+    borderRadius: 20,
+  },
+
   formHeader: {
     marginBottom: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
   },
 
   formEyebrow: {
@@ -1464,6 +1577,7 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 9,
     minHeight: 52,
     fontSize: 14,
@@ -1492,8 +1606,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
+  chipRowSmall: {
+    gap: 7,
+  },
+
   chip: {
     minHeight: 40,
+    maxWidth: "100%",
     paddingHorizontal: 12,
     paddingVertical: 9,
     flexDirection: "row",
@@ -1511,6 +1630,7 @@ const styles = StyleSheet.create({
   },
 
   chipText: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     color: "#475467",
@@ -1525,8 +1645,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  twoColumnRowSmall: {
+    flexDirection: "column",
+    gap: 0,
+  },
+
   halfField: {
     flex: 1,
+    minWidth: 0,
   },
 
   currency: {
@@ -1552,6 +1678,11 @@ const styles = StyleSheet.create({
       height: 8,
     },
     elevation: 5,
+  },
+
+  saveButtonSmall: {
+    height: 56,
+    borderRadius: 16,
   },
 
   saveButtonDisabled: {
@@ -1585,6 +1716,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
 
+  cancelButtonSmall: {
+    height: 46,
+  },
+
   cancelButtonText: {
     fontSize: 13,
     fontWeight: "800",
@@ -1602,6 +1737,7 @@ const styles = StyleSheet.create({
 
   infoNoteText: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 7,
     fontSize: 10,
     lineHeight: 16,

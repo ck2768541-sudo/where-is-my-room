@@ -8,11 +8,57 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 
 export default function SeekerBottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
+
+  const isSmallScreen = width < 360;
+  const isTablet = width >= 768;
+
+  const wrapperSide = isSmallScreen ? 8 : 10;
+  const wrapperBottom = isSmallScreen ? 8 : 10;
+
+  const containerHeight = isSmallScreen
+    ? 68
+    : isTablet
+    ? 80
+    : 74;
+
+  const containerRadius = isSmallScreen
+    ? 20
+    : isTablet
+    ? 28
+    : 24;
+
+  const containerPaddingHorizontal = isSmallScreen
+    ? 2
+    : isTablet
+    ? 10
+    : 4;
+
+  const iconSize = isSmallScreen ? 20 : 22;
+  const searchIconSize = isSmallScreen ? 24 : 27;
+
+  const navTextSize = isSmallScreen ? 7 : 8;
+  const navTextMarginTop = isSmallScreen ? 3 : 4;
+
+  const searchButtonSize = isSmallScreen
+    ? 50
+    : isTablet
+    ? 60
+    : 56;
+
+  const searchButtonRadius = isSmallScreen
+    ? 17
+    : isTablet
+    ? 20
+    : 19;
+
+  const searchButtonLift = isSmallScreen ? -20 : -25;
 
   useEffect(() => {
     const backAction = () => {
@@ -54,8 +100,29 @@ export default function SeekerBottomNav() {
     pathname === route;
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.container}>
+    <View
+      style={[
+        styles.wrapper,
+        {
+          left: wrapperSide,
+          right: wrapperSide,
+          bottom: wrapperBottom,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.container,
+          {
+            height: containerHeight,
+            borderRadius: containerRadius,
+            paddingHorizontal: containerPaddingHorizontal,
+            maxWidth: isTablet ? 520 : undefined,
+            alignSelf: "center",
+            width: "100%",
+          },
+        ]}
+      >
         {/* HOME */}
         <TouchableOpacity
           style={styles.navItem}
@@ -70,7 +137,7 @@ export default function SeekerBottomNav() {
                 ? "home"
                 : "home-outline"
             }
-            size={22}
+            size={iconSize}
             color={
               isActive("/seeker-home")
                 ? "#635BFF"
@@ -81,9 +148,14 @@ export default function SeekerBottomNav() {
           <Text
             style={[
               styles.navText,
+              {
+                fontSize: navTextSize,
+                marginTop: navTextMarginTop,
+              },
               isActive("/seeker-home") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Home
           </Text>
@@ -103,7 +175,7 @@ export default function SeekerBottomNav() {
                 ? "map"
                 : "map-outline"
             }
-            size={22}
+            size={iconSize}
             color={
               isActive("/seeker-map")
                 ? "#635BFF"
@@ -114,9 +186,14 @@ export default function SeekerBottomNav() {
           <Text
             style={[
               styles.navText,
+              {
+                fontSize: navTextSize,
+                marginTop: navTextMarginTop,
+              },
               isActive("/seeker-map") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Map
           </Text>
@@ -125,7 +202,15 @@ export default function SeekerBottomNav() {
         {/* CENTER SEARCH */}
         <View style={styles.centerSpace}>
           <TouchableOpacity
-            style={styles.searchButton}
+            style={[
+              styles.searchButton,
+              {
+                width: searchButtonSize,
+                height: searchButtonSize,
+                borderRadius: searchButtonRadius,
+                marginTop: searchButtonLift,
+              },
+            ]}
             activeOpacity={0.9}
             onPress={() =>
               goTo("/seeker-home")
@@ -133,7 +218,7 @@ export default function SeekerBottomNav() {
           >
             <Ionicons
               name="search"
-              size={27}
+              size={searchIconSize}
               color="#FFFFFF"
             />
           </TouchableOpacity>
@@ -153,7 +238,7 @@ export default function SeekerBottomNav() {
                 ? "heart"
                 : "heart-outline"
             }
-            size={22}
+            size={iconSize}
             color={
               isActive("/seeker-favorites")
                 ? "#F04438"
@@ -164,9 +249,14 @@ export default function SeekerBottomNav() {
           <Text
             style={[
               styles.navText,
+              {
+                fontSize: navTextSize,
+                marginTop: navTextMarginTop,
+              },
               isActive("/seeker-favorites") &&
                 styles.savedTextActive,
             ]}
+            numberOfLines={1}
           >
             Saved
           </Text>
@@ -186,7 +276,7 @@ export default function SeekerBottomNav() {
                 ? "person"
                 : "person-outline"
             }
-            size={22}
+            size={iconSize}
             color={
               isActive("/seeker-profile")
                 ? "#635BFF"
@@ -197,9 +287,14 @@ export default function SeekerBottomNav() {
           <Text
             style={[
               styles.navText,
+              {
+                fontSize: navTextSize,
+                marginTop: navTextMarginTop,
+              },
               isActive("/seeker-profile") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Profile
           </Text>
@@ -212,24 +307,14 @@ export default function SeekerBottomNav() {
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    bottom: 10,
-
     zIndex: 999,
     elevation: 20,
   },
 
   container: {
-    height: 74,
-
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-
-    paddingHorizontal: 4,
-
-    borderRadius: 24,
 
     backgroundColor: "#FFFFFF",
 
@@ -249,19 +334,17 @@ const styles = StyleSheet.create({
   },
 
   navItem: {
-    width: "18%",
+    flex: 1,
     height: "100%",
 
     alignItems: "center",
     justifyContent: "center",
+
+    paddingHorizontal: 2,
   },
 
   navText: {
-    marginTop: 4,
-
-    fontSize: 8,
     fontWeight: "700",
-
     color: "#98A2B3",
   },
 
@@ -274,7 +357,7 @@ const styles = StyleSheet.create({
   },
 
   centerSpace: {
-    width: "20%",
+    flex: 1.15,
     height: "100%",
 
     alignItems: "center",
@@ -282,13 +365,6 @@ const styles = StyleSheet.create({
   },
 
   searchButton: {
-    width: 56,
-    height: 56,
-
-    marginTop: -25,
-
-    borderRadius: 19,
-
     alignItems: "center",
     justifyContent: "center",
 

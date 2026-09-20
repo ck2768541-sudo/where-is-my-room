@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -88,6 +89,12 @@ type Property = {
 
 export default function SeekerHomeScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [location, setLocation] =
     useState("");
@@ -775,10 +782,25 @@ export default function SeekerHomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 26,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         {/* PREMIUM HEADER */}
         <View style={styles.topHeader}>
           <View style={styles.brandWrap}>
@@ -853,7 +875,12 @@ export default function SeekerHomeScreen() {
             </Text>
           </View>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
             Find a place{"\n"}that fits your life.
           </Text>
 
@@ -862,7 +889,12 @@ export default function SeekerHomeScreen() {
             location, budget and distance.
           </Text>
 
-          <View style={styles.heroStatsRow}>
+          <View
+            style={[
+              styles.heroStatsRow,
+              isSmallScreen && styles.heroStatsRowSmall,
+            ]}
+          >
             <View style={styles.heroStatItem}>
               <Ionicons
                 name="location-outline"
@@ -903,7 +935,12 @@ export default function SeekerHomeScreen() {
         </View>
 
         {/* SEARCH + FILTERS */}
-        <View style={styles.searchPanel}>
+        <View
+          style={[
+            styles.searchPanel,
+            isSmallScreen && styles.searchPanelSmall,
+          ]}
+        >
           <View style={styles.panelHeader}>
             <View>
               <Text style={styles.panelEyebrow}>
@@ -1050,7 +1087,12 @@ export default function SeekerHomeScreen() {
               : "Monthly rent"}
           </Text>
 
-          <View style={styles.rentRangeRow}>
+          <View
+            style={[
+              styles.rentRangeRow,
+              isSmallScreen && styles.rentRangeRowSmall,
+            ]}
+          >
             <View style={styles.rentInputContainer}>
               <Text style={styles.currencyText}>₹</Text>
               <TextInput
@@ -1064,7 +1106,12 @@ export default function SeekerHomeScreen() {
               />
             </View>
 
-            <View style={styles.rentDivider}>
+            <View
+              style={[
+                styles.rentDivider,
+                isSmallScreen && styles.rentDividerSmall,
+              ]}
+            >
               <Text style={styles.rentRangeSeparator}>
                 —
               </Text>
@@ -1226,7 +1273,12 @@ export default function SeekerHomeScreen() {
             <Text style={styles.resultsEyebrow}>
               DISCOVER
             </Text>
-            <Text style={styles.resultsTitle}>
+            <Text
+              style={[
+                styles.resultsTitle,
+                isSmallScreen && styles.resultsTitleSmall,
+              ]}
+            >
               Available properties
             </Text>
           </View>
@@ -1354,14 +1406,18 @@ export default function SeekerHomeScreen() {
                   {imageUrl ? (
                     <Image
                       source={{ uri: imageUrl }}
-                      style={styles.propertyImage}
+                      style={[
+                        styles.propertyImage,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
                       resizeMode="cover"
                     />
                   ) : (
                     <View
-                      style={
-                        styles.noImageContainer
-                      }
+                      style={[
+                        styles.noImageContainer,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
                     >
                       <View
                         style={
@@ -1431,12 +1487,16 @@ export default function SeekerHomeScreen() {
                   style={styles.propertyContent}
                 >
                   <View
-                    style={styles.propertyTopRow}
+                    style={[
+                      styles.propertyTopRow,
+                      isSmallScreen && styles.propertyTopRowSmall,
+                    ]}
                   >
                     <View
-                      style={
-                        styles.propertyTitleWrap
-                      }
+                      style={[
+                        styles.propertyTitleWrap,
+                        isSmallScreen && styles.propertyTitleWrapSmall,
+                      ]}
                     >
                       <Text
                         style={
@@ -1471,9 +1531,10 @@ export default function SeekerHomeScreen() {
                     </View>
 
                     <View
-                      style={
-                        styles.rentBlock
-                      }
+                      style={[
+                        styles.rentBlock,
+                        isSmallScreen && styles.rentBlockSmall,
+                      ]}
                     >
                       {property.propertyType === "hotel" ? (
                         <>
@@ -1535,9 +1596,10 @@ export default function SeekerHomeScreen() {
                   <View style={styles.cardDivider} />
 
                   <View
-                    style={
-                      styles.cardBottomRow
-                    }
+                    style={[
+                      styles.cardBottomRow,
+                      isSmallScreen && styles.cardBottomRowSmall,
+                    ]}
                   >
                     <View
                       style={
@@ -1616,9 +1678,10 @@ export default function SeekerHomeScreen() {
                     </View>
 
                     <View
-                      style={
-                        styles.viewDetailsButton
-                      }
+                      style={[
+                        styles.viewDetailsButton,
+                        isSmallScreen && styles.viewDetailsButtonSmall,
+                      ]}
                     >
                       <Text
                         style={
@@ -1639,6 +1702,7 @@ export default function SeekerHomeScreen() {
               </TouchableOpacity>
             );
           })}
+        </View>
       </ScrollView>
 
       <SeekerBottomNav />
@@ -1652,10 +1716,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FD",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 26,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   topHeader: {
@@ -1666,6 +1739,8 @@ const styles = StyleSheet.create({
   },
 
   brandWrap: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -1810,6 +1885,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
+  titleSmall: {
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: -0.8,
+  },
+
   subtitle: {
     marginTop: 11,
     maxWidth: 305,
@@ -1822,6 +1903,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
+    rowGap: 8,
+  },
+
+  heroStatsRowSmall: {
+    marginTop: 17,
   },
 
   heroStatItem: {
@@ -1858,6 +1945,11 @@ const styles = StyleSheet.create({
       height: 7,
     },
     elevation: 3,
+  },
+
+  searchPanelSmall: {
+    padding: 15,
+    borderRadius: 22,
   },
 
   panelHeader: {
@@ -2002,6 +2094,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  rentRangeRowSmall: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 10,
+  },
+
   rentInputContainer: {
     flex: 1,
     minHeight: 54,
@@ -2031,6 +2129,10 @@ const styles = StyleSheet.create({
   rentDivider: {
     width: 28,
     alignItems: "center",
+  },
+
+  rentDividerSmall: {
+    display: "none",
   },
 
   rentRangeSeparator: {
@@ -2112,6 +2214,7 @@ const styles = StyleSheet.create({
 
   quickActionTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -2148,6 +2251,10 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.5,
     color: "#111827",
+  },
+
+  resultsTitleSmall: {
+    fontSize: 19,
   },
 
   resultsCountBadge: {
@@ -2282,6 +2389,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F2F4F7",
   },
 
+  propertyImageSmall: {
+    height: 180,
+  },
+
   noImageContainer: {
     width: "100%",
     height: 205,
@@ -2347,9 +2458,19 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
 
+  propertyTopRowSmall: {
+    flexDirection: "column",
+  },
+
   propertyTitleWrap: {
     flex: 1,
+    minWidth: 0,
     paddingRight: 12,
+  },
+
+  propertyTitleWrapSmall: {
+    width: "100%",
+    paddingRight: 0,
   },
 
   propertyTitle: {
@@ -2362,6 +2483,11 @@ const styles = StyleSheet.create({
 
   rentBlock: {
     alignItems: "flex-end",
+  },
+
+  rentBlockSmall: {
+    marginTop: 12,
+    alignItems: "flex-start",
   },
 
   hotelPriceLine: {
@@ -2414,6 +2540,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  cardBottomRowSmall: {
+    flexDirection: "column",
+    alignItems: "stretch",
   },
 
   propertyInfoRow: {
@@ -2466,6 +2598,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     backgroundColor: "#F8F7FF",
+  },
+
+  viewDetailsButtonSmall: {
+    alignSelf: "flex-start",
   },
 
   viewDetailsText: {

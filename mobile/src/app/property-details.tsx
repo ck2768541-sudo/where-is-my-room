@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
   Linking,
   SafeAreaView,
@@ -12,13 +11,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
 import { API_BASE_URL } from "../config/api";
 import { getAuthToken } from "../utils/authStorage";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
 
 type Property = {
   _id: string;
@@ -58,6 +57,12 @@ type Property = {
 
 export default function PropertyDetailsScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const { propertyId } = useLocalSearchParams<{
     propertyId: string;
@@ -290,7 +295,22 @@ export default function PropertyDetailsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <View style={styles.topBar}>
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
+        <View
+          style={[
+            styles.topBar,
+            {
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.backButton}
         onPress={() => {
@@ -337,11 +357,23 @@ export default function PropertyDetailsScreen() {
                 (photo, index) => (
                   <View
                     key={`${photo}-${index}`}
-                    style={styles.photoPage}
+                    style={[
+                      styles.photoPage,
+                      {
+                        width: width,
+                        height: isSmallScreen ? 235 : 285,
+                      },
+                    ]}
                   >
                     <Image
                       source={{ uri: photo }}
-                      style={styles.propertyImage}
+                      style={[
+                        styles.propertyImage,
+                        {
+                          width: width,
+                          height: isSmallScreen ? 235 : 285,
+                        },
+                      ]}
                       resizeMode="cover"
                     />
 
@@ -361,7 +393,12 @@ export default function PropertyDetailsScreen() {
               )}
             </ScrollView>
           ) : (
-            <View style={styles.noPhoto}>
+            <View
+              style={[
+                styles.noPhoto,
+                isSmallScreen && styles.noPhotoSmall,
+              ]}
+            >
               <View style={styles.noPhotoIconBox}>
                 <Ionicons
                   name="image-outline"
@@ -381,14 +418,26 @@ export default function PropertyDetailsScreen() {
           )}
         </View>
 
-        <View style={styles.mainContent}>
+        <View
+          style={[
+            styles.mainContent,
+            {
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
           <View style={styles.typeBadge}>
             <Text style={styles.typeBadgeText}>
               {property.propertyType.toUpperCase()}
             </Text>
           </View>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
             {property.title}
           </Text>
 
@@ -514,7 +563,12 @@ export default function PropertyDetailsScreen() {
               {property.acAvailable &&
               property.acPricePerDay !== null &&
               property.acPricePerDay !== undefined ? (
-                <View style={styles.detailRow}>
+                <View
+                  style={[
+                    styles.detailRow,
+                    isSmallScreen && styles.detailRowSmall,
+                  ]}
+                >
                   <View style={styles.detailLabelWrap}>
                     <View style={styles.detailMiniIcon}>
                       <Ionicons
@@ -547,7 +601,12 @@ export default function PropertyDetailsScreen() {
               {property.nonAcAvailable &&
               property.nonAcPricePerDay !== null &&
               property.nonAcPricePerDay !== undefined ? (
-                <View style={styles.detailRow}>
+                <View
+                style={[
+                  styles.detailRow,
+                  isSmallScreen && styles.detailRowSmall,
+                ]}
+              >
                   <View style={styles.detailLabelWrap}>
                     <View style={styles.detailMiniIcon}>
                       <Ionicons
@@ -570,7 +629,12 @@ export default function PropertyDetailsScreen() {
             </View>
           ) : (
             <View style={styles.detailCard}>
-              <View style={styles.detailRow}>
+              <View
+                style={[
+                  styles.detailRow,
+                  isSmallScreen && styles.detailRowSmall,
+                ]}
+              >
                 <View style={styles.detailLabelWrap}>
                   <View style={styles.detailMiniIcon}>
                     <Ionicons
@@ -592,7 +656,12 @@ export default function PropertyDetailsScreen() {
 
               <View style={styles.divider} />
 
-              <View style={styles.detailRow}>
+              <View
+                style={[
+                  styles.detailRow,
+                  isSmallScreen && styles.detailRowSmall,
+                ]}
+              >
                 <View style={styles.detailLabelWrap}>
                   <View style={styles.detailMiniIcon}>
                     <Ionicons
@@ -739,7 +808,12 @@ export default function PropertyDetailsScreen() {
             </View>
           </View>
 
-          <View style={styles.ownerCard}>
+          <View
+            style={[
+              styles.ownerCard,
+              isSmallScreen && styles.ownerCardSmall,
+            ]}
+          >
             <View style={styles.ownerAvatar}>
               <Ionicons
                 name="person"
@@ -781,7 +855,12 @@ export default function PropertyDetailsScreen() {
           </View>
 
           {property.owner?.phone ? (
-            <View style={styles.contactButtons}>
+            <View
+              style={[
+                styles.contactButtons,
+                isSmallScreen && styles.contactButtonsSmall,
+              ]}
+            >
               <TouchableOpacity
                 style={styles.callButton}
                 activeOpacity={0.9}
@@ -829,6 +908,7 @@ export default function PropertyDetailsScreen() {
             </Text>
           </View>
         </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -841,7 +921,13 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    alignItems: "center",
     paddingBottom: 54,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   glowOne: {
@@ -963,7 +1049,6 @@ const styles = StyleSheet.create({
 
   topBar: {
     height: 72,
-    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1012,14 +1097,10 @@ const styles = StyleSheet.create({
   },
 
   photoPage: {
-    width: SCREEN_WIDTH,
-    height: 285,
     position: "relative",
   },
 
   propertyImage: {
-    width: SCREEN_WIDTH,
-    height: 285,
     backgroundColor: "#EEF0F6",
   },
 
@@ -1049,6 +1130,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F5FF",
   },
 
+  noPhotoSmall: {
+    height: 220,
+    paddingHorizontal: 16,
+  },
+
   noPhotoIconBox: {
     width: 62,
     height: 62,
@@ -1072,7 +1158,6 @@ const styles = StyleSheet.create({
   },
 
   mainContent: {
-    paddingHorizontal: 20,
     paddingTop: 22,
   },
 
@@ -1100,6 +1185,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -0.6,
+  },
+
   hotelPriceSummary: {
     marginTop: 12,
     flexDirection: "row",
@@ -1109,6 +1200,7 @@ const styles = StyleSheet.create({
 
   hotelPriceChip: {
     minHeight: 38,
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1209,6 +1301,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
   },
 
   sectionEyebrow: {
@@ -1258,8 +1351,15 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
+  detailRowSmall: {
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    rowGap: 10,
+  },
+
   detailLabelWrap: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -1274,6 +1374,7 @@ const styles = StyleSheet.create({
   },
 
   detailLabel: {
+    flexShrink: 1,
     marginLeft: 10,
     fontSize: 12,
     fontWeight: "600",
@@ -1319,6 +1420,7 @@ const styles = StyleSheet.create({
   },
 
   amenityBadge: {
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1340,6 +1442,7 @@ const styles = StyleSheet.create({
   },
 
   amenityText: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     color: "#475467",
@@ -1355,6 +1458,10 @@ const styles = StyleSheet.create({
     borderColor: "#E8EAF2",
   },
 
+  ownerCardSmall: {
+    alignItems: "flex-start",
+  },
+
   ownerAvatar: {
     width: 54,
     height: 54,
@@ -1366,6 +1473,7 @@ const styles = StyleSheet.create({
 
   ownerInfo: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 13,
   },
 
@@ -1391,7 +1499,9 @@ const styles = StyleSheet.create({
   ownerContact: {
     marginTop: 5,
     fontSize: 11,
+    lineHeight: 17,
     color: "#667085",
+    flexShrink: 1,
   },
 
   contactButtons: {
@@ -1400,8 +1510,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  contactButtonsSmall: {
+    flexDirection: "column",
+  },
+
   callButton: {
     flex: 1,
+    minWidth: 0,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -1421,6 +1536,7 @@ const styles = StyleSheet.create({
 
   whatsappButton: {
     flex: 1,
+    minWidth: 0,
     height: 54,
     flexDirection: "row",
     alignItems: "center",

@@ -7,12 +7,18 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
 export default function OwnerBottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalInset =
+    width < 360 ? 6 : width < 430 ? 8 : 10;
 
   useEffect(() => {
     const backAction = () => {
@@ -54,8 +60,22 @@ export default function OwnerBottomNav() {
     pathname === route;
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.container}>
+    <View
+      style={[
+        styles.wrapper,
+        {
+          left: horizontalInset,
+          right: horizontalInset,
+          bottom: isSmallScreen ? 6 : 10,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.container,
+          isSmallScreen && styles.containerSmall,
+        ]}
+      >
         {/* HOME */}
         <TouchableOpacity
           style={styles.navItem}
@@ -70,7 +90,7 @@ export default function OwnerBottomNav() {
                 ? "home"
                 : "home-outline"
             }
-            size={21}
+            size={isSmallScreen ? 20 : 21}
             color={
               isActive("/owner-home")
                 ? "#635BFF"
@@ -81,9 +101,11 @@ export default function OwnerBottomNav() {
           <Text
             style={[
               styles.navText,
+              isSmallScreen && styles.navTextSmall,
               isActive("/owner-home") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Home
           </Text>
@@ -103,7 +125,7 @@ export default function OwnerBottomNav() {
                 ? "business"
                 : "business-outline"
             }
-            size={21}
+            size={isSmallScreen ? 20 : 21}
             color={
               isActive("/owner-properties")
                 ? "#635BFF"
@@ -114,9 +136,11 @@ export default function OwnerBottomNav() {
           <Text
             style={[
               styles.navText,
+              isSmallScreen && styles.navTextSmall,
               isActive("/owner-properties") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Listings
           </Text>
@@ -125,7 +149,10 @@ export default function OwnerBottomNav() {
         {/* CENTER ADD */}
         <View style={styles.centerSpace}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[
+              styles.addButton,
+              isSmallScreen && styles.addButtonSmall,
+            ]}
             activeOpacity={0.9}
             onPress={() =>
               goTo("/owner-add-property")
@@ -133,7 +160,7 @@ export default function OwnerBottomNav() {
           >
             <Ionicons
               name="add"
-              size={29}
+              size={isSmallScreen ? 27 : 29}
               color="#FFFFFF"
             />
           </TouchableOpacity>
@@ -153,7 +180,7 @@ export default function OwnerBottomNav() {
                 ? "notifications"
                 : "notifications-outline"
             }
-            size={21}
+            size={isSmallScreen ? 20 : 21}
             color={
               isActive("/owner-activity")
                 ? "#635BFF"
@@ -164,9 +191,11 @@ export default function OwnerBottomNav() {
           <Text
             style={[
               styles.navText,
+              isSmallScreen && styles.navTextSmall,
               isActive("/owner-activity") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Activity
           </Text>
@@ -186,7 +215,7 @@ export default function OwnerBottomNav() {
                 ? "person"
                 : "person-outline"
             }
-            size={21}
+            size={isSmallScreen ? 20 : 21}
             color={
               isActive("/owner-profile")
                 ? "#635BFF"
@@ -197,9 +226,11 @@ export default function OwnerBottomNav() {
           <Text
             style={[
               styles.navText,
+              isSmallScreen && styles.navTextSmall,
               isActive("/owner-profile") &&
                 styles.navTextActive,
             ]}
+            numberOfLines={1}
           >
             Profile
           </Text>
@@ -212,9 +243,6 @@ export default function OwnerBottomNav() {
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    bottom: 10,
     zIndex: 999,
     elevation: 20,
   },
@@ -245,12 +273,21 @@ const styles = StyleSheet.create({
     elevation: 14,
   },
 
+  containerSmall: {
+    height: 68,
+    borderRadius: 21,
+    paddingHorizontal: 2,
+  },
+
   navItem: {
-    width: "18%",
+    flex: 1,
+    minWidth: 0,
     height: "100%",
 
     alignItems: "center",
     justifyContent: "center",
+
+    paddingHorizontal: 2,
   },
 
   navText: {
@@ -262,12 +299,18 @@ const styles = StyleSheet.create({
     color: "#98A2B3",
   },
 
+  navTextSmall: {
+    marginTop: 3,
+    fontSize: 7,
+  },
+
   navTextActive: {
     color: "#635BFF",
   },
 
   centerSpace: {
     width: "20%",
+    minWidth: 56,
 
     height: "100%",
 
@@ -300,5 +343,16 @@ const styles = StyleSheet.create({
     },
 
     elevation: 10,
+  },
+
+  addButtonSmall: {
+    width: 52,
+    height: 52,
+
+    marginTop: -22,
+
+    borderRadius: 18,
+
+    borderWidth: 4,
   },
 });

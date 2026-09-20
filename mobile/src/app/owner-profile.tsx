@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -44,6 +45,12 @@ type OwnerUser = {
 
 export default function OwnerProfileScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [user, setUser] =
     useState<OwnerUser | null>(null);
@@ -264,18 +271,43 @@ export default function OwnerProfileScreen() {
       <View style={styles.glowTwo} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 20 : 27,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         {/* HEADER */}
 
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            isSmallScreen && styles.headerSmall,
+          ]}
+        >
           <View>
             <Text style={styles.headerEyebrow}>
               ACCOUNT
             </Text>
 
-            <Text style={styles.headerTitle}>
+            <Text
+              style={[
+                styles.headerTitle,
+                isSmallScreen && styles.headerTitleSmall,
+              ]}
+            >
               Your Profile
             </Text>
           </View>
@@ -304,7 +336,12 @@ export default function OwnerProfileScreen() {
           <>
             {/* PROFILE HERO */}
 
-            <View style={styles.profileHero}>
+            <View
+              style={[
+                styles.profileHero,
+                isSmallScreen && styles.profileHeroSmall,
+              ]}
+            >
               <View style={styles.heroGlow} />
 
               <TouchableOpacity
@@ -392,7 +429,12 @@ export default function OwnerProfileScreen() {
               </Text>
             </View>
 
-            <View style={styles.detailsCard}>
+            <View
+              style={[
+                styles.detailsCard,
+                isSmallScreen && styles.cardSmall,
+              ]}
+            >
               <View style={styles.detailRow}>
                 <View
                   style={[
@@ -490,7 +532,12 @@ export default function OwnerProfileScreen() {
               </Text>
             </View>
 
-            <View style={styles.actionsCard}>
+            <View
+              style={[
+                styles.actionsCard,
+                isSmallScreen && styles.cardSmall,
+              ]}
+            >
               <TouchableOpacity
                 style={styles.actionRow}
                 activeOpacity={0.8}
@@ -625,7 +672,12 @@ export default function OwnerProfileScreen() {
               </Text>
             </View>
 
-            <View style={styles.actionsCard}>
+            <View
+              style={[
+                styles.actionsCard,
+                isSmallScreen && styles.cardSmall,
+              ]}
+            >
               <TouchableOpacity
                 style={styles.actionRow}
                 activeOpacity={0.8}
@@ -794,7 +846,10 @@ export default function OwnerProfileScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.logoutButton}
+              style={[
+                styles.logoutButton,
+                isSmallScreen && styles.logoutButtonSmall,
+              ]}
               activeOpacity={0.85}
               onPress={handleLogout}
             >
@@ -824,6 +879,7 @@ export default function OwnerProfileScreen() {
             </TouchableOpacity>
           </>
         )}
+        </View>
       </ScrollView>
 
       <OwnerBottomNav />
@@ -857,10 +913,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 27,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -868,6 +933,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 21,
+    gap: 12,
+  },
+
+  headerSmall: {
+    alignItems: "flex-start",
   },
 
   headerEyebrow: {
@@ -883,6 +953,11 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.7,
     color: "#111827",
+  },
+
+  headerTitleSmall: {
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
 
   brandLogo: {
@@ -926,6 +1001,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 28,
     backgroundColor: "#111827",
+  },
+
+  profileHeroSmall: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: 24,
   },
 
   heroGlow: {
@@ -998,6 +1079,8 @@ const styles = StyleSheet.create({
 
   ownerName: {
     marginTop: 15,
+    maxWidth: "100%",
+    textAlign: "center",
     fontSize: 21,
     fontWeight: "900",
     letterSpacing: -0.5,
@@ -1064,6 +1147,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  cardSmall: {
+    paddingHorizontal: 13,
+    borderRadius: 20,
+  },
+
   detailRow: {
     minHeight: 78,
     flexDirection: "row",
@@ -1092,6 +1180,7 @@ const styles = StyleSheet.create({
 
   detailContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -1103,6 +1192,7 @@ const styles = StyleSheet.create({
 
   detailValue: {
     marginTop: 4,
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: "800",
     color: "#111827",
@@ -1165,6 +1255,7 @@ const styles = StyleSheet.create({
 
   actionContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -1176,6 +1267,7 @@ const styles = StyleSheet.create({
 
   actionText: {
     marginTop: 4,
+    flexShrink: 1,
     fontSize: 9,
     color: "#98A2B3",
   },
@@ -1202,7 +1294,14 @@ const styles = StyleSheet.create({
 
   logoutContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
+  },
+
+  logoutButtonSmall: {
+    minHeight: 72,
+    paddingHorizontal: 13,
+    borderRadius: 20,
   },
 
   logoutTitle: {
@@ -1213,6 +1312,7 @@ const styles = StyleSheet.create({
 
   logoutText: {
     marginTop: 4,
+    flexShrink: 1,
     fontSize: 9,
     color: "#F04438",
   },

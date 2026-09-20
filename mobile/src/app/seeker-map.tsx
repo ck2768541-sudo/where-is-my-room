@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -38,6 +39,11 @@ type Property = {
 
 export default function SeekerMapScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 16 : 18;
 
   const [latitude, setLatitude] =
     useState<number | null>(null);
@@ -369,7 +375,15 @@ export default function SeekerMapScreen() {
         <View style={styles.glowOne} />
         <View style={styles.glowTwo} />
 
-        <View style={styles.errorHeader}>
+        <View
+          style={[
+            styles.errorHeader,
+            {
+              left: horizontalPadding,
+              right: horizontalPadding,
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.backButton}
             activeOpacity={0.8}
@@ -442,7 +456,16 @@ export default function SeekerMapScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingVertical: isSmallScreen ? 10 : 13,
+            minHeight: isSmallScreen ? 86 : 96,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           activeOpacity={0.8}
@@ -466,11 +489,21 @@ export default function SeekerMapScreen() {
             EXPLORE NEARBY
           </Text>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
             Map view
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text
+            style={[
+              styles.subtitle,
+              isSmallScreen && styles.subtitleSmall,
+            ]}
+          >
             {properties.length} mapped{" "}
             {properties.length === 1
               ? "property"
@@ -526,7 +559,14 @@ export default function SeekerMapScreen() {
         />
 
         <View
-          style={styles.mapInfoPill}
+          style={[
+            styles.mapInfoPill,
+            {
+              left: horizontalPadding,
+              right: isSmallScreen ? horizontalPadding : undefined,
+              bottom: isSmallScreen ? 88 : 95,
+            },
+          ]}
           pointerEvents="none"
         >
           <View style={styles.userDot} />
@@ -569,11 +609,8 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    minHeight: 96,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 13,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E8EAF2",
@@ -582,8 +619,6 @@ const styles = StyleSheet.create({
   errorHeader: {
     position: "absolute",
     top: 18,
-    left: 20,
-    right: 20,
     zIndex: 5,
     flexDirection: "row",
     alignItems: "center",
@@ -625,6 +660,7 @@ const styles = StyleSheet.create({
 
   headerTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 13,
   },
 
@@ -643,15 +679,28 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 19,
+    letterSpacing: -0.35,
+  },
+
   subtitle: {
     marginTop: 3,
     fontSize: 11,
+    lineHeight: 16,
     color: "#98A2B3",
+    flexShrink: 1,
+  },
+
+  subtitleSmall: {
+    fontSize: 10,
+    lineHeight: 14,
   },
 
   locationBadge: {
     width: 42,
     height: 42,
+    flexShrink: 0,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -672,10 +721,9 @@ const styles = StyleSheet.create({
 
   mapInfoPill: {
     position: "absolute",
-    left: 16,
-    bottom: 95,
     flexDirection: "row",
     alignItems: "center",
+    maxWidth: "92%",
     paddingHorizontal: 13,
     paddingVertical: 10,
     borderRadius: 14,
@@ -701,6 +749,7 @@ const styles = StyleSheet.create({
   },
 
   mapInfoText: {
+    flexShrink: 1,
     marginLeft: 7,
     fontSize: 10,
     fontWeight: "700",
@@ -711,7 +760,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
   },
 
   loadingIconBox: {

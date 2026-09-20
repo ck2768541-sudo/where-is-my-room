@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -36,6 +37,12 @@ type NotificationItem = {
 
 export default function SeekerNotificationsScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [notifications, setNotifications] =
     useState<NotificationItem[]>([]);
@@ -264,9 +271,24 @@ export default function SeekerNotificationsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 24,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -285,7 +307,12 @@ export default function SeekerNotificationsScreen() {
               STAYRENT
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Notifications
             </Text>
           </View>
@@ -301,7 +328,12 @@ export default function SeekerNotificationsScreen() {
           ) : null}
         </View>
 
-        <View style={styles.heroCard}>
+        <View
+          style={[
+            styles.heroCard,
+            isSmallScreen && styles.heroCardSmall,
+          ]}
+        >
           <View style={styles.heroIcon}>
             <Ionicons
               name="notifications-outline"
@@ -322,7 +354,12 @@ export default function SeekerNotificationsScreen() {
           </View>
         </View>
 
-        <View style={styles.sectionRow}>
+        <View
+          style={[
+            styles.sectionRow,
+            isSmallScreen && styles.sectionRowSmall,
+          ]}
+        >
           <View>
             <Text style={styles.sectionEyebrow}>
               RECENT
@@ -432,6 +469,7 @@ export default function SeekerNotificationsScreen() {
                 key={notification._id}
                 style={[
                   styles.notificationCard,
+                  isSmallScreen && styles.notificationCardSmall,
                   !notification.isRead &&
                     styles.unreadCard,
                 ]}
@@ -502,6 +540,7 @@ export default function SeekerNotificationsScreen() {
               </TouchableOpacity>
             ))
           : null}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -513,10 +552,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FD",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 50,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -538,6 +586,7 @@ const styles = StyleSheet.create({
 
   headerCopy: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -553,6 +602,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "900",
     color: "#111827",
+  },
+
+  titleSmall: {
+    fontSize: 21,
   },
 
   unreadBadge: {
@@ -579,6 +632,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
   },
 
+  heroCardSmall: {
+    padding: 16,
+    borderRadius: 20,
+  },
+
   heroIcon: {
     width: 54,
     height: 54,
@@ -590,6 +648,7 @@ const styles = StyleSheet.create({
 
   heroCopy: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 14,
   },
 
@@ -612,6 +671,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  sectionRowSmall: {
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
 
   sectionEyebrow: {
@@ -624,6 +689,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginTop: 4,
     fontSize: 20,
+    flexShrink: 1,
     fontWeight: "900",
     color: "#111827",
   },
@@ -717,6 +783,11 @@ const styles = StyleSheet.create({
     borderColor: "#E8EAF2",
   },
 
+  notificationCardSmall: {
+    padding: 13,
+    borderRadius: 17,
+  },
+
   unreadCard: {
     backgroundColor: "#F8F7FF",
     borderColor: "#D9D6FE",
@@ -737,6 +808,7 @@ const styles = StyleSheet.create({
 
   notificationContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -747,6 +819,7 @@ const styles = StyleSheet.create({
 
   notificationTitle: {
     flex: 1,
+    minWidth: 0,
     fontSize: 13,
     fontWeight: "900",
     color: "#111827",
@@ -763,6 +836,7 @@ const styles = StyleSheet.create({
   notificationMessage: {
     marginTop: 5,
     fontSize: 11,
+    flexShrink: 1,
     lineHeight: 17,
     color: "#667085",
   },

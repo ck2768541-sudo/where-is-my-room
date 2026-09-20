@@ -1,40 +1,90 @@
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import OwnerBottomNav from "../components/OwnerBottomNav";
 
 export default function OwnerActivityScreen() {
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.glowOne} />
       <View style={styles.glowTwo} />
 
-      <View style={styles.content}>
-        <Text style={styles.eyebrow}>
-          ACTIVITY
-        </Text>
+      <View
+        style={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 22 : 32,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
+          <Text style={styles.eyebrow}>
+            ACTIVITY
+          </Text>
 
-        <Text style={styles.title}>
-          Your activity
-        </Text>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
+            Your activity
+          </Text>
 
-        <View style={styles.card}>
-          <View style={styles.iconBox}>
-            <Ionicons
-              name="notifications-outline"
-              size={34}
-              color="#635BFF"
-            />
+          <View
+            style={[
+              styles.card,
+              isSmallScreen && styles.cardSmall,
+            ]}
+          >
+            <View
+              style={[
+                styles.iconBox,
+                isSmallScreen && styles.iconBoxSmall,
+              ]}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={isSmallScreen ? 30 : 34}
+                color="#635BFF"
+              />
+            </View>
+
+            <Text
+              style={[
+                styles.cardTitle,
+                isSmallScreen && styles.cardTitleSmall,
+              ]}
+            >
+              No activity yet
+            </Text>
+
+            <Text style={styles.cardText}>
+              Property enquiries and important
+              updates will appear here in future.
+            </Text>
           </View>
-
-          <Text style={styles.cardTitle}>
-            No activity yet
-          </Text>
-
-          <Text style={styles.cardText}>
-            Property enquiries and important
-            updates will appear here in future.
-          </Text>
         </View>
       </View>
 
@@ -71,9 +121,13 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 32,
+    alignItems: "center",
     paddingBottom: 110,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   eyebrow: {
@@ -91,6 +145,11 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 23,
+    letterSpacing: -0.5,
+  },
+
   card: {
     marginTop: 28,
     paddingVertical: 38,
@@ -106,6 +165,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  cardSmall: {
+    marginTop: 22,
+    paddingVertical: 30,
+    paddingHorizontal: 18,
+    borderRadius: 22,
+  },
+
   iconBox: {
     width: 70,
     height: 70,
@@ -115,6 +181,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1EFFF",
   },
 
+  iconBoxSmall: {
+    width: 62,
+    height: 62,
+    borderRadius: 21,
+  },
+
   cardTitle: {
     marginTop: 18,
     fontSize: 18,
@@ -122,9 +194,13 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  cardTitleSmall: {
+    fontSize: 16,
+  },
+
   cardText: {
     marginTop: 8,
-    maxWidth: 250,
+    maxWidth: 280,
     textAlign: "center",
     fontSize: 11,
     lineHeight: 18,

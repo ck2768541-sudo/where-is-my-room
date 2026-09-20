@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -63,6 +64,12 @@ const problemOptions: {
 
 export default function SeekerSupportScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [problemType, setProblemType] =
     useState<ProblemType>("technical");
@@ -218,9 +225,25 @@ export default function SeekerSupportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 24,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -239,13 +262,23 @@ export default function SeekerSupportScreen() {
               SUPPORT
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Help & Support
             </Text>
           </View>
         </View>
 
-        <View style={styles.heroCard}>
+        <View
+          style={[
+            styles.heroCard,
+            isSmallScreen && styles.heroCardSmall,
+          ]}
+        >
           <View style={styles.heroIcon}>
             <Ionicons
               name="headset-outline"
@@ -269,7 +302,12 @@ export default function SeekerSupportScreen() {
           Contact us directly
         </Text>
 
-        <View style={styles.contactCard}>
+        <View
+          style={[
+            styles.contactCard,
+            isSmallScreen && styles.contactCardSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.contactRow}
             activeOpacity={0.85}
@@ -438,7 +476,10 @@ export default function SeekerSupportScreen() {
         </Text>
 
         <TextInput
-          style={styles.messageInput}
+          style={[
+            styles.messageInput,
+            isSmallScreen && styles.messageInputSmall,
+          ]}
           placeholder="Example: I am unable to find or open a property..."
           placeholderTextColor="#98A2B3"
           multiline
@@ -455,6 +496,7 @@ export default function SeekerSupportScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
+            isSmallScreen && styles.submitButtonSmall,
             submitting &&
               styles.submitButtonDisabled,
           ]}
@@ -481,6 +523,7 @@ export default function SeekerSupportScreen() {
             </>
           )}
         </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -492,10 +535,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FD",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 50,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -516,6 +568,8 @@ const styles = StyleSheet.create({
   },
 
   headerText: {
+    flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -533,11 +587,20 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 21,
+  },
+
   heroCard: {
     alignItems: "center",
     padding: 24,
     borderRadius: 26,
     backgroundColor: "#111827",
+  },
+
+  heroCardSmall: {
+    padding: 20,
+    borderRadius: 22,
   },
 
   heroIcon: {
@@ -560,6 +623,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
     fontSize: 12,
+    maxWidth: 420,
     lineHeight: 18,
     color: "#C7CDD8",
   },
@@ -578,6 +642,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E8EAF2",
+  },
+
+  contactCardSmall: {
+    paddingHorizontal: 13,
+    borderRadius: 18,
   },
 
   contactRow: {
@@ -608,6 +677,7 @@ const styles = StyleSheet.create({
 
   contactContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -620,7 +690,9 @@ const styles = StyleSheet.create({
   contactText: {
     marginTop: 4,
     fontSize: 10,
+    lineHeight: 15,
     color: "#98A2B3",
+    flexShrink: 1,
   },
 
   divider: {
@@ -643,6 +715,7 @@ const styles = StyleSheet.create({
   },
 
   option: {
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -660,6 +733,7 @@ const styles = StyleSheet.create({
   },
 
   optionText: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     color: "#667085",
@@ -681,6 +755,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  messageInputSmall: {
+    minHeight: 130,
+    padding: 14,
+    borderRadius: 17,
+  },
+
   counterText: {
     marginTop: 7,
     textAlign: "right",
@@ -697,6 +777,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#635BFF",
+  },
+
+  submitButtonSmall: {
+    height: 54,
+    borderRadius: 16,
   },
 
   submitButtonDisabled: {

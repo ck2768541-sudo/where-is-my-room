@@ -17,6 +17,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -27,6 +28,12 @@ const TERMS_OF_USE_URL = "https://stayrent.in/terms-of-use";
 
 export default function OwnerRegisterScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 380 ? 16 : width < 430 ? 20 : 24;
+  const contentMaxWidth = 560;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -172,11 +179,19 @@ export default function OwnerRegisterScreen() {
         behavior={
           Platform.OS === "ios"
             ? "padding"
-            : undefined
+            : "height"
         }
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingTop: isSmallScreen ? 12 : 18,
+              paddingBottom: isSmallScreen ? 24 : 32,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -184,6 +199,7 @@ export default function OwnerRegisterScreen() {
             style={[
               styles.animatedContent,
               {
+                maxWidth: contentMaxWidth,
                 opacity: fadeAnim,
                 transform: [
                   {
@@ -227,7 +243,14 @@ export default function OwnerRegisterScreen() {
               </View>
             </View>
 
-            <View style={styles.hero}>
+            <View
+              style={[
+                styles.hero,
+                {
+                  marginTop: isSmallScreen ? 24 : 34,
+                },
+              ]}
+            >
               <View style={styles.heroIcon}>
                 <Ionicons
                   name="business-outline"
@@ -240,19 +263,34 @@ export default function OwnerRegisterScreen() {
                 FOR PROPERTY OWNERS
               </Text>
 
-              <Text style={styles.title}>
+              <Text
+                style={[
+                  styles.title,
+                  isSmallScreen && styles.titleSmall,
+                ]}
+              >
                 List your property.{"\n"}
                 Reach more renters.
               </Text>
 
-              <Text style={styles.subtitle}>
+              <Text
+                style={[
+                  styles.subtitle,
+                  isSmallScreen && styles.subtitleSmall,
+                ]}
+              >
                 Create your owner account to list,
                 manage and update your rental
                 properties from one place.
               </Text>
             </View>
 
-            <View style={styles.formCard}>
+            <View
+              style={[
+                styles.formCard,
+                isSmallScreen && styles.formCardSmall,
+              ]}
+            >
               <View style={styles.formHeader}>
                 <View>
                   <Text style={styles.formEyebrow}>
@@ -562,6 +600,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   glowOne: {
     position: "absolute",
     width: 270,
@@ -584,13 +626,13 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 32,
+    alignItems: "center",
   },
 
   animatedContent: {
+    width: "100%",
     flexGrow: 1,
+    alignSelf: "center",
   },
 
   header: {
@@ -639,7 +681,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    marginTop: 34,
+    width: "100%",
   },
 
   heroIcon: {
@@ -668,15 +710,27 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+  },
+
   subtitle: {
     marginTop: 12,
-    maxWidth: 330,
+    maxWidth: 380,
     fontSize: 14,
     lineHeight: 22,
     color: "#667085",
   },
 
+  subtitleSmall: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
   formCard: {
+    width: "100%",
     marginTop: 28,
     padding: 20,
     borderRadius: 26,
@@ -693,11 +747,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
+  formCardSmall: {
+    marginTop: 22,
+    padding: 16,
+    borderRadius: 22,
+  },
+
   formHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 22,
+    columnGap: 12,
   },
 
   formEyebrow: {
@@ -818,9 +879,11 @@ const styles = StyleSheet.create({
   },
 
   createButtonText: {
+    maxWidth: "75%",
     fontSize: 15,
     fontWeight: "900",
     color: "#FFFFFF",
+    textAlign: "center",
   },
 
   buttonArrow: {
@@ -839,13 +902,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flexWrap: "wrap",
+    paddingHorizontal: 4,
   },
 
   secureNoteText: {
+    flexShrink: 1,
     marginLeft: 6,
     fontSize: 10,
+    lineHeight: 15,
     fontWeight: "600",
     color: "#667085",
+    textAlign: "center",
   },
 
   loginRow: {

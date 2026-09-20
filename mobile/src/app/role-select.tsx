@@ -4,10 +4,12 @@ import {
   Animated,
   Image,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -16,6 +18,12 @@ import { useRouter } from "expo-router";
 
 export default function RoleSelectScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 380 ? 16 : width < 430 ? 20 : 24;
+  const contentMaxWidth = 560;
 
   const seekerScale = useRef(
     new Animated.Value(1)
@@ -57,8 +65,27 @@ export default function RoleSelectScreen() {
       <View style={styles.glowOne} />
       <View style={styles.glowTwo} />
 
-      <View style={styles.content}>
-        <View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 28,
+            paddingBottom: isSmallScreen ? 18 : 24,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[
+            styles.content,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
+          <View>
           <View style={styles.brandRow}>
             <View style={styles.logoBox}>
               <Image
@@ -77,13 +104,23 @@ export default function RoleSelectScreen() {
             CHOOSE YOUR JOURNEY
           </Text>
 
-          <Text style={styles.title}>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
             What brings you
             {"\n"}
             to StayRent?
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text
+            style={[
+              styles.subtitle,
+              isSmallScreen && styles.subtitleSmall,
+            ]}
+          >
             Choose how you want to continue.
             You can search for a place or list
             your own property.
@@ -102,7 +139,10 @@ export default function RoleSelectScreen() {
           >
             <TouchableOpacity
               activeOpacity={1}
-              style={styles.primaryCard}
+              style={[
+                styles.primaryCard,
+                isSmallScreen && styles.cardSmall,
+              ]}
               onPressIn={() =>
                 animatePressIn(seekerScale)
               }
@@ -159,7 +199,10 @@ export default function RoleSelectScreen() {
           >
             <TouchableOpacity
               activeOpacity={1}
-              style={styles.secondaryCard}
+              style={[
+                styles.secondaryCard,
+                isSmallScreen && styles.cardSmall,
+              ]}
               onPressIn={() =>
                 animatePressIn(ownerScale)
               }
@@ -222,8 +265,9 @@ export default function RoleSelectScreen() {
           <Text style={styles.footerText}>
             One platform. Two simple journeys.
           </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -232,6 +276,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F9FD",
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
   },
 
   glowOne: {
@@ -255,11 +308,10 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 24,
+    width: "100%",
+    flexGrow: 1,
     justifyContent: "space-between",
+    alignSelf: "center",
   },
 
   brandRow: {
@@ -300,7 +352,7 @@ const styles = StyleSheet.create({
   },
 
   eyebrow: {
-    marginTop: 42,
+    marginTop: 36,
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 1.5,
@@ -316,17 +368,29 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 31,
+    lineHeight: 37,
+    letterSpacing: -0.9,
+  },
+
   subtitle: {
     marginTop: 14,
-    maxWidth: 330,
+    maxWidth: 360,
     fontSize: 15,
     lineHeight: 23,
     color: "#667085",
   },
 
+  subtitleSmall: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+
   cardsArea: {
     gap: 16,
     marginTop: 26,
+    width: "100%",
   },
 
   primaryCard: {
@@ -350,6 +414,7 @@ const styles = StyleSheet.create({
   primaryIconBox: {
     width: 58,
     height: 58,
+    flexShrink: 0,
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
@@ -359,6 +424,7 @@ const styles = StyleSheet.create({
   secondaryIconBox: {
     width: 58,
     height: 58,
+    flexShrink: 0,
     borderRadius: 20,
     backgroundColor: "#F1EFFF",
     alignItems: "center",
@@ -367,6 +433,7 @@ const styles = StyleSheet.create({
 
   cardTextArea: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 16,
     paddingRight: 8,
   },
@@ -395,12 +462,19 @@ const styles = StyleSheet.create({
 
   primaryArrow: {
     width: 40,
+    flexShrink: 0,
     height: 40,
     borderRadius: 14,
     backgroundColor:
       "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  cardSmall: {
+    minHeight: 156,
+    padding: 16,
+    borderRadius: 20,
   },
 
   secondaryCard: {
@@ -447,6 +521,7 @@ const styles = StyleSheet.create({
 
   secondaryArrow: {
     width: 40,
+    flexShrink: 0,
     height: 40,
     borderRadius: 14,
     backgroundColor: "#F1EFFF",
@@ -460,6 +535,7 @@ const styles = StyleSheet.create({
   },
 
   trustChip: {
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 13,
@@ -471,6 +547,7 @@ const styles = StyleSheet.create({
   },
 
   trustText: {
+    flexShrink: 1,
     marginLeft: 6,
     fontSize: 11,
     fontWeight: "700",

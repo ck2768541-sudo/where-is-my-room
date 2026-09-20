@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -63,6 +64,12 @@ const problemOptions: {
 
 export default function OwnerSupportScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [problemType, setProblemType] =
     useState<ProblemType>("technical");
@@ -219,10 +226,31 @@ export default function OwnerSupportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 24,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
+        <View
+          style={[
+            styles.header,
+            isSmallScreen && styles.headerSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.backButton}
             activeOpacity={0.8}
@@ -240,13 +268,23 @@ export default function OwnerSupportScreen() {
               SUPPORT
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Help & Support
             </Text>
           </View>
         </View>
 
-        <View style={styles.heroCard}>
+        <View
+          style={[
+            styles.heroCard,
+            isSmallScreen && styles.heroCardSmall,
+          ]}
+        >
           <View style={styles.heroIcon}>
             <Ionicons
               name="headset-outline"
@@ -270,7 +308,12 @@ export default function OwnerSupportScreen() {
           Contact us directly
         </Text>
 
-        <View style={styles.contactCard}>
+        <View
+          style={[
+            styles.contactCard,
+            isSmallScreen && styles.contactCardSmall,
+          ]}
+        >
           <TouchableOpacity
             style={styles.contactRow}
             activeOpacity={0.85}
@@ -392,7 +435,12 @@ export default function OwnerSupportScreen() {
           Select problem type
         </Text>
 
-        <View style={styles.optionsWrap}>
+        <View
+          style={[
+            styles.optionsWrap,
+            isSmallScreen && styles.optionsWrapSmall,
+          ]}
+        >
           {problemOptions.map((option) => {
             const selected =
               problemType === option.value;
@@ -439,7 +487,10 @@ export default function OwnerSupportScreen() {
         </Text>
 
         <TextInput
-          style={styles.messageInput}
+          style={[
+            styles.messageInput,
+            isSmallScreen && styles.messageInputSmall,
+          ]}
           placeholder="Example: I am unable to update my property..."
           placeholderTextColor="#98A2B3"
           multiline
@@ -456,6 +507,7 @@ export default function OwnerSupportScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
+            isSmallScreen && styles.submitButtonSmall,
             submitting &&
               styles.submitButtonDisabled,
           ]}
@@ -482,6 +534,7 @@ export default function OwnerSupportScreen() {
             </>
           )}
         </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -493,16 +546,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FD",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 50,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 22,
+    gap: 12,
+  },
+
+  headerSmall: {
+    alignItems: "flex-start",
   },
 
   backButton: {
@@ -517,6 +584,8 @@ const styles = StyleSheet.create({
   },
 
   headerText: {
+    flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -534,11 +603,20 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 21,
+  },
+
   heroCard: {
     alignItems: "center",
     padding: 24,
     borderRadius: 26,
     backgroundColor: "#111827",
+  },
+
+  heroCardSmall: {
+    padding: 20,
+    borderRadius: 22,
   },
 
   heroIcon: {
@@ -559,6 +637,7 @@ const styles = StyleSheet.create({
 
   heroText: {
     marginTop: 8,
+    maxWidth: 420,
     textAlign: "center",
     fontSize: 12,
     lineHeight: 18,
@@ -579,6 +658,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E8EAF2",
+  },
+
+  contactCardSmall: {
+    paddingHorizontal: 13,
+    borderRadius: 19,
   },
 
   contactRow: {
@@ -609,6 +693,7 @@ const styles = StyleSheet.create({
 
   contactContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -620,6 +705,7 @@ const styles = StyleSheet.create({
 
   contactText: {
     marginTop: 4,
+    flexShrink: 1,
     fontSize: 10,
     color: "#98A2B3",
   },
@@ -643,7 +729,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  optionsWrapSmall: {
+    gap: 8,
+  },
+
   option: {
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -661,6 +752,7 @@ const styles = StyleSheet.create({
   },
 
   optionText: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     color: "#667085",
@@ -682,6 +774,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  messageInputSmall: {
+    minHeight: 130,
+    padding: 14,
+    borderRadius: 17,
+  },
+
   counterText: {
     marginTop: 7,
     textAlign: "right",
@@ -698,6 +796,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#635BFF",
+  },
+
+  submitButtonSmall: {
+    height: 54,
+    borderRadius: 16,
   },
 
   submitButtonDisabled: {

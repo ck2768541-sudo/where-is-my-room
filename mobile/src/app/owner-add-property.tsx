@@ -20,6 +20,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -35,6 +36,12 @@ type Furnishing =
 
 export default function OwnerAddPropertyScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -506,11 +513,31 @@ const uploadResponse = await expoFetch(
         }
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingTop: isSmallScreen ? 14 : 18,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <View
+            style={[
+              styles.pageContent,
+              {
+                maxWidth: contentMaxWidth,
+              },
+            ]}
+          >
+          <View
+            style={[
+              styles.header,
+              isSmallScreen && styles.headerSmall,
+            ]}
+          >
             <TouchableOpacity
               style={styles.backButton}
               activeOpacity={0.8}
@@ -544,7 +571,12 @@ const uploadResponse = await expoFetch(
             </View>
           </View>
 
-          <View style={styles.hero}>
+          <View
+            style={[
+              styles.hero,
+              isSmallScreen && styles.heroSmall,
+            ]}
+          >
             <View style={styles.heroIcon}>
               <Ionicons
                 name="add-circle-outline"
@@ -557,7 +589,12 @@ const uploadResponse = await expoFetch(
               NEW LISTING
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Add your{"\n"}
               property.
             </Text>
@@ -569,7 +606,12 @@ const uploadResponse = await expoFetch(
             </Text>
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <View style={styles.formHeader}>
               <View>
                 <Text style={styles.formEyebrow}>
@@ -842,7 +884,12 @@ const uploadResponse = await expoFetch(
               </>
             ) : (
               <>
-                <View style={styles.twoColumnRow}>
+                <View
+                  style={[
+                    styles.twoColumnRow,
+                    isSmallScreen && styles.twoColumnRowSmall,
+                  ]}
+                >
                   <View style={styles.halfField}>
                     <Text style={styles.label}>
                       Monthly rent
@@ -890,7 +937,12 @@ const uploadResponse = await expoFetch(
                   Available for
                 </Text>
 
-                <View style={styles.chipRow}>
+                <View
+                style={[
+                  styles.chipRow,
+                  isSmallScreen && styles.chipRowSmall,
+                ]}
+              >
                   {availableOptions.map((item) => {
                     const selected =
                       availableFor === item.value;
@@ -926,7 +978,12 @@ const uploadResponse = await expoFetch(
                   Furnishing
                 </Text>
 
-                <View style={styles.chipRow}>
+                <View
+                  style={[
+                    styles.chipRow,
+                    isSmallScreen && styles.chipRowSmall,
+                  ]}
+                >
                   {furnishingOptions.map((item) => {
                     const selected =
                       furnishing === item.value;
@@ -961,7 +1018,12 @@ const uploadResponse = await expoFetch(
             )}
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <View style={styles.formHeader}>
               <View>
                 <Text style={styles.formEyebrow}>
@@ -1101,6 +1163,7 @@ const uploadResponse = await expoFetch(
             <TouchableOpacity
               style={[
                 styles.locationButton,
+                isSmallScreen && styles.locationButtonSmall,
                 latitude !== null &&
                   longitude !== null &&
                   styles.locationButtonAdded,
@@ -1161,7 +1224,12 @@ const uploadResponse = await expoFetch(
             </TouchableOpacity>
           </View>
 
-          <View style={styles.formCard}>
+          <View
+            style={[
+              styles.formCard,
+              isSmallScreen && styles.formCardSmall,
+            ]}
+          >
             <View style={styles.formHeader}>
               <View>
                 <Text style={styles.formEyebrow}>
@@ -1188,7 +1256,10 @@ const uploadResponse = await expoFetch(
             </Text>
 
             <TouchableOpacity
-              style={styles.photoButton}
+              style={[
+                styles.photoButton,
+                isSmallScreen && styles.photoButtonSmall,
+              ]}
               activeOpacity={0.85}
               onPress={pickImages}
             >
@@ -1237,7 +1308,10 @@ const uploadResponse = await expoFetch(
                     >
                       <Image
                         source={{ uri }}
-                        style={styles.photoPreview}
+                        style={[
+                          styles.photoPreview,
+                          isSmallScreen && styles.photoPreviewSmall,
+                        ]}
                       />
 
                       <View
@@ -1261,6 +1335,7 @@ const uploadResponse = await expoFetch(
           <TouchableOpacity
             style={[
               styles.button,
+              isSmallScreen && styles.buttonSmall,
               loading && styles.buttonDisabled,
             ]}
             activeOpacity={0.9}
@@ -1315,6 +1390,7 @@ const uploadResponse = await expoFetch(
               your authenticated owner account.
             </Text>
           </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1351,16 +1427,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 56,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
+  },
+
+  headerSmall: {
+    alignItems: "flex-start",
   },
 
   backButton: {
@@ -1377,6 +1467,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
   },
 
   brandLogo: {
@@ -1399,6 +1490,11 @@ const styles = StyleSheet.create({
   hero: {
     marginTop: 30,
     marginBottom: 24,
+  },
+
+  heroSmall: {
+    marginTop: 22,
+    marginBottom: 20,
   },
 
   heroIcon: {
@@ -1427,6 +1523,12 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+  },
+
   subtitle: {
     marginTop: 11,
     maxWidth: 330,
@@ -1452,11 +1554,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  formCardSmall: {
+    padding: 14,
+    borderRadius: 20,
+  },
+
   formHeader: {
     marginBottom: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
   },
 
   formEyebrow: {
@@ -1503,6 +1611,7 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 9,
     minHeight: 52,
     fontSize: 14,
@@ -1531,8 +1640,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
+  chipRowSmall: {
+    gap: 7,
+  },
+
   chip: {
     minHeight: 40,
+    maxWidth: "100%",
     paddingHorizontal: 12,
     paddingVertical: 9,
     flexDirection: "row",
@@ -1550,6 +1664,7 @@ const styles = StyleSheet.create({
   },
 
   chipText: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     color: "#475467",
@@ -1564,8 +1679,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  twoColumnRowSmall: {
+    flexDirection: "column",
+    gap: 0,
+  },
+
   halfField: {
     flex: 1,
+    minWidth: 0,
   },
 
   currency: {
@@ -1595,12 +1716,15 @@ const styles = StyleSheet.create({
   },
 
   hotelRateLabelWrap: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
 
   hotelRateTitle: {
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: "800",
     color: "#344054",
@@ -1649,6 +1773,7 @@ const styles = StyleSheet.create({
 
   locationTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 11,
   },
 
@@ -1661,6 +1786,7 @@ const styles = StyleSheet.create({
   locationButtonSubtext: {
     marginTop: 3,
     fontSize: 9,
+    flexShrink: 1,
     lineHeight: 14,
     color: "#98A2B3",
   },
@@ -1694,6 +1820,7 @@ const styles = StyleSheet.create({
 
   photoButtonTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 11,
   },
 
@@ -1706,6 +1833,7 @@ const styles = StyleSheet.create({
   photoButtonSubtext: {
     marginTop: 3,
     fontSize: 9,
+    flexShrink: 1,
     color: "#98A2B3",
   },
 
@@ -1723,6 +1851,11 @@ const styles = StyleSheet.create({
     height: 92,
     borderRadius: 14,
     backgroundColor: "#EEF0F6",
+  },
+
+  photoPreviewSmall: {
+    width: 104,
+    height: 82,
   },
 
   photoNumber: {
@@ -1763,6 +1896,21 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
+  locationButtonSmall: {
+    padding: 10,
+    borderRadius: 15,
+  },
+
+  photoButtonSmall: {
+    padding: 10,
+    borderRadius: 15,
+  },
+
+  buttonSmall: {
+    height: 56,
+    borderRadius: 16,
+  },
+
   buttonDisabled: {
     opacity: 0.65,
   },
@@ -1789,9 +1937,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 6,
   },
 
   secureNoteText: {
+    flexShrink: 1,
     marginLeft: 6,
     maxWidth: 300,
     fontSize: 10,

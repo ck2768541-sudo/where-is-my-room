@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -35,6 +36,12 @@ type Property = {
 
 export default function SeekerFavoritesScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380 || height < 700;
+  const horizontalPadding =
+    width < 360 ? 14 : width < 430 ? 18 : 20;
+  const contentMaxWidth = 720;
 
   const [favorites, setFavorites] =
     useState<Property[]>([]);
@@ -198,9 +205,24 @@ export default function SeekerFavoritesScreen() {
       <View style={styles.glowTwo} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: isSmallScreen ? 18 : 26,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View
+          style={[
+            styles.pageContent,
+            {
+              maxWidth: contentMaxWidth,
+            },
+          ]}
+        >
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -225,7 +247,12 @@ export default function SeekerFavoritesScreen() {
               YOUR COLLECTION
             </Text>
 
-            <Text style={styles.title}>
+            <Text
+              style={[
+                styles.title,
+                isSmallScreen && styles.titleSmall,
+              ]}
+            >
               Saved properties
             </Text>
 
@@ -244,7 +271,12 @@ export default function SeekerFavoritesScreen() {
         </View>
 
         {!loading && error === "" && (
-          <View style={styles.summaryCard}>
+          <View
+            style={[
+              styles.summaryCard,
+              isSmallScreen && styles.summaryCardSmall,
+            ]}
+          >
             <View style={styles.summaryIcon}>
               <Ionicons
                 name="bookmark-outline"
@@ -385,11 +417,19 @@ export default function SeekerFavoritesScreen() {
                   {imageUrl ? (
                     <Image
                       source={{ uri: imageUrl }}
-                      style={styles.propertyImage}
+                      style={[
+                        styles.propertyImage,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={styles.noImage}>
+                    <View
+                      style={[
+                        styles.noImage,
+                        isSmallScreen && styles.propertyImageSmall,
+                      ]}
+                    >
                       <View
                         style={
                           styles.noImageIconBox
@@ -453,8 +493,18 @@ export default function SeekerFavoritesScreen() {
                 </View>
 
                 <View style={styles.propertyContent}>
-                  <View style={styles.topRow}>
-                    <View style={styles.titleWrap}>
+                  <View
+                    style={[
+                      styles.topRow,
+                      isSmallScreen && styles.topRowSmall,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.titleWrap,
+                        isSmallScreen && styles.titleWrapSmall,
+                      ]}
+                    >
                       <Text
                         style={styles.propertyTitle}
                         numberOfLines={2}
@@ -479,7 +529,12 @@ export default function SeekerFavoritesScreen() {
                       </View>
                     </View>
 
-                    <View style={styles.rentWrap}>
+                    <View
+                      style={[
+                        styles.rentWrap,
+                        isSmallScreen && styles.rentWrapSmall,
+                      ]}
+                    >
                       {property.propertyType === "hotel" ? (
                         <>
                           {property.acAvailable &&
@@ -530,7 +585,12 @@ export default function SeekerFavoritesScreen() {
 
                   <View style={styles.divider} />
 
-                  <View style={styles.bottomRow}>
+                  <View
+                    style={[
+                      styles.bottomRow,
+                      isSmallScreen && styles.bottomRowSmall,
+                    ]}
+                  >
                     <View style={styles.badgeRow}>
                       {property.propertyType === "hotel" ? (
                         <>
@@ -575,7 +635,12 @@ export default function SeekerFavoritesScreen() {
                       )}
                     </View>
 
-                    <View style={styles.viewButton}>
+                    <View
+                      style={[
+                        styles.viewButton,
+                        isSmallScreen && styles.viewButtonSmall,
+                      ]}
+                    >
                       <Text style={styles.viewButtonText}>
                         View
                       </Text>
@@ -591,6 +656,7 @@ export default function SeekerFavoritesScreen() {
               </TouchableOpacity>
             );
           })}
+        </View>
       </ScrollView>
 
       <SeekerBottomNav />
@@ -624,10 +690,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F3FF",
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 26,
+    flexGrow: 1,
+    alignItems: "center",
     paddingBottom: 125,
+  },
+
+  pageContent: {
+    width: "100%",
+    alignSelf: "center",
   },
 
   header: {
@@ -649,6 +724,7 @@ const styles = StyleSheet.create({
 
   headerTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 13,
   },
 
@@ -667,10 +743,17 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  titleSmall: {
+    fontSize: 20,
+    letterSpacing: -0.4,
+  },
+
   subtitle: {
     marginTop: 4,
     fontSize: 11,
+    lineHeight: 16,
     color: "#98A2B3",
+    flexShrink: 1,
   },
 
   headerHeart: {
@@ -696,6 +779,11 @@ const styles = StyleSheet.create({
     borderColor: "#E8EAF2",
   },
 
+  summaryCardSmall: {
+    padding: 12,
+    borderRadius: 18,
+  },
+
   summaryIcon: {
     width: 44,
     height: 44,
@@ -707,6 +795,7 @@ const styles = StyleSheet.create({
 
   summaryTextWrap: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
 
@@ -874,6 +963,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF0F6",
   },
 
+  propertyImageSmall: {
+    height: 180,
+  },
+
   noImage: {
     height: 205,
     alignItems: "center",
@@ -938,9 +1031,19 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
 
+  topRowSmall: {
+    flexDirection: "column",
+  },
+
   titleWrap: {
     flex: 1,
+    minWidth: 0,
     paddingRight: 12,
+  },
+
+  titleWrapSmall: {
+    width: "100%",
+    paddingRight: 0,
   },
 
   propertyTitle: {
@@ -953,6 +1056,11 @@ const styles = StyleSheet.create({
 
   rentWrap: {
     alignItems: "flex-end",
+  },
+
+  rentWrapSmall: {
+    marginTop: 12,
+    alignItems: "flex-start",
   },
 
   hotelPriceLine: {
@@ -1005,10 +1113,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
+  },
+
+  bottomRowSmall: {
+    flexDirection: "column",
+    alignItems: "stretch",
   },
 
   badgeRow: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 7,
@@ -1040,6 +1155,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     backgroundColor: "#F8F7FF",
+  },
+
+  viewButtonSmall: {
+    alignSelf: "flex-start",
   },
 
   viewButtonText: {
