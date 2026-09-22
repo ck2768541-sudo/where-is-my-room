@@ -6,8 +6,13 @@ const {
   getPropertyById,
   getOwnerProperties,
   updatePropertyAvailability,
-    updateProperty,
-      deleteProperty,
+  updateProperty,
+  deleteProperty,
+
+  // Admin moderation
+  getPendingProperties,
+  approveProperty,
+  rejectProperty,
 } = require("../controllers/propertyController");
 
 const {
@@ -17,18 +22,64 @@ const {
 
 const router = express.Router();
 
+/*
+|--------------------------------------------------------------------------
+| SEEKER / OWNER PROPERTY LIST
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   "/",
   protect,
   allowRoles("seeker", "owner"),
   getProperties
 );
+
+/*
+|--------------------------------------------------------------------------
+| OWNER PROPERTIES
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   "/owner/my-properties",
   protect,
   allowRoles("owner"),
   getOwnerProperties
 );
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN MODERATION
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/admin/pending",
+  protect,
+  allowRoles("admin"),
+  getPendingProperties
+);
+
+router.patch(
+  "/admin/:id/approve",
+  protect,
+  allowRoles("admin"),
+  approveProperty
+);
+
+router.patch(
+  "/admin/:id/reject",
+  protect,
+  allowRoles("admin"),
+  rejectProperty
+);
+
+/*
+|--------------------------------------------------------------------------
+| SINGLE PROPERTY
+|--------------------------------------------------------------------------
+*/
 
 router.get(
   "/:id",
@@ -37,6 +88,11 @@ router.get(
   getPropertyById
 );
 
+/*
+|--------------------------------------------------------------------------
+| OWNER UPDATE AVAILABILITY
+|--------------------------------------------------------------------------
+*/
 
 router.patch(
   "/:id/availability",
@@ -45,18 +101,37 @@ router.patch(
   updatePropertyAvailability
 );
 
+/*
+|--------------------------------------------------------------------------
+| OWNER UPDATE PROPERTY
+|--------------------------------------------------------------------------
+*/
+
 router.patch(
   "/:id",
   protect,
   allowRoles("owner"),
   updateProperty
 );
+
+/*
+|--------------------------------------------------------------------------
+| OWNER DELETE PROPERTY
+|--------------------------------------------------------------------------
+*/
+
 router.delete(
   "/:id",
   protect,
   allowRoles("owner"),
   deleteProperty
 );
+
+/*
+|--------------------------------------------------------------------------
+| OWNER CREATE PROPERTY
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   "/",

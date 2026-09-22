@@ -34,6 +34,9 @@ type Property = {
   city: string;
   photos?: string[];
   isAvailable: boolean;
+  isVerified?: boolean;
+  moderationStatus?: "pending" | "approved" | "rejected";
+  rejectionReason?: string;
 };
 
 export default function OwnerPropertiesScreen() {
@@ -609,6 +612,24 @@ export default function OwnerPropertiesScreen() {
               deletingPropertyId ===
               property._id;
 
+            const moderationStatus =
+              property.moderationStatus ||
+              (property.isVerified ? "approved" : "pending");
+
+            const moderationLabel =
+              moderationStatus === "approved"
+                ? "Approved"
+                : moderationStatus === "rejected"
+                ? "Rejected"
+                : "Pending Review";
+
+            const moderationIcon =
+              moderationStatus === "approved"
+                ? "checkmark-circle"
+                : moderationStatus === "rejected"
+                ? "close-circle"
+                : "time";
+
             return (
               <TouchableOpacity
                 key={property._id}
@@ -832,6 +853,79 @@ export default function OwnerPropertiesScreen() {
                           For {property.availableFor}
                         </Text>
                       </View>
+                    )}
+                  </View>
+
+                  <View
+                    style={[
+                      styles.moderationBox,
+                      moderationStatus === "approved"
+                        ? styles.moderationApprovedBox
+                        : moderationStatus === "rejected"
+                        ? styles.moderationRejectedBox
+                        : styles.moderationPendingBox,
+                    ]}
+                  >
+                    <View style={styles.moderationHeader}>
+                      <Ionicons
+                        name={moderationIcon}
+                        size={18}
+                        color={
+                          moderationStatus === "approved"
+                            ? "#027A48"
+                            : moderationStatus === "rejected"
+                            ? "#B42318"
+                            : "#B54708"
+                        }
+                      />
+
+                      <Text
+                        style={[
+                          styles.moderationTitle,
+                          moderationStatus === "approved"
+                            ? styles.moderationApprovedText
+                            : moderationStatus === "rejected"
+                            ? styles.moderationRejectedText
+                            : styles.moderationPendingText,
+                        ]}
+                      >
+                        {moderationLabel}
+                      </Text>
+                    </View>
+
+                    {moderationStatus === "pending" && (
+                      <Text style={styles.moderationMessage}>
+                        Your listing is under admin review. It will be
+                        visible to seekers after approval.
+                      </Text>
+                    )}
+
+                    {moderationStatus === "approved" && (
+                      <Text style={styles.moderationMessage}>
+                        Your listing is approved and can be shown to
+                        seekers while it is available.
+                      </Text>
+                    )}
+
+                    {moderationStatus === "rejected" && (
+                      <>
+                        <Text style={styles.moderationMessage}>
+                          This listing was rejected. Please edit the
+                          property and submit it for review again.
+                        </Text>
+
+                        {property.rejectionReason ? (
+                          <View style={styles.rejectionReasonBox}>
+                            <Text style={styles.rejectionReasonLabel}>
+                              Reason
+                            </Text>
+
+                            <Text style={styles.rejectionReasonText}>
+                              {property.rejectionReason}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </>
                     )}
                   </View>
 
@@ -1611,6 +1705,83 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#635BFF",
     textTransform: "capitalize",
+  },
+
+  moderationBox: {
+    marginTop: 14,
+    padding: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+
+  moderationApprovedBox: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#ABEFC6",
+  },
+
+  moderationPendingBox: {
+    backgroundColor: "#FFFAEB",
+    borderColor: "#FEDF89",
+  },
+
+  moderationRejectedBox: {
+    backgroundColor: "#FFF1F0",
+    borderColor: "#FECDCA",
+  },
+
+  moderationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+
+  moderationTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
+  moderationApprovedText: {
+    color: "#027A48",
+  },
+
+  moderationPendingText: {
+    color: "#B54708",
+  },
+
+  moderationRejectedText: {
+    color: "#B42318",
+  },
+
+  moderationMessage: {
+    marginTop: 7,
+    fontSize: 10,
+    lineHeight: 16,
+    color: "#667085",
+  },
+
+  rejectionReasonBox: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#FECDCA",
+  },
+
+  rejectionReasonLabel: {
+    fontSize: 9,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    color: "#B42318",
+  },
+
+  rejectionReasonText: {
+    marginTop: 4,
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight: "600",
+    color: "#344054",
   },
 
   divider: {

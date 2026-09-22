@@ -60,6 +60,18 @@ function App() {
   const [updatingPropertyId, setUpdatingPropertyId] =
     useState(null);
 
+  const [pendingProperties, setPendingProperties] =
+    useState([]);
+
+  const [pendingPropertiesLoading, setPendingPropertiesLoading] =
+    useState(false);
+
+  const [pendingPropertiesError, setPendingPropertiesError] =
+    useState("");
+
+  const [moderatingPropertyId, setModeratingPropertyId] =
+    useState(null);
+
   const [supportTickets, setSupportTickets] =
     useState([]);
 
@@ -88,13 +100,16 @@ function App() {
     setStatsError("");
     setUsersError("");
     setPropertiesError("");
+    setPendingPropertiesError("");
     setSupportError("");
 
     setUsers([]);
     setProperties([]);
+    setPendingProperties([]);
     setSupportTickets([]);
     setUpdatingUserId(null);
     setUpdatingPropertyId(null);
+    setModeratingPropertyId(null);
     setUpdatingSupportId(null);
 
     setStats({
@@ -618,6 +633,222 @@ function App() {
     }
   };
 
+  const fetchPendingProperties = async () => {
+    try {
+      setPendingPropertiesLoading(true);
+      setPendingPropertiesError("");
+
+      const token =
+        localStorage.getItem("adminToken");
+
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/properties/admin/pending`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          handleLogout();
+          return;
+        }
+
+        setPendingPropertiesError(
+          data?.message ||
+            "Unable to load pending properties."
+        );
+        return;
+      }
+
+      setPendingProperties(
+        Array.isArray(data?.properties)
+          ? data.properties
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "Pending properties error:",
+        error
+      );
+
+      setPendingPropertiesError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setPendingPropertiesLoading(false);
+    }
+  };
+
+  const approvePendingProperty = async (propertyId) => {
+    const confirmed = window.confirm(
+      "Approve this property and make it visible to seekers?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setModeratingPropertyId(propertyId);
+      setPendingPropertiesError("");
+
+      const token =
+        localStorage.getItem("adminToken");
+
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/properties/admin/${propertyId}/approve`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          handleLogout();
+          return;
+        }
+
+        setPendingPropertiesError(
+          data?.message ||
+            "Unable to approve property."
+        );
+        return;
+      }
+
+      setPendingProperties((currentProperties) =>
+        currentProperties.filter(
+          (property) => property._id !== propertyId
+        )
+      );
+
+      await fetchDashboardStats();
+    } catch (error) {
+      console.error(
+        "Approve pending property error:",
+        error
+      );
+
+      setPendingPropertiesError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setModeratingPropertyId(null);
+    }
+  };
+
+  const rejectPendingProperty = async (propertyId) => {
+    const reason = window.prompt(
+      "Enter rejection reason for the owner:"
+    );
+
+    if (reason === null) {
+      return;
+    }
+
+    const cleanReason = reason.trim();
+
+    if (!cleanReason) {
+      window.alert("Rejection reason is required.");
+      return;
+    }
+
+    if (cleanReason.length > 500) {
+      window.alert(
+        "Rejection reason must be 500 characters or less."
+      );
+      return;
+    }
+
+    try {
+      setModeratingPropertyId(propertyId);
+      setPendingPropertiesError("");
+
+      const token =
+        localStorage.getItem("adminToken");
+
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/properties/admin/${propertyId}/reject`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: cleanReason,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          handleLogout();
+          return;
+        }
+
+        setPendingPropertiesError(
+          data?.message ||
+            "Unable to reject property."
+        );
+        return;
+      }
+
+      setPendingProperties((currentProperties) =>
+        currentProperties.filter(
+          (property) => property._id !== propertyId
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Reject pending property error:",
+        error
+      );
+
+      setPendingPropertiesError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setModeratingPropertyId(null);
+    }
+  };
+
   const openWhatsApp = (phone) => {
     if (!phone) return;
 
@@ -674,6 +905,13 @@ function App() {
       activePage === "properties"
     ) {
       fetchProperties();
+    }
+
+    if (
+      isLoggedIn &&
+      activePage === "pending-properties"
+    ) {
+      fetchPendingProperties();
     }
 
     if (
@@ -1403,6 +1641,287 @@ function App() {
     );
   };
 
+  const renderPendingProperties = () => {
+    return (
+      <>
+        {renderPageHeader(
+          "PROPERTY MODERATION",
+          "Pending Properties",
+          "Review new and edited listings before they become visible to StayRent seekers."
+        )}
+
+        <section className="data-card">
+          <div className="data-card-header">
+            <div>
+              <p className="section-eyebrow">
+                REVIEW QUEUE
+              </p>
+
+              <h2>Properties Waiting for Approval</h2>
+
+              <p>
+                Check photos, owner details, location and pricing before approving a listing.
+              </p>
+            </div>
+
+            {!pendingPropertiesLoading && (
+              <div className="count-pill">
+                {pendingProperties.length}
+                <span>pending</span>
+              </div>
+            )}
+          </div>
+
+          {pendingPropertiesLoading && (
+            <div className="empty-state">
+              <div className="spinner" />
+              <h3>Loading pending properties</h3>
+              <p>Fetching listings waiting for review...</p>
+            </div>
+          )}
+
+          {!pendingPropertiesLoading &&
+            pendingPropertiesError && (
+              <div className="inline-alert error-alert">
+                <span className="inline-alert-icon">
+                  !
+                </span>
+                <span>{pendingPropertiesError}</span>
+              </div>
+            )}
+
+          {!pendingPropertiesLoading &&
+            !pendingPropertiesError &&
+            pendingProperties.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  ✓
+                </div>
+                <h3>No pending properties</h3>
+                <p>All submitted listings have been reviewed.</p>
+              </div>
+            )}
+
+          {!pendingPropertiesLoading &&
+            !pendingPropertiesError &&
+            pendingProperties.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gap: "18px",
+                }}
+              >
+                {pendingProperties.map((property) => {
+                  const propertyPrice =
+                    property.propertyType === "hotel"
+                      ? property.nonAcAvailable
+                        ? property.nonAcPricePerDay
+                        : property.acPricePerDay
+                      : property.monthlyRent;
+
+                  return (
+                    <article
+                      key={property._id}
+                      style={{
+                        border: "1px solid #E8EAF2",
+                        borderRadius: "18px",
+                        padding: "18px",
+                        background: "#FFFFFF",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "minmax(220px, 320px) 1fr",
+                          gap: "20px",
+                          alignItems: "start",
+                        }}
+                      >
+                        <div>
+                          {Array.isArray(property.photos) &&
+                          property.photos.length > 0 ? (
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  property.photos.length > 1
+                                    ? "1fr 1fr"
+                                    : "1fr",
+                                gap: "8px",
+                              }}
+                            >
+                              {property.photos.map((photo, index) => (
+                                <img
+                                  key={`${property._id}-${index}`}
+                                  src={photo}
+                                  alt={`${property.title || "Property"} ${index + 1}`}
+                                  style={{
+                                    width: "100%",
+                                    height: index === 0 ? "180px" : "86px",
+                                    objectFit: "cover",
+                                    borderRadius: "12px",
+                                    gridColumn:
+                                      index === 0 &&
+                                      property.photos.length > 1
+                                        ? "1 / -1"
+                                        : "auto",
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div
+                              className="empty-state"
+                              style={{ minHeight: "180px" }}
+                            >
+                              <div className="empty-icon">P</div>
+                              <p>No property photos</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: "12px",
+                              alignItems: "flex-start",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div>
+                              <p className="section-eyebrow">
+                                {(property.propertyType || "property").toUpperCase()}
+                              </p>
+                              <h2
+                                style={{
+                                  margin: "4px 0 6px",
+                                }}
+                              >
+                                {property.title || "Untitled property"}
+                              </h2>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  color: "#667085",
+                                }}
+                              >
+                                {property.address || "-"}, {property.locality || "-"}, {property.city || "-"}, {property.state || "-"} - {property.pincode || "-"}
+                              </p>
+                            </div>
+
+                            <span className="status-badge available-status">
+                              <i />
+                              Pending Review
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(auto-fit, minmax(160px, 1fr))",
+                              gap: "12px",
+                              marginTop: "18px",
+                            }}
+                          >
+                            <div>
+                              <span className="muted-cell">Owner</span>
+                              <div className="primary-cell">
+                                {property.owner?.name || "-"}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="muted-cell">Email</span>
+                              <div className="primary-cell">
+                                {property.owner?.email || "-"}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="muted-cell">Phone</span>
+                              <div className="primary-cell">
+                                {property.owner?.phone || "-"}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="muted-cell">
+                                {property.propertyType === "hotel"
+                                  ? "Starting price / day"
+                                  : "Monthly rent"}
+                              </span>
+                              <div className="rent-cell">
+                                ₹{propertyPrice ?? 0}
+                              </div>
+                            </div>
+                          </div>
+
+                          {property.description && (
+                            <p
+                              style={{
+                                marginTop: "16px",
+                                color: "#475467",
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              {property.description}
+                            </p>
+                          )}
+
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              flexWrap: "wrap",
+                              marginTop: "18px",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="status-action success-action"
+                              disabled={
+                                moderatingPropertyId === property._id
+                              }
+                              onClick={() =>
+                                approvePendingProperty(property._id)
+                              }
+                            >
+                              {moderatingPropertyId === property._id
+                                ? "Processing..."
+                                : "Approve"}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="status-action danger-action"
+                              disabled={
+                                moderatingPropertyId === property._id
+                              }
+                              onClick={() =>
+                                rejectPendingProperty(property._id)
+                              }
+                            >
+                              {moderatingPropertyId === property._id
+                                ? "Processing..."
+                                : "Reject"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+        </section>
+      </>
+    );
+  };
+
   const renderSupport = () => {
     return (
       <>
@@ -1737,6 +2256,24 @@ function App() {
               <button
                 type="button"
                 className={`nav-item ${
+                  activePage === "pending-properties"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActivePage("pending-properties")
+                }
+              >
+                <span className="nav-icon">
+                  ✓
+                </span>
+
+                <span>Pending Properties</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-item ${
                   activePage === "support"
                     ? "active"
                     : ""
@@ -1793,6 +2330,9 @@ function App() {
 
             {activePage === "properties" &&
               renderProperties()}
+
+            {activePage === "pending-properties" &&
+              renderPendingProperties()}
 
             {activePage === "support" &&
               renderSupport()}

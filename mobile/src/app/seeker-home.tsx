@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -23,17 +24,6 @@ import { clearAuthSession, getAuthToken } from "../utils/authStorage";
 import SeekerBottomNav from "../components/SeekerBottomNav";
 
 type PropertyType = "Room" | "PG" | "Flat" | "Hotel";
-
-type AvailabilityType =
-  | "Anyone"
-  | "Male"
-  | "Female"
-  | "Family";
-
-type DistanceOption = {
-  label: string;
-  value: number | null;
-};
 
 type Property = {
   _id: string;
@@ -91,6 +81,9 @@ export default function SeekerHomeScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
 
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const resultsSectionY = useRef(0);
+
   const isSmallScreen = width < 380 || height < 700;
   const horizontalPadding =
     width < 360 ? 14 : width < 430 ? 18 : 20;
@@ -102,40 +95,28 @@ export default function SeekerHomeScreen() {
   const [
     propertyType,
     setPropertyType,
-  ] =
-    useState<PropertyType>(
-      "Room"
-    );
-
-  const [
-    availability,
-    setAvailability,
-  ] =
-    useState<AvailabilityType>(
-      "Anyone"
-    );
+  ] = useState<PropertyType | null>(null);
 
   const [
     properties,
     setProperties,
   ] = useState<Property[]>([]);
 
+  const [
+    allProperties,
+    setAllProperties,
+  ] = useState<Property[]>([]);
+
+  const [
+    isSearchTextDirty,
+    setIsSearchTextDirty,
+  ] = useState(false);
+
   const [loading, setLoading] =
     useState(false);
 
   const [error, setError] =
     useState("");
-
-  const [minRent, setMinRent] =
-    useState("");
-
-  const [maxRent, setMaxRent] =
-    useState("");
-
-  const [
-    selectedDistanceKm,
-    setSelectedDistanceKm,
-  ] = useState<number | null>(null);
 
   const [
     userLatitude,
@@ -152,6 +133,26 @@ export default function SeekerHomeScreen() {
     useState<number | null>(
       null
     );
+
+  const [
+    currentCity,
+    setCurrentCity,
+  ] = useState("");
+
+  const [
+    resolvedLocationQuery,
+    setResolvedLocationQuery,
+  ] = useState("");
+
+  const [
+    resolvedLatitude,
+    setResolvedLatitude,
+  ] = useState<number | null>(null);
+
+  const [
+    resolvedLongitude,
+    setResolvedLongitude,
+  ] = useState<number | null>(null);
 
   const [
     favoritePropertyIds,
@@ -174,36 +175,45 @@ export default function SeekerHomeScreen() {
       "Hotel",
     ];
 
-  const availabilityOptions: AvailabilityType[] =
-    [
-      "Anyone",
-      "Male",
-      "Female",
-      "Family",
-    ];
+  const applyInstantFilters = (
+    sourceProperties: Property[],
+    searchText: string,
+    selectedType: PropertyType | null,
+    applyTextFilter = true
+  ) => {
+    const normalizedSearch = searchText
+      .trim()
+      .toLowerCase();
 
-  const distanceOptions: DistanceOption[] = [
-    {
-      label: "Any Distance",
-      value: null,
-    },
-    {
-      label: "Within 1 km",
-      value: 1,
-    },
-    {
-      label: "Within 3 km",
-      value: 3,
-    },
-    {
-      label: "Within 5 km",
-      value: 5,
-    },
-    {
-      label: "Within 10 km",
-      value: 10,
-    },
-  ];
+    return sourceProperties.filter((property) => {
+      const matchesType =
+        !selectedType ||
+        property.propertyType ===
+          selectedType.toLowerCase();
+
+      if (!matchesType) {
+        return false;
+      }
+
+      if (!applyTextFilter || !normalizedSearch) {
+        return true;
+      }
+
+      const searchableText = [
+        property.title,
+        property.locality,
+        property.city,
+        property.address,
+        property.state,
+        property.pincode,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearch);
+    });
+  };
 
   const getDistanceInKm = (
     lat1: number,
@@ -256,227 +266,209 @@ export default function SeekerHomeScreen() {
     );
   };
 
-  const getUserLocation =
-    async () => {
-      try {
-        const { status } =
-          await Location.requestForegroundPermissionsAsync();
+  const fetchProperties = async (options?: {
+    citySearch?: string;
+    selectedType?: PropertyType | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    searchTextFilter?: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError("");
 
-        if (
-          status !==
-          "granted"
-        ) {
-          console.log(
-            "Location permission denied"
-          );
+      const token = await getAuthToken();
 
-          return;
-        }
+      if (!token) {
+        setError("Please login again.");
+        return;
+      }
 
-        const currentLocation =
-          await Location.getCurrentPositionAsync(
-            {
-              accuracy:
-                Location
-                  .Accuracy
-                  .Balanced,
-            }
-          );
+      const citySearch =
+        options?.citySearch ?? "";
+      const selectedType =
+        options?.selectedType !== undefined
+          ? options.selectedType
+          : propertyType;
+      const latitude =
+        options?.latitude !== undefined
+          ? options.latitude
+          : userLatitude;
+      const longitude =
+        options?.longitude !== undefined
+          ? options.longitude
+          : userLongitude;
+      const searchTextFilter =
+        options?.searchTextFilter ?? "";
 
-        setUserLatitude(
-          currentLocation
-            .coords
-            .latitude
+      const params: string[] = [];
+
+      /*
+       * Preferred search mode is coordinates. This works for current
+       * location as well as a typed city / area / landmark after
+       * geocoding. If geocoding is unavailable, citySearch keeps the
+       * old backend city filter as a backward-compatible fallback.
+       */
+      if (latitude !== null && longitude !== null) {
+        params.push(
+          `lat=${encodeURIComponent(String(latitude))}`
         );
-
-        setUserLongitude(
-          currentLocation
-            .coords
-            .longitude
+        params.push(
+          `lng=${encodeURIComponent(String(longitude))}`
         );
-      } catch (
-        error
-      ) {
-        console.error(
-          "Seeker location error:",
-          error
+      } else if (citySearch.trim()) {
+        params.push(
+          `city=${encodeURIComponent(citySearch.trim())}`
         );
       }
-    };
 
-  const fetchProperties =
-    async (
-      useFilters =
-        false
-    ) => {
-      try {
-        setLoading(true);
+      let url = `${API_BASE_URL}/properties`;
 
-        setError("");
+      if (params.length > 0) {
+        url += `?${params.join("&")}`;
+      }
 
-        const token =
-          await getAuthToken();
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        if (!token) {
-          setError(
-            "Please login again."
-          );
+      const data = await response.json();
 
-          return;
-        }
-
-        let url =
-          `${API_BASE_URL}/properties`;
-
-        if (
-          useFilters
-        ) {
-          const params: string[] =
-            [];
-
-          if (
-            location.trim()
-          ) {
-            params.push(
-              `city=${encodeURIComponent(
-                location.trim()
-              )}`
-            );
-          }
-
-          params.push(
-            `propertyType=${propertyType.toLowerCase()}`
-          );
-
-          if (propertyType !== "Hotel") {
-            params.push(
-              `availableFor=${availability.toLowerCase()}`
-            );
-          }
-
-          if (minRent.trim()) {
-            params.push(
-              `minRent=${encodeURIComponent(
-                minRent.trim()
-              )}`
-            );
-          }
-
-          if (maxRent.trim()) {
-            params.push(
-              `maxRent=${encodeURIComponent(
-                maxRent.trim()
-              )}`
-            );
-          }
-
-          if (
-            params.length >
-            0
-          ) {
-            url +=
-              `?${params.join(
-                "&"
-              )}`;
-          }
-        }
-
-        const response =
-          await fetch(
-            url,
-            {
-              method:
-                "GET",
-
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-              },
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (
-          !response.ok
-        ) {
-          setError(
-            data?.message ||
-              "Unable to fetch properties."
-          );
-
-          return;
-        }
-
-        const fetchedProperties: Property[] =
-          Array.isArray(data.properties)
-            ? data.properties
-            : [];
-
-        if (
-          useFilters &&
-          selectedDistanceKm !== null &&
-          userLatitude !== null &&
-          userLongitude !== null
-        ) {
-          const distanceFilteredProperties =
-            fetchedProperties.filter(
-              (property) => {
-                const coordinates =
-                  property.location?.coordinates;
-
-                if (
-                  !coordinates ||
-                  coordinates.length !== 2
-                ) {
-                  return false;
-                }
-
-                const propertyLongitude =
-                  coordinates[0];
-
-                const propertyLatitude =
-                  coordinates[1];
-
-                const distance =
-                  getDistanceInKm(
-                    userLatitude,
-                    userLongitude,
-                    propertyLatitude,
-                    propertyLongitude
-                  );
-
-                return (
-                  distance <=
-                  selectedDistanceKm
-                );
-              }
-            );
-
-          setProperties(
-            distanceFilteredProperties
-          );
-        } else {
-          setProperties(
-            fetchedProperties
-          );
-        }
-      } catch (
-        error
-      ) {
-        console.error(
-          "Fetch properties error:",
-          error
-        );
-
+      if (!response.ok) {
         setError(
-          "Unable to connect to the server."
+          data?.message ||
+            "Unable to fetch properties."
         );
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
+
+      const fetchedProperties: Property[] =
+        Array.isArray(data.properties)
+          ? data.properties
+          : [];
+
+      setAllProperties(fetchedProperties);
+      setIsSearchTextDirty(false);
+      setProperties(
+        applyInstantFilters(
+          fetchedProperties,
+          searchTextFilter,
+          selectedType,
+          searchTextFilter.trim().length > 0
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Fetch properties error:",
+        error
+      );
+
+      setError(
+        "Unable to connect to the server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getUserLocation = async () => {
+    try {
+      const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        console.log(
+          "Location permission denied"
+        );
+
+        setCurrentCity("");
+
+        await fetchProperties({
+          selectedType: null,
+          latitude: null,
+          longitude: null,
+        });
+        return;
+      }
+
+      const currentLocation =
+        await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+      const latitude =
+        currentLocation.coords.latitude;
+      const longitude =
+        currentLocation.coords.longitude;
+
+      setUserLatitude(latitude);
+      setUserLongitude(longitude);
+
+      try {
+        const addresses =
+          await Location.reverseGeocodeAsync({
+            latitude,
+            longitude,
+          });
+
+        const address = addresses[0];
+        const detectedCity =
+          address?.city?.trim() ||
+          address?.subregion?.trim() ||
+          "";
+
+        if (detectedCity) {
+          setCurrentCity(detectedCity);
+
+          /*
+           * Current-location mode = CITY-WIDE search.
+           * No 25 km limit here.
+           */
+          await fetchProperties({
+            citySearch: detectedCity,
+            selectedType: null,
+            latitude: null,
+            longitude: null,
+          });
+          return;
+        }
+      } catch (reverseGeocodeError) {
+        console.error(
+          "Reverse geocode current city error:",
+          reverseGeocodeError
+        );
+      }
+
+      /*
+       * Safe fallback only if city detection fails:
+       * use existing nearby search so home does not break.
+       */
+      setCurrentCity("");
+
+      await fetchProperties({
+        selectedType: null,
+        latitude,
+        longitude,
+      });
+    } catch (error) {
+      console.error(
+        "Seeker location error:",
+        error
+      );
+
+      setCurrentCity("");
+
+      await fetchProperties({
+        citySearch: "",
+        selectedType: null,
+        latitude: null,
+        longitude: null,
+      });
+    }
+  };
 
   const fetchFavorites =
     async () => {
@@ -657,11 +649,6 @@ export default function SeekerHomeScreen() {
 
   useEffect(() => {
     getUserLocation();
-
-    fetchProperties(
-      false
-    );
-
     fetchFavorites();
   }, []);
 
@@ -671,80 +658,204 @@ export default function SeekerHomeScreen() {
     }, [])
   );
 
-  const handleSearch =
-    () => {
-      const minValue =
-        minRent.trim() === ""
-          ? null
-          : Number(minRent);
+  const searchByLocationInput = async (
+    selectedType: PropertyType | null = propertyType
+  ) => {
+    const query = location.trim();
 
-      const maxValue =
-        maxRent.trim() === ""
-          ? null
-          : Number(maxRent);
+    setIsSearchTextDirty(false);
 
-      if (
-        minValue !== null &&
-        (!Number.isFinite(minValue) ||
-          minValue < 0)
-      ) {
-        Alert.alert(
-          propertyType === "Hotel"
-            ? "Invalid Minimum Price"
-            : "Invalid Minimum Rent",
-          propertyType === "Hotel"
-            ? "Please enter a valid minimum per-day price."
-            : "Please enter a valid minimum rent."
-        );
+    if (!query) {
+      setResolvedLocationQuery("");
+      setResolvedLatitude(null);
+      setResolvedLongitude(null);
+
+      if (currentCity.trim()) {
+        await fetchProperties({
+          citySearch: currentCity,
+          selectedType,
+          latitude: null,
+          longitude: null,
+        });
+      } else {
+        await fetchProperties({
+          selectedType,
+          latitude: userLatitude,
+          longitude: userLongitude,
+        });
+      }
+      return;
+    }
+
+    if (
+      resolvedLocationQuery.toLowerCase() ===
+        query.toLowerCase() &&
+      resolvedLatitude !== null &&
+      resolvedLongitude !== null
+    ) {
+      await fetchProperties({
+        selectedType,
+        latitude: resolvedLatitude,
+        longitude: resolvedLongitude,
+        searchTextFilter: query,
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      let permission =
+        await Location.getForegroundPermissionsAsync();
+
+      if (permission.status !== "granted") {
+        permission =
+          await Location.requestForegroundPermissionsAsync();
+      }
+
+      if (permission.status !== "granted") {
+        setResolvedLocationQuery("");
+        setResolvedLatitude(null);
+        setResolvedLongitude(null);
+
+        await fetchProperties({
+          citySearch: query,
+          selectedType,
+          latitude: null,
+          longitude: null,
+          searchTextFilter: query,
+        });
         return;
       }
 
-      if (
-        maxValue !== null &&
-        (!Number.isFinite(maxValue) ||
-          maxValue < 0)
-      ) {
-        Alert.alert(
-          propertyType === "Hotel"
-            ? "Invalid Maximum Price"
-            : "Invalid Maximum Rent",
-          propertyType === "Hotel"
-            ? "Please enter a valid maximum per-day price."
-            : "Please enter a valid maximum rent."
-        );
+      const geocodedLocations =
+        await Location.geocodeAsync(`${query}, India`);
+
+      const matchedLocation =
+        geocodedLocations[0];
+
+      if (!matchedLocation) {
+        setResolvedLocationQuery("");
+        setResolvedLatitude(null);
+        setResolvedLongitude(null);
+        setAllProperties([]);
+        setProperties([]);
+        setError("");
         return;
       }
 
-      if (
-        minValue !== null &&
-        maxValue !== null &&
-        minValue > maxValue
-      ) {
-        Alert.alert(
-          propertyType === "Hotel"
-            ? "Invalid Price Range"
-            : "Invalid Rent Range",
-          propertyType === "Hotel"
-            ? "Minimum per-day price cannot be greater than maximum per-day price."
-            : "Minimum rent cannot be greater than maximum rent."
-        );
-        return;
-      }
+      setResolvedLocationQuery(query);
+      setResolvedLatitude(
+        matchedLocation.latitude
+      );
+      setResolvedLongitude(
+        matchedLocation.longitude
+      );
 
-      if (
-        selectedDistanceKm !== null &&
-        (userLatitude === null ||
-          userLongitude === null)
-      ) {
-        Alert.alert(
-          "Location Required",
-          "Please allow location access and wait for your current location before using the distance filter."
-        );
-        return;
-      }
+      await fetchProperties({
+        selectedType,
+        latitude: matchedLocation.latitude,
+        longitude: matchedLocation.longitude,
+        searchTextFilter: query,
+      });
+    } catch (error) {
+      console.error(
+        "Location search error:",
+        error
+      );
 
-      fetchProperties(true);
-    };
+      setResolvedLocationQuery("");
+      setResolvedLatitude(null);
+      setResolvedLongitude(null);
+
+      /*
+       * Safe fallback for typed city names. searchTextFilter prevents
+       * unrelated nearby/current-location properties from appearing.
+       */
+      await fetchProperties({
+        citySearch: query,
+        selectedType,
+        latitude: null,
+        longitude: null,
+        searchTextFilter: query,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    Keyboard.dismiss();
+
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(resultsSectionY.current - 12, 0),
+        animated: true,
+      });
+    });
+
+    searchByLocationInput();
+  };
+
+  const handlePropertyTypePress = (item: PropertyType | null) => {
+    setPropertyType(item);
+
+    setProperties(
+      applyInstantFilters(
+        allProperties,
+        location,
+        item,
+        isSearchTextDirty
+      )
+    );
+  };
+
+  const handleLocationChange = (value: string) => {
+    setLocation(value);
+    setIsSearchTextDirty(true);
+
+    setProperties(
+      applyInstantFilters(
+        allProperties,
+        value,
+        propertyType,
+        true
+      )
+    );
+
+    if (
+      value.trim().toLowerCase() !==
+      resolvedLocationQuery.toLowerCase()
+    ) {
+      setResolvedLocationQuery("");
+      setResolvedLatitude(null);
+      setResolvedLongitude(null);
+    }
+  };
+
+  const handleClearLocation = () => {
+    setLocation("");
+    setIsSearchTextDirty(false);
+    setResolvedLocationQuery("");
+    setResolvedLatitude(null);
+    setResolvedLongitude(null);
+
+    if (currentCity.trim()) {
+      fetchProperties({
+        citySearch: currentCity,
+        selectedType: propertyType,
+        latitude: null,
+        longitude: null,
+      });
+    } else {
+      fetchProperties({
+        selectedType: propertyType,
+        latitude: userLatitude,
+        longitude: userLongitude,
+      });
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -782,6 +893,7 @@ export default function SeekerHomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
@@ -885,8 +997,8 @@ export default function SeekerHomeScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Search rooms, PGs, flats and hotels by
-            location, budget and distance.
+            Search rooms, PGs, flats and hotels near you
+            or in the city you choose.
           </Text>
 
           <View
@@ -975,15 +1087,17 @@ export default function SeekerHomeScreen() {
 
             <TextInput
               style={styles.searchInput}
-              placeholder="Search city"
+              placeholder="Search city, area or landmark..."
               placeholderTextColor="#98A2B3"
               value={location}
-              onChangeText={setLocation}
+              onChangeText={handleLocationChange}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
 
             {location.length > 0 && (
               <TouchableOpacity
-                onPress={() => setLocation("")}
+                onPress={handleClearLocation}
                 activeOpacity={0.7}
               >
                 <Ionicons
@@ -1000,6 +1114,35 @@ export default function SeekerHomeScreen() {
           </Text>
 
           <View style={styles.chipRow}>
+            <TouchableOpacity
+              style={[
+                styles.chip,
+                propertyType === null && styles.chipSelected,
+              ]}
+              activeOpacity={0.8}
+              onPress={() => handlePropertyTypePress(null)}
+            >
+              <Ionicons
+                name="apps-outline"
+                size={15}
+                color={
+                  propertyType === null
+                    ? "#FFFFFF"
+                    : "#667085"
+                }
+              />
+
+              <Text
+                style={[
+                  styles.chipText,
+                  propertyType === null &&
+                    styles.chipTextSelected,
+                ]}
+              >
+                All
+              </Text>
+            </TouchableOpacity>
+
             {propertyTypes.map((item) => {
               const selected = propertyType === item;
 
@@ -1011,7 +1154,9 @@ export default function SeekerHomeScreen() {
                     selected && styles.chipSelected,
                   ]}
                   activeOpacity={0.8}
-                  onPress={() => setPropertyType(item)}
+                  onPress={() =>
+                    handlePropertyTypePress(item)
+                  }
                 >
                   <Ionicons
                     name={
@@ -1019,8 +1164,6 @@ export default function SeekerHomeScreen() {
                         ? "home-outline"
                         : item === "PG"
                         ? "bed-outline"
-                        : item === "Hotel"
-                        ? "business-outline"
                         : "business-outline"
                     }
                     size={15}
@@ -1039,138 +1182,6 @@ export default function SeekerHomeScreen() {
                     ]}
                   >
                     {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {propertyType !== "Hotel" && (
-            <>
-              <Text style={styles.filterTitle}>
-                Available for
-              </Text>
-
-              <View style={styles.chipRow}>
-                {availabilityOptions.map((item) => {
-                  const selected = availability === item;
-
-                  return (
-                    <TouchableOpacity
-                      key={item}
-                      style={[
-                        styles.chip,
-                        selected && styles.chipSelected,
-                      ]}
-                      activeOpacity={0.8}
-                      onPress={() => setAvailability(item)}
-                    >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          selected &&
-                            styles.chipTextSelected,
-                        ]}
-                      >
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </>
-          )}
-
-          <Text style={styles.filterTitle}>
-            {propertyType === "Hotel"
-              ? "Per-day price"
-              : "Monthly rent"}
-          </Text>
-
-          <View
-            style={[
-              styles.rentRangeRow,
-              isSmallScreen && styles.rentRangeRowSmall,
-            ]}
-          >
-            <View style={styles.rentInputContainer}>
-              <Text style={styles.currencyText}>₹</Text>
-              <TextInput
-                style={styles.rentInput}
-                placeholder={propertyType === "Hotel" ? "Min price" : "Min rent"}
-                placeholderTextColor="#98A2B3"
-                keyboardType="numeric"
-                value={minRent}
-                onChangeText={setMinRent}
-                maxLength={7}
-              />
-            </View>
-
-            <View
-              style={[
-                styles.rentDivider,
-                isSmallScreen && styles.rentDividerSmall,
-              ]}
-            >
-              <Text style={styles.rentRangeSeparator}>
-                —
-              </Text>
-            </View>
-
-            <View style={styles.rentInputContainer}>
-              <Text style={styles.currencyText}>₹</Text>
-              <TextInput
-                style={styles.rentInput}
-                placeholder={propertyType === "Hotel" ? "Max price" : "Max rent"}
-                placeholderTextColor="#98A2B3"
-                keyboardType="numeric"
-                value={maxRent}
-                onChangeText={setMaxRent}
-                maxLength={7}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.filterTitle}>
-            Distance from you
-          </Text>
-
-          <View style={styles.chipRow}>
-            {distanceOptions.map((item) => {
-              const selected =
-                selectedDistanceKm === item.value;
-
-              return (
-                <TouchableOpacity
-                  key={item.label}
-                  style={[
-                    styles.distanceChip,
-                    selected &&
-                      styles.distanceChipSelected,
-                  ]}
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    setSelectedDistanceKm(item.value)
-                  }
-                >
-                  <Ionicons
-                    name="navigate-outline"
-                    size={14}
-                    color={
-                      selected
-                        ? "#FFFFFF"
-                        : "#667085"
-                    }
-                  />
-
-                  <Text
-                    style={[
-                      styles.distanceChipText,
-                      selected &&
-                        styles.distanceChipTextSelected,
-                    ]}
-                  >
-                    {item.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -1268,7 +1279,13 @@ export default function SeekerHomeScreen() {
         </View>
 
         {/* RESULTS */}
-        <View style={styles.resultsHeader}>
+        <View
+          style={styles.resultsHeader}
+          onLayout={(event) => {
+            resultsSectionY.current =
+              event.nativeEvent.layout.y;
+          }}
+        >
           <View>
             <Text style={styles.resultsEyebrow}>
               DISCOVER
@@ -1348,8 +1365,7 @@ export default function SeekerHomeScreen() {
               </Text>
 
               <Text style={styles.emptyText}>
-                Try another city or adjust your
-                filters.
+                Try another location or property type.
               </Text>
             </View>
           )}

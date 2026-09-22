@@ -47,7 +47,8 @@ const createProperty = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all required property fields",
+        message:
+          "Please fill all required property fields",
       });
     }
 
@@ -58,7 +59,10 @@ const createProperty = async (req, res) => {
     */
 
     if (propertyType === "hotel") {
-      if (acAvailable !== true && nonAcAvailable !== true) {
+      if (
+        acAvailable !== true &&
+        nonAcAvailable !== true
+      ) {
         return res.status(400).json({
           success: false,
           message:
@@ -71,7 +75,9 @@ const createProperty = async (req, res) => {
           acPricePerDay === undefined ||
           acPricePerDay === null ||
           acPricePerDay === "" ||
-          !Number.isFinite(Number(acPricePerDay)) ||
+          !Number.isFinite(
+            Number(acPricePerDay)
+          ) ||
           Number(acPricePerDay) < 0
         ) {
           return res.status(400).json({
@@ -84,10 +90,13 @@ const createProperty = async (req, res) => {
 
       if (nonAcAvailable === true) {
         if (
-          nonAcPricePerDay === undefined ||
+          nonAcPricePerDay ===
+            undefined ||
           nonAcPricePerDay === null ||
           nonAcPricePerDay === "" ||
-          !Number.isFinite(Number(nonAcPricePerDay)) ||
+          !Number.isFinite(
+            Number(nonAcPricePerDay)
+          ) ||
           Number(nonAcPricePerDay) < 0
         ) {
           return res.status(400).json({
@@ -112,7 +121,8 @@ const createProperty = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Please fill all required property fields",
+          message:
+            "Please fill all required property fields",
         });
       }
     }
@@ -133,12 +143,6 @@ const createProperty = async (req, res) => {
 
       propertyType,
 
-      /*
-       * Existing Room / PG / Flat monthly rent remains unchanged.
-       *
-       * Hotel keeps monthlyRent 0 because the existing schema
-       * requires monthlyRent.
-       */
       monthlyRent:
         propertyType === "hotel"
           ? 0
@@ -159,9 +163,6 @@ const createProperty = async (req, res) => {
           ? "unfurnished"
           : furnishing || "unfurnished",
 
-      /*
-       * Hotel-only fields
-       */
       acAvailable:
         propertyType === "hotel"
           ? acAvailable === true
@@ -203,6 +204,19 @@ const createProperty = async (req, res) => {
         Array.isArray(photos)
           ? photos
           : [],
+
+      /*
+      |--------------------------------------------------------------------------
+      | MODERATION
+      |--------------------------------------------------------------------------
+      */
+
+      isVerified: false,
+
+      moderationStatus:
+        "pending",
+
+      rejectionReason: "",
     };
 
     /*
@@ -225,14 +239,18 @@ const createProperty = async (req, res) => {
     }
 
     const property =
-      await Property.create(propertyData);
+      await Property.create(
+        propertyData
+      );
 
     return res.status(201).json({
       success: true,
+
       message:
         propertyType === "hotel"
-          ? "Hotel added successfully"
-          : "Property created successfully",
+          ? "Hotel added and sent for review"
+          : "Property created and sent for review",
+
       property,
     });
   } catch (error) {
@@ -243,12 +261,16 @@ const createProperty = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Unable to create property",
+      message:
+        "Unable to create property",
     });
   }
 };
 
-const getProperties = async (req, res) => {
+const getProperties = async (
+  req,
+  res
+) => {
   try {
     const {
       city,
@@ -257,12 +279,145 @@ const getProperties = async (req, res) => {
       availableFor,
       minRent,
       maxRent,
+      lat,
+      lng,
+      radiusKm,
     } = req.query;
+
+    /*
+    |--------------------------------------------------------------------------
+    | BASE FILTER
+    |--------------------------------------------------------------------------
+    */
 
     const filter = {
       isActive: true,
       isAvailable: true,
     };
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEEKER VISIBILITY SECURITY
+    |--------------------------------------------------------------------------
+    |
+    | Seeker ko sirf admin-approved properties milengi.
+    |
+    | Owner ke existing behavior ko preserve kiya gaya hai.
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      req.user?.role === "seeker"
+    ) {
+      filter.isVerified = true;
+
+      filter.moderationStatus =
+        "approved";
+    }
+
+    const hasLatitude =
+      lat !== undefined &&
+      lat !== null &&
+      String(lat).trim() !== "";
+
+    const hasLongitude =
+      lng !== undefined &&
+      lng !== null &&
+      String(lng).trim() !== "";
+
+    if (
+      hasLatitude !==
+      hasLongitude
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Both latitude and longitude are required for nearby search",
+      });
+    }
+
+    let useNearbySearch =
+      false;
+
+    if (
+      hasLatitude &&
+      hasLongitude
+    ) {
+      const latitude =
+        Number(lat);
+
+      const longitude =
+        Number(lng);
+
+      if (
+        !Number.isFinite(
+          latitude
+        ) ||
+        !Number.isFinite(
+          longitude
+        ) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Please provide valid latitude and longitude values",
+        });
+      }
+
+      let maxDistanceKm = 25;
+
+      if (
+        radiusKm !==
+          undefined &&
+        radiusKm !== null &&
+        String(
+          radiusKm
+        ).trim() !== ""
+      ) {
+        maxDistanceKm =
+          Number(radiusKm);
+
+        if (
+          !Number.isFinite(
+            maxDistanceKm
+          ) ||
+          maxDistanceKm <= 0 ||
+          maxDistanceKm > 100
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "radiusKm must be greater than 0 and at most 100",
+            });
+        }
+      }
+
+      filter.location = {
+        $near: {
+          $geometry: {
+            type: "Point",
+
+            coordinates: [
+              longitude,
+              latitude,
+            ],
+          },
+
+          $maxDistance:
+            maxDistanceKm *
+            1000,
+        },
+      };
+
+      useNearbySearch =
+        true;
+    }
 
     if (city) {
       filter.city = {
@@ -283,10 +438,6 @@ const getProperties = async (req, res) => {
         propertyType;
     }
 
-    /*
-     * availableFor Hotel ke liye use nahi hoga.
-     * Existing Room / PG / Flat filtering remains same.
-     */
     if (
       availableFor &&
       propertyType !== "hotel"
@@ -296,14 +447,21 @@ const getProperties = async (req, res) => {
     }
 
     /*
-     * Existing minRent/maxRent filter preserve kiya gaya hai.
-     *
-     * Hotel ke liye AC ya Non-AC me jo option available hai,
-     * uske per-day price par same filter apply hoga.
-     */
-    if (minRent || maxRent) {
-      if (propertyType === "hotel") {
-        const hotelPriceConditions = [];
+    |--------------------------------------------------------------------------
+    | RENT FILTER
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      minRent ||
+      maxRent
+    ) {
+      if (
+        propertyType ===
+        "hotel"
+      ) {
+        const hotelPriceConditions =
+          [];
 
         const acPriceCondition = {
           acAvailable: true,
@@ -311,12 +469,16 @@ const getProperties = async (req, res) => {
         };
 
         if (minRent) {
-          acPriceCondition.acPricePerDay.$gte =
+          acPriceCondition
+            .acPricePerDay
+            .$gte =
             Number(minRent);
         }
 
         if (maxRent) {
-          acPriceCondition.acPricePerDay.$lte =
+          acPriceCondition
+            .acPricePerDay
+            .$lte =
             Number(maxRent);
         }
 
@@ -324,18 +486,26 @@ const getProperties = async (req, res) => {
           acPriceCondition
         );
 
-        const nonAcPriceCondition = {
-          nonAcAvailable: true,
-          nonAcPricePerDay: {},
-        };
+        const nonAcPriceCondition =
+          {
+            nonAcAvailable:
+              true,
+
+            nonAcPricePerDay:
+              {},
+          };
 
         if (minRent) {
-          nonAcPriceCondition.nonAcPricePerDay.$gte =
+          nonAcPriceCondition
+            .nonAcPricePerDay
+            .$gte =
             Number(minRent);
         }
 
         if (maxRent) {
-          nonAcPriceCondition.nonAcPricePerDay.$lte =
+          nonAcPriceCondition
+            .nonAcPricePerDay
+            .$lte =
             Number(maxRent);
         }
 
@@ -346,33 +516,51 @@ const getProperties = async (req, res) => {
         filter.$or =
           hotelPriceConditions;
       } else {
-        filter.monthlyRent = {};
+        filter.monthlyRent =
+          {};
 
         if (minRent) {
-          filter.monthlyRent.$gte =
+          filter.monthlyRent
+            .$gte =
             Number(minRent);
         }
 
         if (maxRent) {
-          filter.monthlyRent.$lte =
+          filter.monthlyRent
+            .$lte =
             Number(maxRent);
         }
       }
     }
 
-    const properties =
-      await Property.find(filter)
-        .populate(
-          "owner",
-          "name phone email"
-        )
-        .sort({
+    let propertyQuery =
+      Property.find(
+        filter
+      ).populate(
+        "owner",
+        "name phone email"
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT
+    |--------------------------------------------------------------------------
+    */
+
+    if (!useNearbySearch) {
+      propertyQuery =
+        propertyQuery.sort({
           createdAt: -1,
         });
+    }
+
+    const properties =
+      await propertyQuery;
 
     return res.status(200).json({
       success: true,
-      count: properties.length,
+      count:
+        properties.length,
       properties,
     });
   } catch (error) {
@@ -389,104 +577,156 @@ const getProperties = async (req, res) => {
   }
 };
 
-const getPropertyById = async (
-  req,
-  res
-) => {
-  try {
-    const property =
-      await Property.findOne({
+const getPropertyById =
+  async (req, res) => {
+    try {
+      /*
+      |--------------------------------------------------------------------------
+      | ROLE-AWARE PROPERTY DETAIL FILTER
+      |--------------------------------------------------------------------------
+      */
+
+      const filter = {
         _id: req.params.id,
         isActive: true,
-      }).populate(
-        "owner",
-        "name phone email"
+      };
+
+      /*
+       * Seeker direct URL / ID se pending/rejected/occupied
+       * property access nahi kar sakta.
+       */
+
+      if (
+        req.user?.role ===
+        "seeker"
+      ) {
+        filter.isAvailable =
+          true;
+
+        filter.isVerified =
+          true;
+
+        filter.moderationStatus =
+          "approved";
+      }
+
+      const property =
+        await Property.findOne(
+          filter
+        ).populate(
+          "owner",
+          "name phone email"
+        );
+
+      if (!property) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Property not found",
+          });
+      }
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          property,
+        });
+    } catch (error) {
+      console.error(
+        "Get property details error:",
+        error
       );
 
-    if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: "Property not found",
-      });
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to fetch property details",
+        });
     }
+  };
 
-    return res.status(200).json({
-      success: true,
-      property,
-    });
-  } catch (error) {
-    console.error(
-      "Get property details error:",
-      error
-    );
+const getOwnerProperties =
+  async (req, res) => {
+    try {
+      /*
+       * Owner ko pending / approved / rejected
+       * sab apni properties dikhengi.
+       */
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch property details",
-    });
-  }
-};
+      const properties =
+        await Property.find({
+          owner:
+            req.user.userId,
+          isActive: true,
+        }).sort({
+          createdAt: -1,
+        });
 
-const getOwnerProperties = async (
-  req,
-  res
-) => {
-  try {
-    const properties =
-      await Property.find({
-        owner: req.user.userId,
-        isActive: true,
-      }).sort({
-        createdAt: -1,
-      });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          count:
+            properties.length,
+          properties,
+        });
+    } catch (error) {
+      console.error(
+        "Get owner properties error:",
+        error
+      );
 
-    return res.status(200).json({
-      success: true,
-      count: properties.length,
-      properties,
-    });
-  } catch (error) {
-    console.error(
-      "Get owner properties error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch owner properties",
-    });
-  }
-};
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to fetch owner properties",
+        });
+    }
+  };
 
 const updatePropertyAvailability =
   async (req, res) => {
     try {
-      const { isAvailable } = req.body;
+      const {
+        isAvailable,
+      } = req.body;
 
       if (
-        typeof isAvailable !== "boolean"
+        typeof isAvailable !==
+        "boolean"
       ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "isAvailable must be true or false",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "isAvailable must be true or false",
+          });
       }
 
       const property =
         await Property.findOne({
           _id: req.params.id,
-          owner: req.user.userId,
+          owner:
+            req.user.userId,
           isActive: true,
         });
 
       if (!property) {
-        return res.status(404).json({
-          success: false,
-          message: "Property not found",
-        });
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Property not found",
+          });
       }
 
       property.isAvailable =
@@ -494,283 +734,589 @@ const updatePropertyAvailability =
 
       await property.save();
 
-      return res.status(200).json({
-        success: true,
+      return res
+        .status(200)
+        .json({
+          success: true,
 
-        message: isAvailable
-          ? "Property marked as available"
-          : "Property marked as occupied",
+          message:
+            isAvailable
+              ? "Property marked as available"
+              : "Property marked as occupied",
 
-        property,
-      });
+          property,
+        });
     } catch (error) {
       console.error(
         "Update property availability error:",
         error
       );
 
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to update property availability",
-      });
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to update property availability",
+        });
     }
   };
 
-const updateProperty = async (
-  req,
-  res
-) => {
-  try {
-    const property =
-      await Property.findOne({
-        _id: req.params.id,
-        owner: req.user.userId,
-        isActive: true,
-      });
-
-    if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: "Property not found",
-      });
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALLOWED FIELDS
-    |--------------------------------------------------------------------------
-    */
-
-    const allowedFields = [
-      "title",
-      "description",
-      "propertyType",
-      "monthlyRent",
-      "securityDeposit",
-      "availableFor",
-      "furnishing",
-
-      // Hotel fields
-      "acAvailable",
-      "acPricePerDay",
-      "nonAcAvailable",
-      "nonAcPricePerDay",
-
-      "address",
-      "locality",
-      "city",
-      "state",
-      "pincode",
-      "amenities",
-      "photos",
-    ];
-
-    allowedFields.forEach(
-      (field) => {
-        if (
-          req.body[field] !==
-          undefined
-        ) {
-          property[field] =
-            req.body[field];
-        }
-      }
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | HOTEL EDIT VALIDATION
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-      property.propertyType ===
-      "hotel"
-    ) {
-      if (
-        property.acAvailable !== true &&
-        property.nonAcAvailable !== true
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "At least AC or Non-AC must be available for hotel",
+const updateProperty =
+  async (req, res) => {
+    try {
+      const property =
+        await Property.findOne({
+          _id: req.params.id,
+          owner:
+            req.user.userId,
+          isActive: true,
         });
-      }
 
-      if (property.acAvailable === true) {
-        if (
-          property.acPricePerDay ===
-            undefined ||
-          property.acPricePerDay ===
-            null ||
-          property.acPricePerDay ===
-            "" ||
-          !Number.isFinite(
-            Number(property.acPricePerDay)
-          ) ||
-          Number(
-            property.acPricePerDay
-          ) < 0
-        ) {
-          return res.status(400).json({
+      if (!property) {
+        return res
+          .status(404)
+          .json({
             success: false,
             message:
-              "Please enter valid AC per-day price",
+              "Property not found",
           });
-        }
-
-        property.acPricePerDay =
-          Number(
-            property.acPricePerDay
-          );
-      } else {
-        property.acPricePerDay =
-          null;
       }
 
-      if (
-        property.nonAcAvailable === true
-      ) {
-        if (
-          property.nonAcPricePerDay ===
-            undefined ||
-          property.nonAcPricePerDay ===
-            null ||
-          property.nonAcPricePerDay ===
-            "" ||
-          !Number.isFinite(
-            Number(
-              property.nonAcPricePerDay
-            )
-          ) ||
-          Number(
-            property.nonAcPricePerDay
-          ) < 0
-        ) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "Please enter valid Non-AC per-day price",
-          });
-        }
-
-        property.nonAcPricePerDay =
-          Number(
-            property.nonAcPricePerDay
-          );
-      } else {
-        property.nonAcPricePerDay =
-          null;
-      }
-
-      property.monthlyRent = 0;
-      property.securityDeposit = 0;
-      property.availableFor =
-        "anyone";
-      property.furnishing =
-        "unfurnished";
-    } else {
       /*
-       * Property Hotel se Room / PG / Flat
-       * banayi jaye to Hotel fields clear.
-       */
-      property.acAvailable = false;
-      property.acPricePerDay = null;
-      property.nonAcAvailable = false;
-      property.nonAcPricePerDay = null;
+      |--------------------------------------------------------------------------
+      | ALLOWED FIELDS
+      |--------------------------------------------------------------------------
+      */
+
+      const allowedFields =
+        [
+          "title",
+          "description",
+          "propertyType",
+          "monthlyRent",
+          "securityDeposit",
+          "availableFor",
+          "furnishing",
+
+          "acAvailable",
+          "acPricePerDay",
+          "nonAcAvailable",
+          "nonAcPricePerDay",
+
+          "address",
+          "locality",
+          "city",
+          "state",
+          "pincode",
+          "amenities",
+          "photos",
+        ];
+
+      let propertyDetailsChanged =
+        false;
+
+      allowedFields.forEach(
+        (field) => {
+          if (
+            req.body[
+              field
+            ] !== undefined
+          ) {
+            property[field] =
+              req.body[
+                field
+              ];
+
+            propertyDetailsChanged =
+              true;
+          }
+        }
+      );
+
+      /*
+      |--------------------------------------------------------------------------
+      | HOTEL EDIT VALIDATION
+      |--------------------------------------------------------------------------
+      */
 
       if (
-        property.monthlyRent ===
-          undefined ||
-        property.monthlyRent ===
-          null
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Monthly rent is required",
-        });
-      }
-
-      if (!property.availableFor) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Available for is required",
-        });
-      }
-    }
-
-    await property.save();
-
-    return res.status(200).json({
-      success: true,
-
-      message:
         property.propertyType ===
         "hotel"
-          ? "Hotel updated successfully"
-          : "Property updated successfully",
+      ) {
+        if (
+          property
+            .acAvailable !==
+            true &&
+          property
+            .nonAcAvailable !==
+            true
+        ) {
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "At least AC or Non-AC must be available for hotel",
+            });
+        }
 
-      property,
-    });
-  } catch (error) {
-    console.error(
-      "Update property error:",
-      error
-    );
+        if (
+          property
+            .acAvailable ===
+          true
+        ) {
+          if (
+            property
+              .acPricePerDay ===
+              undefined ||
+            property
+              .acPricePerDay ===
+              null ||
+            property
+              .acPricePerDay ===
+              "" ||
+            !Number.isFinite(
+              Number(
+                property
+                  .acPricePerDay
+              )
+            ) ||
+            Number(
+              property
+                .acPricePerDay
+            ) < 0
+          ) {
+            return res
+              .status(400)
+              .json({
+                success:
+                  false,
+                message:
+                  "Please enter valid AC per-day price",
+              });
+          }
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to update property",
-    });
-  }
-};
+          property.acPricePerDay =
+            Number(
+              property
+                .acPricePerDay
+            );
+        } else {
+          property.acPricePerDay =
+            null;
+        }
 
-const deleteProperty = async (
-  req,
-  res
-) => {
-  try {
-    const property =
-      await Property.findOne({
-        _id: req.params.id,
-        owner: req.user.userId,
-        isActive: true,
-      });
+        if (
+          property
+            .nonAcAvailable ===
+          true
+        ) {
+          if (
+            property
+              .nonAcPricePerDay ===
+              undefined ||
+            property
+              .nonAcPricePerDay ===
+              null ||
+            property
+              .nonAcPricePerDay ===
+              "" ||
+            !Number.isFinite(
+              Number(
+                property
+                  .nonAcPricePerDay
+              )
+            ) ||
+            Number(
+              property
+                .nonAcPricePerDay
+            ) < 0
+          ) {
+            return res
+              .status(400)
+              .json({
+                success:
+                  false,
+                message:
+                  "Please enter valid Non-AC per-day price",
+              });
+          }
 
-    if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: "Property not found",
-      });
+          property.nonAcPricePerDay =
+            Number(
+              property
+                .nonAcPricePerDay
+            );
+        } else {
+          property.nonAcPricePerDay =
+            null;
+        }
+
+        property.monthlyRent =
+          0;
+
+        property.securityDeposit =
+          0;
+
+        property.availableFor =
+          "anyone";
+
+        property.furnishing =
+          "unfurnished";
+      } else {
+        property.acAvailable =
+          false;
+
+        property.acPricePerDay =
+          null;
+
+        property.nonAcAvailable =
+          false;
+
+        property.nonAcPricePerDay =
+          null;
+
+        if (
+          property.monthlyRent ===
+            undefined ||
+          property.monthlyRent ===
+            null
+        ) {
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "Monthly rent is required",
+            });
+        }
+
+        if (
+          !property.availableFor
+        ) {
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "Available for is required",
+            });
+        }
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | RE-REVIEW AFTER OWNER EDIT
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        propertyDetailsChanged
+      ) {
+        property.isVerified =
+          false;
+
+        property.moderationStatus =
+          "pending";
+
+        property.rejectionReason =
+          "";
+      }
+
+      await property.save();
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+
+          message:
+            propertyDetailsChanged
+              ? "Property updated and sent for review"
+              : "Property updated successfully",
+
+          property,
+        });
+    } catch (error) {
+      console.error(
+        "Update property error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to update property",
+        });
     }
+  };
 
-    property.isActive = false;
+const deleteProperty =
+  async (req, res) => {
+    try {
+      const property =
+        await Property.findOne({
+          _id: req.params.id,
+          owner:
+            req.user.userId,
+          isActive: true,
+        });
 
-    await property.save();
+      if (!property) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Property not found",
+          });
+      }
 
-    return res.status(200).json({
-      success: true,
-      message:
-        "Property deleted successfully",
-    });
-  } catch (error) {
-    console.error(
-      "Delete property error:",
-      error
-    );
+      property.isActive =
+        false;
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to delete property",
-    });
-  }
-};
+      await property.save();
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message:
+            "Property deleted successfully",
+        });
+    } catch (error) {
+      console.error(
+        "Delete property error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to delete property",
+        });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN - PENDING PROPERTIES
+|--------------------------------------------------------------------------
+*/
+
+const getPendingProperties =
+  async (req, res) => {
+    try {
+      const properties =
+        await Property.find({
+          isActive: true,
+          isVerified: false,
+
+          $or: [
+            {
+              moderationStatus:
+                "pending",
+            },
+
+            {
+              moderationStatus:
+                {
+                  $exists:
+                    false,
+                },
+            },
+          ],
+        })
+          .populate(
+            "owner",
+            "name phone email"
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          count:
+            properties.length,
+          properties,
+        });
+    } catch (error) {
+      console.error(
+        "Get pending properties error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to fetch pending properties",
+        });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN - APPROVE PROPERTY
+|--------------------------------------------------------------------------
+*/
+
+const approveProperty =
+  async (req, res) => {
+    try {
+      const property =
+        await Property.findOne({
+          _id: req.params.id,
+          isActive: true,
+        });
+
+      if (!property) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Property not found",
+          });
+      }
+
+      property.isVerified =
+        true;
+
+      property.moderationStatus =
+        "approved";
+
+      property.rejectionReason =
+        "";
+
+      await property.save();
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message:
+            "Property approved successfully",
+          property,
+        });
+    } catch (error) {
+      console.error(
+        "Approve property error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to approve property",
+        });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN - REJECT PROPERTY
+|--------------------------------------------------------------------------
+*/
+
+const rejectProperty =
+  async (req, res) => {
+    try {
+      const {
+        reason,
+      } = req.body;
+
+      if (
+        typeof reason !==
+          "string" ||
+        !reason.trim()
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Rejection reason is required",
+          });
+      }
+
+      if (
+        reason.trim().length >
+        500
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Rejection reason must be 500 characters or less",
+          });
+      }
+
+      const property =
+        await Property.findOne({
+          _id: req.params.id,
+          isActive: true,
+        });
+
+      if (!property) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Property not found",
+          });
+      }
+
+      property.isVerified =
+        false;
+
+      property.moderationStatus =
+        "rejected";
+
+      property.rejectionReason =
+        reason.trim();
+
+      await property.save();
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message:
+            "Property rejected successfully",
+          property,
+        });
+    } catch (error) {
+      console.error(
+        "Reject property error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to reject property",
+        });
+    }
+  };
 
 module.exports = {
   createProperty,
@@ -780,4 +1326,8 @@ module.exports = {
   updatePropertyAvailability,
   updateProperty,
   deleteProperty,
+
+  getPendingProperties,
+  approveProperty,
+  rejectProperty,
 };

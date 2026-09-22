@@ -220,6 +220,24 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    moderationStatus: {
+      type: String,
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+      ],
+      default: "pending",
+      index: true,
+    },
+
+    rejectionReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
   },
   {
     timestamps: true,
