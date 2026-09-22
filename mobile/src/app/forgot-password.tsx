@@ -97,9 +97,21 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
+      const normalizedEmail = email
+        .trim()
+        .toLowerCase();
+
+      const maskedEmail = normalizedEmail.replace(
+        /^(.{2})(.*)(@.*)$/,
+        (_, start, middle, end) =>
+          `${start}${"*".repeat(
+            Math.min(middle.length, 6)
+          )}${end}`
+      );
+
       Alert.alert(
-        "OTP sent",
-        "A 6-digit OTP has been sent to your email.",
+        "OTP sent successfully",
+        `We sent a 6-digit OTP to ${maskedEmail || normalizedEmail}. Check your inbox, Spam, or Promotions folder.`,
         [
           {
             text: "Continue",
@@ -108,9 +120,7 @@ export default function ForgotPasswordScreen() {
                 pathname:
                   "/verify-reset-otp",
                 params: {
-                  email: email
-                    .trim()
-                    .toLowerCase(),
+                  email: normalizedEmail,
                 },
               }),
           },
@@ -335,8 +345,8 @@ export default function ForgotPasswordScreen() {
               />
 
               <Text style={styles.infoText}>
-                Check your inbox after
-                requesting the OTP.
+                After sending, we’ll clearly confirm that the OTP was sent.
+                You can then open Gmail from the next screen.
               </Text>
             </View>
           </View>

@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   Keyboard,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -113,6 +114,9 @@ export default function SeekerHomeScreen() {
   ] = useState(false);
 
   const [loading, setLoading] =
+    useState(false);
+
+  const [refreshing, setRefreshing] =
     useState(false);
 
   const [error, setError] =
@@ -266,15 +270,21 @@ export default function SeekerHomeScreen() {
     );
   };
 
-  const fetchProperties = async (options?: {
-    citySearch?: string;
-    selectedType?: PropertyType | null;
-    latitude?: number | null;
-    longitude?: number | null;
-    searchTextFilter?: string;
-  }) => {
+  const fetchProperties = async (
+    options?: {
+      citySearch?: string;
+      selectedType?: PropertyType | null;
+      latitude?: number | null;
+      longitude?: number | null;
+      searchTextFilter?: string;
+    },
+    showLoading = true
+  ) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
+
       setError("");
 
       const token = await getAuthToken();
@@ -370,7 +380,9 @@ export default function SeekerHomeScreen() {
         "Unable to connect to the server."
       );
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -785,6 +797,61 @@ export default function SeekerHomeScreen() {
     }
   };
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      const activeSearchText =
+        isSearchTextDirty ? location : "";
+
+      if (
+        resolvedLocationQuery.trim() &&
+        resolvedLatitude !== null &&
+        resolvedLongitude !== null &&
+        resolvedLocationQuery.toLowerCase() ===
+          location.trim().toLowerCase()
+      ) {
+        await fetchProperties(
+          {
+            selectedType: propertyType,
+            latitude: resolvedLatitude,
+            longitude: resolvedLongitude,
+            searchTextFilter: location.trim(),
+          },
+          false
+        );
+      } else if (currentCity.trim()) {
+        await fetchProperties(
+          {
+            citySearch: currentCity,
+            selectedType: propertyType,
+            latitude: null,
+            longitude: null,
+            searchTextFilter: activeSearchText,
+          },
+          false
+        );
+      } else {
+        await fetchProperties(
+          {
+            selectedType: propertyType,
+            latitude: userLatitude,
+            longitude: userLongitude,
+            searchTextFilter: activeSearchText,
+          },
+          false
+        );
+      }
+
+      await Promise.all([
+        fetchFavorites(),
+        fetchUnreadNotificationCount(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleSearch = () => {
     Keyboard.dismiss();
 
@@ -904,6 +971,14 @@ export default function SeekerHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#635BFF"
+            colors={["#635BFF"]}
+          />
+        }
       >
         <View
           style={[

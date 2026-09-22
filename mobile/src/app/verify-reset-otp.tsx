@@ -8,6 +8,7 @@ import {
   Animated,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -40,6 +41,12 @@ export default function VerifyResetOTPScreen() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] =
     useState(false);
+
+  const [resending, setResending] =
+    useState(false);
+
+  const [resendSeconds, setResendSeconds] =
+    useState(45);
 
   const [secondsLeft, setSecondsLeft] =
     useState(5 * 60);
@@ -86,6 +93,22 @@ export default function VerifyResetOTPScreen() {
       clearInterval(timer);
     };
   }, [secondsLeft]);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setResendSeconds((current) =>
+        current > 0 ? current - 1 : 0
+      );
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [resendSeconds]);
 
   const formattedTime = `${Math.floor(
     secondsLeft / 60
@@ -154,6 +177,89 @@ export default function VerifyResetOTPScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenGmail = async () => {
+    try {
+      const gmailUrl = "googlegmail://";
+
+      const canOpenGmail =
+        await Linking.canOpenURL(gmailUrl);
+
+      if (canOpenGmail) {
+        await Linking.openURL(gmailUrl);
+        return;
+      }
+
+      await Linking.openURL("mailto:");
+    } catch (error) {
+      console.error(
+        "Open Gmail error:",
+        error
+      );
+
+      Alert.alert(
+        "Open your email",
+        "Please open Gmail or your email app and check your inbox and spam folder."
+      );
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resending || resendSeconds > 0 || !email) {
+      return;
+    }
+
+    try {
+      setResending(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email
+              .trim()
+              .toLowerCase(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert(
+          "Unable to resend OTP",
+          data?.message ||
+            "Please try again."
+        );
+        return;
+      }
+
+      setOtp("");
+      setSecondsLeft(5 * 60);
+      setResendSeconds(45);
+
+      Alert.alert(
+        "OTP sent again",
+        "A new 6-digit OTP has been sent to your email."
+      );
+    } catch (error) {
+      console.error(
+        "Resend OTP error:",
+        error
+      );
+
+      Alert.alert(
+        "Connection error",
+        "Unable to resend OTP. Please try again."
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -300,6 +406,42 @@ export default function VerifyResetOTPScreen() {
               {maskedEmail || email}
             </Text>
           </View>
+
+          <View style={styles.sentCard}>
+            <View style={styles.sentIcon}>
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color="#12B76A"
+              />
+            </View>
+
+            <View style={styles.sentCopy}>
+              <Text style={styles.sentTitle}>
+                OTP sent successfully
+              </Text>
+
+              <Text style={styles.sentText}>
+                Check your Gmail inbox. If you do not see it, check Spam or Promotions.
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.openGmailButton}
+            activeOpacity={0.85}
+            onPress={handleOpenGmail}
+          >
+            <Ionicons
+              name="mail-open-outline"
+              size={18}
+              color="#635BFF"
+            />
+
+            <Text style={styles.openGmailText}>
+              Open Gmail
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View
@@ -400,6 +542,46 @@ export default function VerifyResetOTPScreen() {
                 : "OTP expired. Go back and request a new OTP."}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={[
+              styles.resendButton,
+              (resendSeconds > 0 || resending) &&
+                styles.resendButtonDisabled,
+            ]}
+            activeOpacity={0.85}
+            disabled={resendSeconds > 0 || resending}
+            onPress={handleResendOTP}
+          >
+            {resending ? (
+              <ActivityIndicator
+                size="small"
+                color="#635BFF"
+              />
+            ) : (
+              <Ionicons
+                name="refresh-outline"
+                size={17}
+                color={
+                  resendSeconds > 0
+                    ? "#98A2B3"
+                    : "#635BFF"
+                }
+              />
+            )}
+
+            <Text
+              style={[
+                styles.resendText,
+                resendSeconds > 0 &&
+                  styles.resendTextDisabled,
+              ]}
+            >
+              {resendSeconds > 0
+                ? `Resend OTP in ${resendSeconds}s`
+                : "Resend OTP"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -591,6 +773,57 @@ const styles = StyleSheet.create({
     color: "#475467",
   },
 
+  sentCard: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "#ECFDF3",
+    borderWidth: 1,
+    borderColor: "#ABEFC6",
+  },
+
+  sentIcon: {
+    marginTop: 1,
+  },
+
+  sentCopy: {
+    flex: 1,
+    marginLeft: 9,
+  },
+
+  sentTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#027A48",
+  },
+
+  sentText: {
+    marginTop: 4,
+    fontSize: 10,
+    lineHeight: 16,
+    color: "#667085",
+  },
+
+  openGmailButton: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 13,
+    borderRadius: 13,
+    backgroundColor: "#F1EFFF",
+  },
+
+  openGmailText: {
+    marginLeft: 7,
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#635BFF",
+  },
+
   formCard: {
     width: "100%",
     marginTop: 28,
@@ -720,6 +953,34 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontWeight: "600",
     color: "#667085",
+  },
+
+  resendButton: {
+    minHeight: 46,
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D9D6FE",
+    backgroundColor: "#F8F7FF",
+  },
+
+  resendButtonDisabled: {
+    borderColor: "#E4E7EC",
+    backgroundColor: "#F9FAFB",
+  },
+
+  resendText: {
+    marginLeft: 7,
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#635BFF",
+  },
+
+  resendTextDisabled: {
+    color: "#98A2B3",
   },
 
   changeEmailButton: {

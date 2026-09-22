@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -51,6 +52,7 @@ export default function OwnerPropertiesScreen() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   
 
   const [updatingPropertyId, setUpdatingPropertyId] =
@@ -59,9 +61,12 @@ export default function OwnerPropertiesScreen() {
   const [deletingPropertyId, setDeletingPropertyId] =
     useState<string | null>(null);
 
-  const fetchOwnerProperties = async () => {
+  const fetchOwnerProperties = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
+
       setError("");
 
       const token = await getAuthToken();
@@ -106,7 +111,18 @@ export default function OwnerPropertiesScreen() {
         "Unable to connect to the server."
       );
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchOwnerProperties(false);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -325,6 +341,14 @@ export default function OwnerPropertiesScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#635BFF"
+            colors={["#635BFF"]}
+          />
+        }
       >
         <View
           style={[
@@ -557,7 +581,7 @@ export default function OwnerPropertiesScreen() {
             <TouchableOpacity
               style={styles.retryButton}
               activeOpacity={0.9}
-              onPress={fetchOwnerProperties}
+              onPress={() => fetchOwnerProperties()}
             >
               <Ionicons
                 name="refresh"

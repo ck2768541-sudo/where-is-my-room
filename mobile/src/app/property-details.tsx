@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 
 import {
   ActivityIndicator,
   Image,
   Linking,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -73,10 +74,14 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchProperty = async () => {
+  const fetchProperty = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
+
       setError("");
 
       if (!propertyId) {
@@ -124,13 +129,26 @@ export default function PropertyDetailsScreen() {
         "Unable to connect to the server."
       );
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => {
-    fetchProperty();
-  }, [propertyId]);
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchProperty(false);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProperty();
+    }, [propertyId])
+  );
 
   const handleCall = async () => {
     const phone = property?.owner?.phone;
@@ -271,7 +289,7 @@ export default function PropertyDetailsScreen() {
 
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={fetchProperty}
+            onPress={() => fetchProperty()}
             activeOpacity={0.9}
           >
             <Ionicons
@@ -294,6 +312,14 @@ export default function PropertyDetailsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#635BFF"
+            colors={["#635BFF"]}
+          />
+        }
       >
         <View
           style={[

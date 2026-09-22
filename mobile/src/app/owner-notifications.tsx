@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -58,9 +59,15 @@ export default function OwnerNotificationsScreen() {
   const [markingAll, setMarkingAll] =
     useState(false);
 
-  const fetchNotifications = async () => {
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const fetchNotifications = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
+
       setError("");
 
       const token = await getAuthToken();
@@ -112,7 +119,18 @@ export default function OwnerNotificationsScreen() {
         "Unable to connect to the server."
       );
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchNotifications(false);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -279,6 +297,14 @@ export default function OwnerNotificationsScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#635BFF"
+            colors={["#635BFF"]}
+          />
+        }
       >
         <View
           style={[
@@ -428,7 +454,7 @@ export default function OwnerNotificationsScreen() {
             <TouchableOpacity
               style={styles.retryButton}
               activeOpacity={0.85}
-              onPress={fetchNotifications}
+              onPress={() => fetchNotifications()}
             >
               <Text style={styles.retryText}>
                 Try Again

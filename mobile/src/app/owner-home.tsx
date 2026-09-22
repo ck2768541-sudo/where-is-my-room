@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -52,12 +53,18 @@ export default function OwnerHomeScreen() {
   const [error, setError] =
     useState("");
 
+  const [refreshing, setRefreshing] =
+    useState(false);
+
   const [unreadNotificationCount, setUnreadNotificationCount] =
     useState(0);
 
-  const fetchOwnerProperties = async () => {
+  const fetchOwnerProperties = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
+
       setError("");
 
       const token = await getAuthToken();
@@ -102,7 +109,9 @@ export default function OwnerHomeScreen() {
         "Unable to connect to the server."
       );
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -147,6 +156,19 @@ export default function OwnerHomeScreen() {
       }
     };
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      await Promise.all([
+        fetchOwnerProperties(false),
+        fetchUnreadNotificationCount(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchOwnerProperties();
@@ -187,6 +209,14 @@ export default function OwnerHomeScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#635BFF"
+            colors={["#635BFF"]}
+          />
+        }
       >
         <View
           style={[
@@ -599,8 +629,8 @@ export default function OwnerHomeScreen() {
               <TouchableOpacity
                 style={styles.retryButton}
                 activeOpacity={0.85}
-                onPress={
-                  fetchOwnerProperties
+                onPress={() =>
+                  fetchOwnerProperties()
                 }
               >
                 <Ionicons
