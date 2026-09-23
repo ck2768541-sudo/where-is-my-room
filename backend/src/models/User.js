@@ -24,6 +24,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    city: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 100,
+    },
+
     password: {
       type: String,
       required: true,

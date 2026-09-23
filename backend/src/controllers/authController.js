@@ -112,6 +112,7 @@ const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        city: user.city || "",
         role: user.role,
         seekerType: user.seekerType,
         profilePhoto: user.profilePhoto || "",
@@ -193,6 +194,7 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        city: user.city || "",
         role: user.role,
         seekerType: user.seekerType,
         profilePhoto: user.profilePhoto || "",
@@ -208,6 +210,108 @@ const loginUser = async (req, res) => {
       success: false,
       message:
         "Server error while logging in",
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      city,
+    } = req.body;
+
+    if (
+      typeof name !== "string" ||
+      typeof phone !== "string" ||
+      typeof city !== "string" ||
+      !name.trim() ||
+      !phone.trim() ||
+      !city.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name, phone and city are required",
+      });
+    }
+
+    const normalizedPhone = phone.trim();
+
+    const existingPhoneUser =
+      await User.findOne({
+        phone: normalizedPhone,
+        _id: {
+          $ne: req.user.userId,
+        },
+      });
+
+    if (existingPhoneUser) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Phone number already registered",
+      });
+    }
+
+    const user =
+      await User.findOneAndUpdate(
+        {
+          _id: req.user.userId,
+          role: {
+            $in: [
+              "owner",
+              "seeker",
+            ],
+          },
+          isActive: true,
+        },
+        {
+          name: name.trim(),
+          phone: normalizedPhone,
+          city: city.trim(),
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "User account not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        city: user.city || "",
+        role: user.role,
+        seekerType: user.seekerType,
+        profilePhoto:
+          user.profilePhoto || "",
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Update profile error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to update profile",
     });
   }
 };
@@ -270,6 +374,7 @@ const updateProfilePhoto = async (
         name: user.name,
         email: user.email,
         phone: user.phone,
+        city: user.city || "",
         role: user.role,
         seekerType: user.seekerType,
         profilePhoto:
@@ -704,6 +809,7 @@ const resetPassword = async (
 module.exports = {
   registerUser,
   loginUser,
+  updateProfile,
   updateProfilePhoto,
   forgotPassword,
   verifyResetOTP,

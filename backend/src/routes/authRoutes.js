@@ -4,6 +4,7 @@ const rateLimit = require("express-rate-limit");
 const {
   registerUser,
   loginUser,
+  updateProfile,
   updateProfilePhoto,
   forgotPassword,
   verifyResetOTP,
@@ -109,6 +110,14 @@ router.post(
   "/login",
   loginLimiter,
   loginUser
+);
+
+
+router.patch(
+  "/profile",
+  protect,
+  allowRoles("owner", "seeker"),
+  updateProfile
 );
 
 router.patch(

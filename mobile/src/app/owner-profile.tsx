@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -28,28 +29,46 @@ import {
   saveAuthUser,
 } from "../utils/authStorage";
 
-const PRIVACY_POLICY_URL = "https://stayrent.in/privacy-policy";
-const TERMS_OF_USE_URL = "https://stayrent.in/terms-of-use";
-const ACCOUNT_DELETION_URL = "https://stayrent.in/account-deletion";
-const CONTACT_URL = "https://stayrent.in/contact";
+const PRIVACY_POLICY_URL =
+  "https://stayrent.in/privacy-policy";
+
+const TERMS_OF_USE_URL =
+  "https://stayrent.in/terms-of-use";
+
+const ACCOUNT_DELETION_URL =
+  "https://stayrent.in/account-deletion";
+
+const CONTACT_URL =
+  "https://stayrent.in/contact";
 
 type OwnerUser = {
   _id?: string;
+  id?: string;
   name?: string;
   fullName?: string;
   email?: string;
   phone?: string;
+  city?: string;
   role?: string;
   profilePhoto?: string;
 };
 
 export default function OwnerProfileScreen() {
   const router = useRouter();
-  const { width, height } = useWindowDimensions();
 
-  const isSmallScreen = width < 380 || height < 700;
+  const { width, height } =
+    useWindowDimensions();
+
+  const isSmallScreen =
+    width < 380 || height < 700;
+
   const horizontalPadding =
-    width < 360 ? 14 : width < 430 ? 18 : 20;
+    width < 360
+      ? 14
+      : width < 430
+        ? 18
+        : 20;
+
   const contentMaxWidth = 720;
 
   const [user, setUser] =
@@ -61,6 +80,21 @@ export default function OwnerProfileScreen() {
   const [uploadingPhoto, setUploadingPhoto] =
     useState(false);
 
+  const [editingProfile, setEditingProfile] =
+    useState(false);
+
+  const [savingProfile, setSavingProfile] =
+    useState(false);
+
+  const [name, setName] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [city, setCity] =
+    useState("");
+
   const loadUser = async () => {
     try {
       setLoading(true);
@@ -69,6 +103,20 @@ export default function OwnerProfileScreen() {
         await getAuthUser();
 
       setUser(savedUser);
+
+      setName(
+        savedUser?.name ||
+          savedUser?.fullName ||
+          ""
+      );
+
+      setPhone(
+        savedUser?.phone || ""
+      );
+
+      setCity(
+        savedUser?.city || ""
+      );
     } catch (error) {
       console.error(
         "Owner profile load error:",
@@ -95,6 +143,7 @@ export default function OwnerProfileScreen() {
           "Permission required",
           "Please allow photo access to choose a profile picture."
         );
+
         return;
       }
 
@@ -110,47 +159,55 @@ export default function OwnerProfileScreen() {
         return;
       }
 
-      const asset = pickerResult.assets[0];
+      const asset =
+        pickerResult.assets[0];
 
       if (!asset?.uri) {
         Alert.alert(
           "Photo Error",
           "Unable to read the selected photo."
         );
+
         return;
       }
 
-      const token = await getAuthToken();
+      const token =
+        await getAuthToken();
 
       if (!token) {
         Alert.alert(
           "Login required",
           "Please login again."
         );
+
         return;
       }
 
       setUploadingPhoto(true);
 
-      const imageFile = new File(asset.uri);
+      const imageFile =
+        new File(asset.uri);
 
-      const formData = new FormData();
+      const formData =
+        new FormData();
 
       formData.append(
         "image",
         imageFile
       );
 
-      const uploadResponse = await fetch(
-        `${API_BASE_URL}/uploads/profile-photo`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const uploadResponse =
+        await fetch(
+          `${API_BASE_URL}/uploads/profile-photo`,
+          {
+            method: "POST",
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
 
       const uploadData =
         await uploadResponse.json();
@@ -164,22 +221,29 @@ export default function OwnerProfileScreen() {
           uploadData?.message ||
             "Unable to upload profile photo."
         );
+
         return;
       }
 
-      const saveResponse = await fetch(
-        `${API_BASE_URL}/auth/profile-photo`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            profilePhoto: uploadData.image,
-          }),
-        }
-      );
+      const saveResponse =
+        await fetch(
+          `${API_BASE_URL}/auth/profile-photo`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${token}`,
+            },
+
+            body: JSON.stringify({
+              profilePhoto:
+                uploadData.image,
+            }),
+          }
+        );
 
       const saveData =
         await saveResponse.json();
@@ -193,11 +257,29 @@ export default function OwnerProfileScreen() {
           saveData?.message ||
             "Photo uploaded, but profile could not be updated."
         );
+
         return;
       }
 
-      await saveAuthUser(saveData.user);
-      setUser(saveData.user);
+      await saveAuthUser(
+        saveData.user
+      );
+
+      setUser(
+        saveData.user
+      );
+
+      setName(
+        saveData.user?.name || ""
+      );
+
+      setPhone(
+        saveData.user?.phone || ""
+      );
+
+      setCity(
+        saveData.user?.city || ""
+      );
 
       Alert.alert(
         "Profile Updated",
@@ -218,6 +300,159 @@ export default function OwnerProfileScreen() {
     }
   };
 
+  const handleEditProfile = () => {
+    setName(
+      user?.name ||
+        user?.fullName ||
+        ""
+    );
+
+    setPhone(
+      user?.phone || ""
+    );
+
+    setCity(
+      user?.city || ""
+    );
+
+    setEditingProfile(true);
+  };
+
+  const handleCancelEdit = () => {
+    setName(
+      user?.name ||
+        user?.fullName ||
+        ""
+    );
+
+    setPhone(
+      user?.phone || ""
+    );
+
+    setCity(
+      user?.city || ""
+    );
+
+    setEditingProfile(false);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const cleanName =
+        name.trim();
+
+      const cleanPhone =
+        phone.trim();
+
+      const cleanCity =
+        city.trim();
+
+      if (
+        !cleanName ||
+        !cleanPhone ||
+        !cleanCity
+      ) {
+        Alert.alert(
+          "Required fields",
+          "Please enter your name, phone number and city."
+        );
+
+        return;
+      }
+
+      const token =
+        await getAuthToken();
+
+      if (!token) {
+        Alert.alert(
+          "Login required",
+          "Please login again."
+        );
+
+        return;
+      }
+
+      setSavingProfile(true);
+
+      const response =
+        await fetch(
+          `${API_BASE_URL}/auth/profile`,
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${token}`,
+            },
+
+            body: JSON.stringify({
+              name: cleanName,
+              phone: cleanPhone,
+              city: cleanCity,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !data?.user
+      ) {
+        Alert.alert(
+          "Update failed",
+          data?.message ||
+            "Unable to update profile."
+        );
+
+        return;
+      }
+
+      await saveAuthUser(
+        data.user
+      );
+
+      setUser(
+        data.user
+      );
+
+      setName(
+        data.user?.name || ""
+      );
+
+      setPhone(
+        data.user?.phone || ""
+      );
+
+      setCity(
+        data.user?.city || ""
+      );
+
+      setEditingProfile(false);
+
+      Alert.alert(
+        "Profile Updated",
+        "Your profile has been updated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Owner profile update error:",
+        error
+      );
+
+      Alert.alert(
+        "Update Error",
+        "Unable to update profile. Please try again."
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -227,9 +462,11 @@ export default function OwnerProfileScreen() {
           text: "Cancel",
           style: "cancel",
         },
+
         {
           text: "Logout",
           style: "destructive",
+
           onPress: async () => {
             try {
               await clearAuthSession();
@@ -266,619 +503,1266 @@ export default function OwnerProfileScreen() {
       .toUpperCase() || "O";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.glowOne} />
-      <View style={styles.glowTwo} />
+    <SafeAreaView
+      style={styles.container}
+    >
+      <View
+        style={styles.glowOne}
+      />
+
+      <View
+        style={styles.glowTwo}
+      />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
           {
-            paddingHorizontal: horizontalPadding,
-            paddingTop: isSmallScreen ? 20 : 27,
+            paddingHorizontal:
+              horizontalPadding,
+
+            paddingTop:
+              isSmallScreen
+                ? 20
+                : 27,
           },
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={
+          false
+        }
+        keyboardShouldPersistTaps="handled"
       >
         <View
           style={[
             styles.pageContent,
             {
-              maxWidth: contentMaxWidth,
+              maxWidth:
+                contentMaxWidth,
             },
           ]}
         >
-        {/* HEADER */}
+          {/* HEADER */}
 
-        <View
-          style={[
-            styles.header,
-            isSmallScreen && styles.headerSmall,
-          ]}
-        >
-          <View>
-            <Text style={styles.headerEyebrow}>
-              ACCOUNT
-            </Text>
-
-            <Text
-              style={[
-                styles.headerTitle,
-                isSmallScreen && styles.headerTitleSmall,
-              ]}
-            >
-              Your Profile
-            </Text>
-          </View>
-
-          <View style={styles.brandLogo}>
-            <Ionicons
-              name="home"
-              size={18}
-              color="#FFFFFF"
-            />
-          </View>
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingCard}>
-            <ActivityIndicator
-              size="small"
-              color="#635BFF"
-            />
-
-            <Text style={styles.loadingText}>
-              Loading your profile...
-            </Text>
-          </View>
-        ) : (
-          <>
-            {/* PROFILE HERO */}
-
-            <View
-              style={[
-                styles.profileHero,
-                isSmallScreen && styles.profileHeroSmall,
-              ]}
-            >
-              <View style={styles.heroGlow} />
-
-              <TouchableOpacity
-                style={styles.avatarButton}
-                activeOpacity={0.85}
-                disabled={uploadingPhoto}
-                onPress={handleProfilePhoto}
-              >
-                <View style={styles.avatar}>
-                  {user?.profilePhoto ? (
-                    <Image
-                      source={{
-                        uri: user.profilePhoto,
-                      }}
-                      style={styles.avatarImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <Text style={styles.avatarText}>
-                      {firstLetter}
-                    </Text>
-                  )}
-
-                  {uploadingPhoto ? (
-                    <View style={styles.avatarLoadingOverlay}>
-                      <ActivityIndicator
-                        size="small"
-                        color="#FFFFFF"
-                      />
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={styles.cameraBadge}>
-                  <Ionicons
-                    name="camera"
-                    size={15}
-                    color="#635BFF"
-                  />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                disabled={uploadingPhoto}
-                onPress={handleProfilePhoto}
-              >
-                <Text style={styles.changePhotoText}>
-                  {user?.profilePhoto
-                    ? "Change photo"
-                    : "Add profile photo"}
-                </Text>
-              </TouchableOpacity>
-
-              <Text style={styles.ownerName}>
-                {displayName}
-              </Text>
-
-              <View style={styles.roleBadge}>
-                <Ionicons
-                  name="business-outline"
-                  size={14}
-                  color="#D9D6FE"
-                />
-
-                <Text style={styles.roleText}>
-                  PROPERTY OWNER
-                </Text>
-              </View>
-
-              <Text style={styles.heroSubtitle}>
-                Manage your StayRent account and rental portfolio.
-              </Text>
-            </View>
-
-            {/* ACCOUNT DETAILS */}
-
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEyebrow}>
-                PERSONAL DETAILS
-              </Text>
-
-              <Text style={styles.sectionTitle}>
-                Account information
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.detailsCard,
-                isSmallScreen && styles.cardSmall,
-              ]}
-            >
-              <View style={styles.detailRow}>
-                <View
-                  style={[
-                    styles.detailIcon,
-                    styles.nameIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="person-outline"
-                    size={20}
-                    color="#635BFF"
-                  />
-                </View>
-
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>
-                    Full name
-                  </Text>
-
-                  <Text style={styles.detailValue}>
-                    {displayName}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailRow}>
-                <View
-                  style={[
-                    styles.detailIcon,
-                    styles.emailIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="mail-outline"
-                    size={20}
-                    color="#1570EF"
-                  />
-                </View>
-
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>
-                    Email address
-                  </Text>
-
-                  <Text
-                    style={styles.detailValue}
-                    numberOfLines={1}
-                  >
-                    {user?.email ||
-                      "Not available"}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailRow}>
-                <View
-                  style={[
-                    styles.detailIcon,
-                    styles.phoneIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="call-outline"
-                    size={20}
-                    color="#12B76A"
-                  />
-                </View>
-
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>
-                    Phone number
-                  </Text>
-
-                  <Text style={styles.detailValue}>
-                    {user?.phone ||
-                      "Not available"}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* PROPERTY ACTIONS */}
-
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEyebrow}>
-                OWNER TOOLS
-              </Text>
-
-              <Text style={styles.sectionTitle}>
-                Manage your rentals
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.actionsCard,
-                isSmallScreen && styles.cardSmall,
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  router.push(
-                    "/owner-properties"
-                  )
+          <View
+            style={[
+              styles.header,
+              isSmallScreen &&
+                styles.headerSmall,
+            ]}
+          >
+            <View>
+              <Text
+                style={
+                  styles.headerEyebrow
                 }
               >
+                ACCOUNT
+              </Text>
+
+              <Text
+                style={[
+                  styles.headerTitle,
+                  isSmallScreen &&
+                    styles.headerTitleSmall,
+                ]}
+              >
+                Your Profile
+              </Text>
+            </View>
+
+            <View
+              style={styles.brandLogo}
+            >
+              <Ionicons
+                name="home"
+                size={18}
+                color="#FFFFFF"
+              />
+            </View>
+          </View>
+
+          {loading ? (
+            <View
+              style={
+                styles.loadingCard
+              }
+            >
+              <ActivityIndicator
+                size="small"
+                color="#635BFF"
+              />
+
+              <Text
+                style={
+                  styles.loadingText
+                }
+              >
+                Loading your
+                profile...
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* PROFILE HERO */}
+
+              <View
+                style={[
+                  styles.profileHero,
+                  isSmallScreen &&
+                    styles.profileHeroSmall,
+                ]}
+              >
                 <View
-                  style={[
-                    styles.actionIcon,
-                    styles.listingIcon,
-                  ]}
+                  style={
+                    styles.heroGlow
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.avatarButton
+                  }
+                  activeOpacity={0.85}
+                  disabled={
+                    uploadingPhoto
+                  }
+                  onPress={
+                    handleProfilePhoto
+                  }
+                >
+                  <View
+                    style={
+                      styles.avatar
+                    }
+                  >
+                    {user?.profilePhoto ? (
+                      <Image
+                        source={{
+                          uri: user.profilePhoto,
+                        }}
+                        style={
+                          styles.avatarImage
+                        }
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Text
+                        style={
+                          styles.avatarText
+                        }
+                      >
+                        {firstLetter}
+                      </Text>
+                    )}
+
+                    {uploadingPhoto ? (
+                      <View
+                        style={
+                          styles.avatarLoadingOverlay
+                        }
+                      >
+                        <ActivityIndicator
+                          size="small"
+                          color="#FFFFFF"
+                        />
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <View
+                    style={
+                      styles.cameraBadge
+                    }
+                  >
+                    <Ionicons
+                      name="camera"
+                      size={15}
+                      color="#635BFF"
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  disabled={
+                    uploadingPhoto
+                  }
+                  onPress={
+                    handleProfilePhoto
+                  }
+                >
+                  <Text
+                    style={
+                      styles.changePhotoText
+                    }
+                  >
+                    {user?.profilePhoto
+                      ? "Change photo"
+                      : "Add profile photo"}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text
+                  style={
+                    styles.ownerName
+                  }
+                >
+                  {displayName}
+                </Text>
+
+                <View
+                  style={
+                    styles.roleBadge
+                  }
                 >
                   <Ionicons
                     name="business-outline"
+                    size={14}
+                    color="#D9D6FE"
+                  />
+
+                  <Text
+                    style={
+                      styles.roleText
+                    }
+                  >
+                    PROPERTY OWNER
+                  </Text>
+                </View>
+
+                <Text
+                  style={
+                    styles.heroSubtitle
+                  }
+                >
+                  Manage your
+                  StayRent account and
+                  rental portfolio.
+                </Text>
+              </View>
+
+              {/* ACCOUNT DETAILS */}
+
+              <View
+                style={
+                  styles.sectionHeaderRow
+                }
+              >
+                <View>
+                  <Text
+                    style={
+                      styles.sectionEyebrow
+                    }
+                  >
+                    PERSONAL DETAILS
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.sectionTitle
+                    }
+                  >
+                    Account information
+                  </Text>
+                </View>
+
+                {!editingProfile ? (
+                  <TouchableOpacity
+                    style={
+                      styles.editButton
+                    }
+                    activeOpacity={0.8}
+                    onPress={
+                      handleEditProfile
+                    }
+                  >
+                    <Ionicons
+                      name="create-outline"
+                      size={16}
+                      color="#635BFF"
+                    />
+
+                    <Text
+                      style={
+                        styles.editButtonText
+                      }
+                    >
+                      Edit
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              {editingProfile ? (
+                <View
+                  style={[
+                    styles.editCard,
+                    isSmallScreen &&
+                      styles.cardSmall,
+                  ]}
+                >
+                  <Text
+                    style={
+                      styles.inputLabel
+                    }
+                  >
+                    Full name
+                  </Text>
+
+                  <View
+                    style={
+                      styles.inputBox
+                    }
+                  >
+                    <Ionicons
+                      name="person-outline"
+                      size={19}
+                      color="#635BFF"
+                    />
+
+                    <TextInput
+                      style={
+                        styles.input
+                      }
+                      value={name}
+                      onChangeText={
+                        setName
+                      }
+                      placeholder="Enter your full name"
+                      placeholderTextColor="#98A2B3"
+                      autoCapitalize="words"
+                    />
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.inputLabel,
+                      styles.inputLabelSpacing,
+                    ]}
+                  >
+                    Phone number
+                  </Text>
+
+                  <View
+                    style={
+                      styles.inputBox
+                    }
+                  >
+                    <Ionicons
+                      name="call-outline"
+                      size={19}
+                      color="#12B76A"
+                    />
+
+                    <TextInput
+                      style={
+                        styles.input
+                      }
+                      value={phone}
+                      onChangeText={
+                        setPhone
+                      }
+                      placeholder="Enter phone number"
+                      placeholderTextColor="#98A2B3"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.inputLabel,
+                      styles.inputLabelSpacing,
+                    ]}
+                  >
+                    City
+                  </Text>
+
+                  <View
+                    style={
+                      styles.inputBox
+                    }
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={19}
+                      color="#F79009"
+                    />
+
+                    <TextInput
+                      style={
+                        styles.input
+                      }
+                      value={city}
+                      onChangeText={
+                        setCity
+                      }
+                      placeholder="Enter your city"
+                      placeholderTextColor="#98A2B3"
+                      autoCapitalize="words"
+                    />
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.inputLabel,
+                      styles.inputLabelSpacing,
+                    ]}
+                  >
+                    Email address
+                  </Text>
+
+                  <View
+                    style={[
+                      styles.inputBox,
+                      styles.disabledInputBox,
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail-outline"
+                      size={19}
+                      color="#98A2B3"
+                    />
+
+                    <Text
+                      style={
+                        styles.disabledInputText
+                      }
+                      numberOfLines={1}
+                    >
+                      {user?.email ||
+                        "Not available"}
+                    </Text>
+
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={15}
+                      color="#98A2B3"
+                    />
+                  </View>
+
+                  <Text
+                    style={
+                      styles.emailHint
+                    }
+                  >
+                    Email address cannot
+                    be changed here.
+                  </Text>
+
+                  <View
+                    style={
+                      styles.editActions
+                    }
+                  >
+                    <TouchableOpacity
+                      style={
+                        styles.cancelButton
+                      }
+                      activeOpacity={0.8}
+                      disabled={
+                        savingProfile
+                      }
+                      onPress={
+                        handleCancelEdit
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.cancelButtonText
+                        }
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.saveButton,
+                        savingProfile &&
+                          styles.saveButtonDisabled,
+                      ]}
+                      activeOpacity={0.85}
+                      disabled={
+                        savingProfile
+                      }
+                      onPress={
+                        handleSaveProfile
+                      }
+                    >
+                      {savingProfile ? (
+                        <ActivityIndicator
+                          size="small"
+                          color="#FFFFFF"
+                        />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="checkmark-outline"
+                            size={19}
+                            color="#FFFFFF"
+                          />
+
+                          <Text
+                            style={
+                              styles.saveButtonText
+                            }
+                          >
+                            Save changes
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.detailsCard,
+                    isSmallScreen &&
+                      styles.cardSmall,
+                  ]}
+                >
+                  <View
+                    style={
+                      styles.detailRow
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.detailIcon,
+                        styles.nameIcon,
+                      ]}
+                    >
+                      <Ionicons
+                        name="person-outline"
+                        size={20}
+                        color="#635BFF"
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.detailContent
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.detailLabel
+                        }
+                      >
+                        Full name
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.detailValue
+                        }
+                      >
+                        {displayName}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={
+                      styles.divider
+                    }
+                  />
+
+                  <View
+                    style={
+                      styles.detailRow
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.detailIcon,
+                        styles.emailIcon,
+                      ]}
+                    >
+                      <Ionicons
+                        name="mail-outline"
+                        size={20}
+                        color="#1570EF"
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.detailContent
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.detailLabel
+                        }
+                      >
+                        Email address
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.detailValue
+                        }
+                        numberOfLines={
+                          1
+                        }
+                      >
+                        {user?.email ||
+                          "Not available"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={
+                      styles.divider
+                    }
+                  />
+
+                  <View
+                    style={
+                      styles.detailRow
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.detailIcon,
+                        styles.phoneIcon,
+                      ]}
+                    >
+                      <Ionicons
+                        name="call-outline"
+                        size={20}
+                        color="#12B76A"
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.detailContent
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.detailLabel
+                        }
+                      >
+                        Phone number
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.detailValue
+                        }
+                      >
+                        {user?.phone ||
+                          "Not available"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={
+                      styles.divider
+                    }
+                  />
+
+                  <View
+                    style={
+                      styles.detailRow
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.detailIcon,
+                        styles.cityIcon,
+                      ]}
+                    >
+                      <Ionicons
+                        name="location-outline"
+                        size={20}
+                        color="#F79009"
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.detailContent
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.detailLabel
+                        }
+                      >
+                        City
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.detailValue
+                        }
+                      >
+                        {user?.city ||
+                          "Not added"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* PROPERTY ACTIONS */}
+
+              <View
+                style={
+                  styles.sectionHeader
+                }
+              >
+                <Text
+                  style={
+                    styles.sectionEyebrow
+                  }
+                >
+                  OWNER TOOLS
+                </Text>
+
+                <Text
+                  style={
+                    styles.sectionTitle
+                  }
+                >
+                  Manage your rentals
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.actionsCard,
+                  isSmallScreen &&
+                    styles.cardSmall,
+                ]}
+              >
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push(
+                      "/owner-properties"
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.listingIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="business-outline"
+                      size={21}
+                      color="#635BFF"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      My Properties
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      View and manage all
+                      listings
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={19}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+
+                <View
+                  style={
+                    styles.divider
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push(
+                      "/owner-add-property"
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.addIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="add-outline"
+                      size={22}
+                      color="#12B76A"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Add Property
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      Publish a new rental
+                      listing
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={19}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+
+                <View
+                  style={
+                    styles.divider
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push(
+                      "/owner-support" as any
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.supportIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="help-circle-outline"
+                      size={22}
+                      color="#F79009"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Help & Support
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      Report a problem or
+                      contact StayRent
+                      support
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={19}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* LEGAL & SUPPORT */}
+
+              <View
+                style={
+                  styles.sectionHeader
+                }
+              >
+                <Text
+                  style={
+                    styles.sectionEyebrow
+                  }
+                >
+                  LEGAL & SUPPORT
+                </Text>
+
+                <Text
+                  style={
+                    styles.sectionTitle
+                  }
+                >
+                  Policies and account help
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.actionsCard,
+                  isSmallScreen &&
+                    styles.cardSmall,
+                ]}
+              >
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    Linking.openURL(
+                      PRIVACY_POLICY_URL
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.privacyIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={22}
+                      color="#635BFF"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Privacy Policy
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      See how StayRent
+                      handles your
+                      information
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="open-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+
+                <View
+                  style={
+                    styles.divider
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    Linking.openURL(
+                      TERMS_OF_USE_URL
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.termsIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="document-text-outline"
+                      size={22}
+                      color="#1570EF"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Terms of Use
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      Read the rules for
+                      using StayRent
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="open-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+
+                <View
+                  style={
+                    styles.divider
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    Linking.openURL(
+                      ACCOUNT_DELETION_URL
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.deleteAccountIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={22}
+                      color="#F04438"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Account Deletion
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      Learn how to request
+                      account deletion
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="open-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+
+                <View
+                  style={
+                    styles.divider
+                  }
+                />
+
+                <TouchableOpacity
+                  style={
+                    styles.actionRow
+                  }
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    Linking.openURL(
+                      CONTACT_URL
+                    )
+                  }
+                >
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      styles.contactIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name="chatbubble-ellipses-outline"
+                      size={22}
+                      color="#F79009"
+                    />
+                  </View>
+
+                  <View
+                    style={
+                      styles.actionContent
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.actionTitle
+                      }
+                    >
+                      Contact StayRent
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.actionText
+                      }
+                    >
+                      Open StayRent contact
+                      information
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="open-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* SESSION */}
+
+              <View
+                style={
+                  styles.sectionHeader
+                }
+              >
+                <Text
+                  style={
+                    styles.sectionEyebrow
+                  }
+                >
+                  SECURITY
+                </Text>
+
+                <Text
+                  style={
+                    styles.sectionTitle
+                  }
+                >
+                  Session
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.logoutButton,
+                  isSmallScreen &&
+                    styles.logoutButtonSmall,
+                ]}
+                activeOpacity={0.85}
+                onPress={handleLogout}
+              >
+                <View
+                  style={
+                    styles.logoutIcon
+                  }
+                >
+                  <Ionicons
+                    name="log-out-outline"
                     size={21}
-                    color="#635BFF"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    My Properties
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    View and manage all listings
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="chevron-forward"
-                  size={19}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  router.push(
-                    "/owner-add-property"
-                  )
-                }
-              >
-                <View
-                  style={[
-                    styles.actionIcon,
-                    styles.addIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="add-outline"
-                    size={22}
-                    color="#12B76A"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Add Property
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    Publish a new rental listing
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="chevron-forward"
-                  size={19}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  router.push(
-                    "/owner-support" as any
-                  )
-                }
-              >
-                <View
-                  style={[
-                    styles.actionIcon,
-                    styles.supportIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={22}
-                    color="#F79009"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Help & Support
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    Report a problem or contact StayRent support
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="chevron-forward"
-                  size={19}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* LEGAL & SUPPORT */}
-
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEyebrow}>
-                LEGAL & SUPPORT
-              </Text>
-
-              <Text style={styles.sectionTitle}>
-                Policies and account help
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.actionsCard,
-                isSmallScreen && styles.cardSmall,
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  Linking.openURL(PRIVACY_POLICY_URL)
-                }
-              >
-                <View
-                  style={[
-                    styles.actionIcon,
-                    styles.privacyIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="shield-checkmark-outline"
-                    size={22}
-                    color="#635BFF"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Privacy Policy
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    See how StayRent handles your information
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="open-outline"
-                  size={18}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  Linking.openURL(TERMS_OF_USE_URL)
-                }
-              >
-                <View
-                  style={[
-                    styles.actionIcon,
-                    styles.termsIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="document-text-outline"
-                    size={22}
-                    color="#1570EF"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Terms of Use
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    Read the rules for using StayRent
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="open-outline"
-                  size={18}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  Linking.openURL(ACCOUNT_DELETION_URL)
-                }
-              >
-                <View
-                  style={[
-                    styles.actionIcon,
-                    styles.deleteAccountIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name="trash-outline"
-                    size={22}
                     color="#F04438"
                   />
                 </View>
 
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Account Deletion
-                  </Text>
-
-                  <Text style={styles.actionText}>
-                    Learn how to request account deletion
-                  </Text>
-                </View>
-
-                <Ionicons
-                  name="open-outline"
-                  size={18}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={styles.actionRow}
-                activeOpacity={0.8}
-                onPress={() =>
-                  Linking.openURL(CONTACT_URL)
-                }
-              >
                 <View
-                  style={[
-                    styles.actionIcon,
-                    styles.contactIcon,
-                  ]}
+                  style={
+                    styles.logoutContent
+                  }
                 >
-                  <Ionicons
-                    name="chatbubble-ellipses-outline"
-                    size={22}
-                    color="#F79009"
-                  />
-                </View>
-
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Contact StayRent
+                  <Text
+                    style={
+                      styles.logoutTitle
+                    }
+                  >
+                    Logout
                   </Text>
 
-                  <Text style={styles.actionText}>
-                    Open StayRent contact information
+                  <Text
+                    style={
+                      styles.logoutText
+                    }
+                  >
+                    Sign out from your
+                    owner account
                   </Text>
                 </View>
 
                 <Ionicons
-                  name="open-outline"
-                  size={18}
-                  color="#98A2B3"
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* SESSION */}
-
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEyebrow}>
-                SECURITY
-              </Text>
-
-              <Text style={styles.sectionTitle}>
-                Session
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.logoutButton,
-                isSmallScreen && styles.logoutButtonSmall,
-              ]}
-              activeOpacity={0.85}
-              onPress={handleLogout}
-            >
-              <View style={styles.logoutIcon}>
-                <Ionicons
-                  name="log-out-outline"
-                  size={21}
+                  name="chevron-forward"
+                  size={19}
                   color="#F04438"
                 />
-              </View>
-
-              <View style={styles.logoutContent}>
-                <Text style={styles.logoutTitle}>
-                  Logout
-                </Text>
-
-                <Text style={styles.logoutText}>
-                  Sign out from your owner account
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={19}
-                color="#F04438"
-              />
-            </TouchableOpacity>
-          </>
-        )}
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -1043,7 +1927,7 @@ const styles = StyleSheet.create({
   },
 
   avatarLoadingOverlay: {
-    ...StyleSheet.absoluteFill,
+   
     alignItems: "center",
     justifyContent: "center",
     backgroundColor:
@@ -1120,6 +2004,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
+  sectionHeaderRow: {
+    marginTop: 29,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
   sectionEyebrow: {
     fontSize: 9,
     fontWeight: "800",
@@ -1135,8 +2028,37 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  editButton: {
+    height: 36,
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    borderRadius: 12,
+    backgroundColor: "#F1EFFF",
+  },
+
+  editButtonText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#635BFF",
+  },
+
   detailsCard: {
     paddingHorizontal: 17,
+    borderRadius: 23,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+
+  editCard: {
+    padding: 17,
     borderRadius: 23,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -1150,6 +2072,98 @@ const styles = StyleSheet.create({
   cardSmall: {
     paddingHorizontal: 13,
     borderRadius: 20,
+  },
+
+  inputLabel: {
+    marginBottom: 7,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#475467",
+  },
+
+  inputLabelSpacing: {
+    marginTop: 16,
+  },
+
+  inputBox: {
+    minHeight: 52,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 15,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+  },
+
+  input: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 12,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  disabledInputBox: {
+    backgroundColor: "#F2F4F7",
+  },
+
+  disabledInputText: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  emailHint: {
+    marginTop: 7,
+    fontSize: 9,
+    color: "#98A2B3",
+  },
+
+  editActions: {
+    marginTop: 20,
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  cancelButton: {
+    flex: 1,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    backgroundColor: "#F2F4F7",
+  },
+
+  cancelButtonText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#475467",
+  },
+
+  saveButton: {
+    flex: 1.45,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 15,
+    backgroundColor: "#635BFF",
+  },
+
+  saveButtonDisabled: {
+    opacity: 0.65,
+  },
+
+  saveButtonText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   detailRow: {
@@ -1176,6 +2190,10 @@ const styles = StyleSheet.create({
 
   phoneIcon: {
     backgroundColor: "#ECFDF3",
+  },
+
+  cityIcon: {
+    backgroundColor: "#FFFAEB",
   },
 
   detailContent: {
