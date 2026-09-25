@@ -72,7 +72,7 @@ export default function SeekerBottomNav() {
         pathname === "/seeker-favorites" ||
         pathname === "/seeker-profile"
       ) {
-        router.replace("/seeker-home" as any);
+     router.navigate("/seeker-home" as any);
         return true;
       }
 
@@ -90,15 +90,14 @@ export default function SeekerBottomNav() {
     };
   }, [pathname, router]);
 
-  const goTo = (route: string) => {
-    if (pathname !== route) {
-      router.replace(route as any);
-    }
-  };
+ const goTo = (route: string) => {
+  if (pathname !== route) {
+    router.navigate(route as any);
+  }
+};
 
   const isActive = (route: string) =>
     pathname === route;
-
   return (
     <View
       style={[

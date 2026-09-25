@@ -471,6 +471,10 @@ export default function OwnerProfileScreen() {
             try {
               await clearAuthSession();
 
+              // Directly replace the current protected screen.
+              // Do not dismiss the stack first, because that briefly
+              // exposes/refocuses old protected screens after the
+              // auth session has already been cleared.
               router.replace(
                 "/owner-login" as any
               );

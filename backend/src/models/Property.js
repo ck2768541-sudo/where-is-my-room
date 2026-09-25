@@ -210,6 +210,36 @@ const propertySchema = new mongoose.Schema(
       index: true,
     },
 
+    totalUnits: {
+      type: Number,
+      default: 1,
+      min: 1,
+
+      validate: {
+        validator: Number.isInteger,
+        message:
+          "Total units must be a whole number",
+      },
+    },
+
+    availableUnits: {
+      type: Number,
+
+      default: function () {
+        return this.isAvailable === false
+          ? 0
+          : 1;
+      },
+
+      min: 0,
+
+      validate: {
+        validator: Number.isInteger,
+        message:
+          "Available units must be a whole number",
+      },
+    },
+
     isActive: {
       type: Boolean,
       default: true,

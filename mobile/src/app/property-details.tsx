@@ -49,6 +49,12 @@ type Property = {
   amenities?: string[];
   photos?: string[];
 
+  isAvailable?: boolean;
+  totalUnits?: number;
+  availableUnits?: number;
+  isVerified?: boolean;
+  moderationStatus?: "pending" | "approved" | "rejected";
+
   owner?: {
     name?: string;
     phone?: string;
@@ -307,6 +313,30 @@ export default function PropertyDetailsScreen() {
     );
   }
 
+  const totalUnits =
+    Number.isInteger(property.totalUnits) &&
+    (property.totalUnits as number) > 0
+      ? (property.totalUnits as number)
+      : 1;
+
+  const availableUnits =
+    Number.isInteger(property.availableUnits) &&
+    (property.availableUnits as number) >= 0
+      ? Math.min(
+          property.availableUnits as number,
+          totalUnits
+        )
+      : property.isAvailable === false
+        ? 0
+        : 1;
+
+  const occupiedUnits =
+    totalUnits - availableUnits;
+
+  const isVerifiedProperty =
+    property.isVerified === true &&
+    property.moderationStatus === "approved";
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -452,10 +482,26 @@ export default function PropertyDetailsScreen() {
             },
           ]}
         >
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeBadgeText}>
-              {property.propertyType.toUpperCase()}
-            </Text>
+          <View style={styles.topBadgeRow}>
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeBadgeText}>
+                {property.propertyType.toUpperCase()}
+              </Text>
+            </View>
+
+            {isVerifiedProperty && (
+              <View style={styles.verifiedBadge}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={15}
+                  color="#027A48"
+                />
+
+                <Text style={styles.verifiedBadgeText}>
+                  Verified
+                </Text>
+              </View>
+            )}
           </View>
 
           <Text
@@ -564,6 +610,71 @@ export default function PropertyDetailsScreen() {
               )}
             </View>
           ) : null}
+
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionEyebrow}>
+                AVAILABILITY
+              </Text>
+              <Text style={styles.sectionTitle}>
+                Unit status
+              </Text>
+            </View>
+
+            <View style={styles.sectionIcon}>
+              <Ionicons
+                name="layers-outline"
+                size={19}
+                color="#635BFF"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inventoryCard}>
+            <View style={styles.inventoryItem}>
+              <Text style={styles.inventoryValue}>
+                {totalUnits}
+              </Text>
+
+              <Text style={styles.inventoryLabel}>
+                Total
+              </Text>
+            </View>
+
+            <View style={styles.inventoryDivider} />
+
+            <View style={styles.inventoryItem}>
+              <Text
+                style={[
+                  styles.inventoryValue,
+                  styles.inventoryAvailableText,
+                ]}
+              >
+                {availableUnits}
+              </Text>
+
+              <Text style={styles.inventoryLabel}>
+                Available
+              </Text>
+            </View>
+
+            <View style={styles.inventoryDivider} />
+
+            <View style={styles.inventoryItem}>
+              <Text
+                style={[
+                  styles.inventoryValue,
+                  styles.inventoryOccupiedText,
+                ]}
+              >
+                {occupiedUnits}
+              </Text>
+
+              <Text style={styles.inventoryLabel}>
+                Occupied
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.sectionHeader}>
             <View>
@@ -1187,6 +1298,31 @@ const styles = StyleSheet.create({
     paddingTop: 22,
   },
 
+  topBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#ABEFC6",
+    backgroundColor: "#ECFDF3",
+  },
+
+  verifiedBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#027A48",
+  },
+
   typeBadge: {
     alignSelf: "flex-start",
     paddingHorizontal: 10,
@@ -1319,6 +1455,56 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#475467",
     textTransform: "capitalize",
+  },
+
+  inventoryCard: {
+    paddingVertical: 16,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EAF2",
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    elevation: 2,
+  },
+
+  inventoryItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  inventoryDivider: {
+    width: 1,
+    height: 34,
+    backgroundColor: "#EAECF0",
+  },
+
+  inventoryValue: {
+    fontSize: 19,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  inventoryAvailableText: {
+    color: "#027A48",
+  },
+
+  inventoryOccupiedText: {
+    color: "#B42318",
+  },
+
+  inventoryLabel: {
+    marginTop: 4,
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
   },
 
   sectionHeader: {

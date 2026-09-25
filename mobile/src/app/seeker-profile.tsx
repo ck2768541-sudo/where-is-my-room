@@ -81,6 +81,9 @@ export default function SeekerProfileScreen() {
   const [savingProfile, setSavingProfile] =
     useState(false);
 
+  const [loggingOut, setLoggingOut] =
+    useState(false);
+
   const [name, setName] =
     useState("");
 
@@ -92,8 +95,23 @@ export default function SeekerProfileScreen() {
 
   const loadUser = async () => {
     try {
+      if (loggingOut) {
+        return;
+      }
+
+      const token =
+        await getAuthToken();
+
       const savedUser =
         await getAuthUser();
+
+      if (!token || !savedUser) {
+        router.replace(
+          "/seeker-login" as any
+        );
+
+        return;
+      }
 
       setUser(savedUser);
 
@@ -115,13 +133,19 @@ export default function SeekerProfileScreen() {
         "Load seeker profile error:",
         error
       );
+
+      router.replace(
+        "/seeker-login" as any
+      );
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadUser();
-    }, [])
+      if (!loggingOut) {
+        loadUser();
+      }
+    }, [loggingOut])
   );
 
   const handleProfilePhoto = async () => {
@@ -446,6 +470,10 @@ export default function SeekerProfileScreen() {
   };
 
   const handleLogout = () => {
+    if (loggingOut) {
+      return;
+    }
+
     Alert.alert(
       "Logout",
       "Are you sure you want to logout?",
@@ -461,7 +489,11 @@ export default function SeekerProfileScreen() {
 
           onPress: async () => {
             try {
+              setLoggingOut(true);
+
               await clearAuthSession();
+
+              router.dismissAll();
 
               router.replace(
                 "/seeker-login" as any
@@ -471,6 +503,8 @@ export default function SeekerProfileScreen() {
                 "Seeker logout error:",
                 error
               );
+
+              setLoggingOut(false);
 
               Alert.alert(
                 "Logout Failed",
@@ -487,6 +521,27 @@ export default function SeekerProfileScreen() {
     user?.name ||
     user?.fullName ||
     "Seeker";
+
+  if (loggingOut) {
+    return (
+      <SafeAreaView
+        style={styles.container}
+      >
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <ActivityIndicator
+            size="large"
+            color="#635BFF"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView

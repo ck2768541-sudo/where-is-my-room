@@ -28,6 +28,8 @@ const createProperty = async (req, res) => {
       photos,
       latitude,
       longitude,
+      totalUnits,
+      availableUnits,
     } = req.body;
 
     /*
@@ -129,6 +131,54 @@ const createProperty = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
+    | UNIT AVAILABILITY VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    const normalizedTotalUnits =
+      totalUnits === undefined ||
+      totalUnits === null ||
+      totalUnits === ""
+        ? 1
+        : Number(totalUnits);
+
+    const normalizedAvailableUnits =
+      availableUnits === undefined ||
+      availableUnits === null ||
+      availableUnits === ""
+        ? normalizedTotalUnits
+        : Number(availableUnits);
+
+    if (
+      !Number.isInteger(
+        normalizedTotalUnits
+      ) ||
+      normalizedTotalUnits < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Total units must be a whole number greater than 0",
+      });
+    }
+
+    if (
+      !Number.isInteger(
+        normalizedAvailableUnits
+      ) ||
+      normalizedAvailableUnits < 0 ||
+      normalizedAvailableUnits >
+        normalizedTotalUnits
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Available units must be between 0 and total units",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | PROPERTY DATA
     |--------------------------------------------------------------------------
     */
@@ -161,7 +211,8 @@ const createProperty = async (req, res) => {
       furnishing:
         propertyType === "hotel"
           ? "unfurnished"
-          : furnishing || "unfurnished",
+          : furnishing ||
+            "unfurnished",
 
       acAvailable:
         propertyType === "hotel"
@@ -204,6 +255,15 @@ const createProperty = async (req, res) => {
         Array.isArray(photos)
           ? photos
           : [],
+
+      totalUnits:
+        normalizedTotalUnits,
+
+      availableUnits:
+        normalizedAvailableUnits,
+
+      isAvailable:
+        normalizedAvailableUnits > 0,
 
       /*
       |--------------------------------------------------------------------------
@@ -282,6 +342,7 @@ const getProperties = async (
       lat,
       lng,
       radiusKm,
+      search,
     } = req.query;
 
     /*
@@ -299,11 +360,6 @@ const getProperties = async (
     |--------------------------------------------------------------------------
     | SEEKER VISIBILITY SECURITY
     |--------------------------------------------------------------------------
-    |
-    | Seeker ko sirf admin-approved properties milengi.
-    |
-    | Owner ke existing behavior ko preserve kiya gaya hai.
-    |--------------------------------------------------------------------------
     */
 
     if (
@@ -314,6 +370,12 @@ const getProperties = async (
       filter.moderationStatus =
         "approved";
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NEARBY SEARCH
+    |--------------------------------------------------------------------------
+    */
 
     const hasLatitude =
       lat !== undefined &&
@@ -402,7 +464,6 @@ const getProperties = async (
         $near: {
           $geometry: {
             type: "Point",
-
             coordinates: [
               longitude,
               latitude,
@@ -419,6 +480,12 @@ const getProperties = async (
         true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CITY FILTER
+    |--------------------------------------------------------------------------
+    */
+
     if (city) {
       filter.city = {
         $regex: city,
@@ -426,12 +493,152 @@ const getProperties = async (
       };
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LOCALITY FILTER
+    |--------------------------------------------------------------------------
+    */
+
     if (locality) {
       filter.locality = {
         $regex: locality,
         $options: "i",
       };
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FRIENDLY GLOBAL SEARCH
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      typeof search ===
+        "string" &&
+      search.trim()
+    ) {
+      const escapedSearch =
+        search
+          .trim()
+          .replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+          );
+
+      filter.$and = [
+        ...(Array.isArray(
+          filter.$and
+        )
+          ? filter.$and
+          : []),
+
+        {
+          $or: [
+            {
+              title: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              description: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              address: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              locality: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              landmark: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              city: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              state: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              pincode: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              propertyType: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              furnishing: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              availableFor: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+
+            {
+              amenities: {
+                $regex:
+                  escapedSearch,
+                $options: "i",
+              },
+            },
+          ],
+        },
+      ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROPERTY TYPE
+    |--------------------------------------------------------------------------
+    */
 
     if (propertyType) {
       filter.propertyType =
@@ -532,6 +739,12 @@ const getProperties = async (
         }
       }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FETCH PROPERTIES
+    |--------------------------------------------------------------------------
+    */
 
     let propertyQuery =
       Property.find(
@@ -696,19 +909,27 @@ const updatePropertyAvailability =
     try {
       const {
         isAvailable,
+        totalUnits,
+        availableUnits,
       } = req.body;
 
-      if (
-        typeof isAvailable !==
-        "boolean"
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "isAvailable must be true or false",
-          });
+      const hasUnitUpdate =
+        totalUnits !== undefined ||
+        availableUnits !== undefined;
+
+      if (!hasUnitUpdate) {
+        if (
+          typeof isAvailable !==
+          "boolean"
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "isAvailable must be true or false",
+            });
+        }
       }
 
       const property =
@@ -729,22 +950,140 @@ const updatePropertyAvailability =
           });
       }
 
-      property.isAvailable =
-        isAvailable;
+      if (hasUnitUpdate) {
+        const normalizedTotalUnits =
+          totalUnits !== undefined
+            ? Number(totalUnits)
+            : Number.isInteger(
+                property.totalUnits
+              )
+              ? property.totalUnits
+              : 1;
+
+        const normalizedAvailableUnits =
+          availableUnits !== undefined
+            ? Number(
+                availableUnits
+              )
+            : Number.isInteger(
+                property.availableUnits
+              )
+              ? property.availableUnits
+              : property.isAvailable
+                ? 1
+                : 0;
+
+        if (
+          !Number.isInteger(
+            normalizedTotalUnits
+          ) ||
+          normalizedTotalUnits < 1
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "Total units must be a whole number greater than 0",
+            });
+        }
+
+        if (
+          !Number.isInteger(
+            normalizedAvailableUnits
+          ) ||
+          normalizedAvailableUnits < 0 ||
+          normalizedAvailableUnits >
+            normalizedTotalUnits
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "Available units must be between 0 and total units",
+            });
+        }
+
+        property.totalUnits =
+          normalizedTotalUnits;
+
+        property.availableUnits =
+          normalizedAvailableUnits;
+
+        property.isAvailable =
+          normalizedAvailableUnits > 0;
+      } else {
+        /*
+         * OLD BOOLEAN FLOW
+         * Backward-compatible.
+         */
+
+        property.isAvailable =
+          isAvailable;
+
+        if (!isAvailable) {
+          property.availableUnits =
+            0;
+        } else {
+          if (
+            !Number.isInteger(
+              property.totalUnits
+            ) ||
+            property.totalUnits < 1
+          ) {
+            property.totalUnits =
+              1;
+          }
+
+          if (
+            !Number.isInteger(
+              property.availableUnits
+            ) ||
+            property.availableUnits < 1
+          ) {
+            property.availableUnits =
+              1;
+          }
+
+          if (
+            property.availableUnits >
+            property.totalUnits
+          ) {
+            property.availableUnits =
+              property.totalUnits;
+          }
+        }
+      }
 
       await property.save();
+
+      const occupiedUnits =
+        property.totalUnits -
+        property.availableUnits;
 
       return res
         .status(200)
         .json({
           success: true,
 
-          message:
-            isAvailable
+          message: hasUnitUpdate
+            ? "Property availability updated successfully"
+            : property.isAvailable
               ? "Property marked as available"
               : "Property marked as occupied",
 
           property,
+
+          availability: {
+            totalUnits:
+              property.totalUnits,
+
+            availableUnits:
+              property.availableUnits,
+
+            occupiedUnits,
+          },
         });
     } catch (error) {
       console.error(

@@ -31,6 +31,10 @@ type Property = {
 
   title: string;
 
+  description?: string;
+  amenities?: string[];
+  landmark?: string;
+
   propertyType:
     | "room"
     | "pg"
@@ -66,6 +70,12 @@ type Property = {
 
   photos: string[];
 
+  isAvailable?: boolean;
+  totalUnits?: number;
+  availableUnits?: number;
+  isVerified?: boolean;
+  moderationStatus?: "pending" | "approved" | "rejected";
+
   location?: {
     type: "Point";
     coordinates: number[];
@@ -84,6 +94,7 @@ export default function SeekerHomeScreen() {
 
   const scrollViewRef = useRef<ScrollView | null>(null);
   const resultsSectionY = useRef(0);
+  const latestPropertyRequestRef = useRef(0);
 
   const isSmallScreen = width < 380 || height < 700;
   const horizontalPadding =
@@ -115,6 +126,12 @@ export default function SeekerHomeScreen() {
 
   const [loading, setLoading] =
     useState(false);
+
+  const [hasLoadedOnce, setHasLoadedOnce] =
+    useState(false);
+
+  const [authChecking, setAuthChecking] =
+    useState(true);
 
   const [refreshing, setRefreshing] =
     useState(false);
@@ -205,11 +222,19 @@ export default function SeekerHomeScreen() {
 
       const searchableText = [
         property.title,
+        property.description,
         property.locality,
+        property.landmark,
         property.city,
         property.address,
         property.state,
         property.pincode,
+        property.propertyType,
+        property.furnishing,
+        property.availableFor,
+        ...(Array.isArray(property.amenities)
+          ? property.amenities
+          : []),
       ]
         .filter(Boolean)
         .join(" ")
@@ -277,11 +302,21 @@ export default function SeekerHomeScreen() {
       latitude?: number | null;
       longitude?: number | null;
       searchTextFilter?: string;
+      searchQuery?: string;
     },
     showLoading = true
   ) => {
+    const requestId =
+      latestPropertyRequestRef.current + 1;
+
+    latestPropertyRequestRef.current =
+      requestId;
+
+    const shouldShowInitialLoading =
+      showLoading && !hasLoadedOnce;
+
     try {
-      if (showLoading) {
+      if (shouldShowInitialLoading) {
         setLoading(true);
       }
 
@@ -290,7 +325,7 @@ export default function SeekerHomeScreen() {
       const token = await getAuthToken();
 
       if (!token) {
-        setError("Please login again.");
+        router.replace("/seeker-login" as any);
         return;
       }
 
@@ -310,6 +345,8 @@ export default function SeekerHomeScreen() {
           : userLongitude;
       const searchTextFilter =
         options?.searchTextFilter ?? "";
+      const searchQuery =
+        options?.searchQuery ?? "";
 
       const params: string[] = [];
 
@@ -332,6 +369,12 @@ export default function SeekerHomeScreen() {
         );
       }
 
+      if (searchQuery.trim()) {
+        params.push(
+          `search=${encodeURIComponent(searchQuery.trim())}`
+        );
+      }
+
       let url = `${API_BASE_URL}/properties`;
 
       if (params.length > 0) {
@@ -348,10 +391,15 @@ export default function SeekerHomeScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(
-          data?.message ||
-            "Unable to fetch properties."
-        );
+        if (
+          requestId ===
+          latestPropertyRequestRef.current
+        ) {
+          setError(
+            data?.message ||
+              "Unable to fetch properties."
+          );
+        }
         return;
       }
 
@@ -359,6 +407,13 @@ export default function SeekerHomeScreen() {
         Array.isArray(data.properties)
           ? data.properties
           : [];
+
+      if (
+        requestId !==
+        latestPropertyRequestRef.current
+      ) {
+        return;
+      }
 
       setAllProperties(fetchedProperties);
       setIsSearchTextDirty(false);
@@ -370,17 +425,28 @@ export default function SeekerHomeScreen() {
           searchTextFilter.trim().length > 0
         )
       );
+      setHasLoadedOnce(true);
     } catch (error) {
       console.error(
         "Fetch properties error:",
         error
       );
 
-      setError(
-        "Unable to connect to the server."
-      );
+      if (
+        requestId ===
+        latestPropertyRequestRef.current
+      ) {
+        setError(
+          "Unable to connect to the server."
+        );
+        setHasLoadedOnce(true);
+      }
     } finally {
-      if (showLoading) {
+      if (
+        shouldShowInitialLoading &&
+        requestId ===
+          latestPropertyRequestRef.current
+      ) {
         setLoading(false);
       }
     }
@@ -660,9 +726,39 @@ export default function SeekerHomeScreen() {
     };
 
   useEffect(() => {
-    getUserLocation();
-    fetchFavorites();
-  }, []);
+    let isMounted = true;
+
+    const initializeSeekerHome = async () => {
+      const token = await getAuthToken();
+
+      if (!token) {
+        router.replace("/seeker-login" as any);
+        return;
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      setAuthChecking(false);
+
+      getUserLocation();
+      fetchFavorites();
+    };
+
+    initializeSeekerHome().catch((error) => {
+      console.error(
+        "Seeker auth check error:",
+        error
+      );
+
+      router.replace("/seeker-login" as any);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -696,21 +792,7 @@ export default function SeekerHomeScreen() {
           longitude: userLongitude,
         });
       }
-      return;
-    }
 
-    if (
-      resolvedLocationQuery.toLowerCase() ===
-        query.toLowerCase() &&
-      resolvedLatitude !== null &&
-      resolvedLongitude !== null
-    ) {
-      await fetchProperties({
-        selectedType,
-        latitude: resolvedLatitude,
-        longitude: resolvedLongitude,
-        searchTextFilter: query,
-      });
       return;
     }
 
@@ -718,80 +800,31 @@ export default function SeekerHomeScreen() {
       setLoading(true);
       setError("");
 
-      let permission =
-        await Location.getForegroundPermissionsAsync();
-
-      if (permission.status !== "granted") {
-        permission =
-          await Location.requestForegroundPermissionsAsync();
-      }
-
-      if (permission.status !== "granted") {
-        setResolvedLocationQuery("");
-        setResolvedLatitude(null);
-        setResolvedLongitude(null);
-
-        await fetchProperties({
-          citySearch: query,
-          selectedType,
-          latitude: null,
-          longitude: null,
-          searchTextFilter: query,
-        });
-        return;
-      }
-
-      const geocodedLocations =
-        await Location.geocodeAsync(`${query}, India`);
-
-      const matchedLocation =
-        geocodedLocations[0];
-
-      if (!matchedLocation) {
-        setResolvedLocationQuery("");
-        setResolvedLatitude(null);
-        setResolvedLongitude(null);
-        setAllProperties([]);
-        setProperties([]);
-        setError("");
-        return;
-      }
-
+      /*
+       * Friendly text search:
+       * typed city / area / landmark / address / title / amenity etc.
+       * ko backend ke global `search` filter se match karaya jata hai.
+       * Typed search ke liye geocoding required nahi hai.
+       */
       setResolvedLocationQuery(query);
-      setResolvedLatitude(
-        matchedLocation.latitude
-      );
-      setResolvedLongitude(
-        matchedLocation.longitude
-      );
-
-      await fetchProperties({
-        selectedType,
-        latitude: matchedLocation.latitude,
-        longitude: matchedLocation.longitude,
-        searchTextFilter: query,
-      });
-    } catch (error) {
-      console.error(
-        "Location search error:",
-        error
-      );
-
-      setResolvedLocationQuery("");
       setResolvedLatitude(null);
       setResolvedLongitude(null);
 
-      /*
-       * Safe fallback for typed city names. searchTextFilter prevents
-       * unrelated nearby/current-location properties from appearing.
-       */
       await fetchProperties({
-        citySearch: query,
         selectedType,
         latitude: null,
         longitude: null,
-        searchTextFilter: query,
+        searchQuery: query,
       });
+    } catch (error) {
+      console.error(
+        "Property search error:",
+        error
+      );
+
+      setError(
+        "Unable to search properties."
+      );
     } finally {
       setLoading(false);
     }
@@ -801,22 +834,20 @@ export default function SeekerHomeScreen() {
     try {
       setRefreshing(true);
 
-      const activeSearchText =
-        isSearchTextDirty ? location : "";
+      const committedSearch =
+        resolvedLocationQuery.trim();
 
       if (
-        resolvedLocationQuery.trim() &&
-        resolvedLatitude !== null &&
-        resolvedLongitude !== null &&
-        resolvedLocationQuery.toLowerCase() ===
+        committedSearch &&
+        committedSearch.toLowerCase() ===
           location.trim().toLowerCase()
       ) {
         await fetchProperties(
           {
             selectedType: propertyType,
-            latitude: resolvedLatitude,
-            longitude: resolvedLongitude,
-            searchTextFilter: location.trim(),
+            latitude: null,
+            longitude: null,
+            searchQuery: committedSearch,
           },
           false
         );
@@ -827,7 +858,8 @@ export default function SeekerHomeScreen() {
             selectedType: propertyType,
             latitude: null,
             longitude: null,
-            searchTextFilter: activeSearchText,
+            searchTextFilter:
+              isSearchTextDirty ? location : "",
           },
           false
         );
@@ -837,7 +869,8 @@ export default function SeekerHomeScreen() {
             selectedType: propertyType,
             latitude: userLatitude,
             longitude: userLongitude,
-            searchTextFilter: activeSearchText,
+            searchTextFilter:
+              isSearchTextDirty ? location : "",
           },
           false
         );
@@ -939,7 +972,13 @@ export default function SeekerHomeScreen() {
           onPress: async () => {
             try {
               await clearAuthSession();
-              router.replace("/seeker-login" as any);
+
+              // Directly replace the protected screen.
+              // Avoid dismissAll() because it can briefly refocus
+              // an old protected screen after the session is cleared.
+              router.replace(
+                "/seeker-login" as any
+              );
             } catch (error) {
               console.error(
                 "Seeker logout error:",
@@ -956,6 +995,19 @@ export default function SeekerHomeScreen() {
       ]
     );
   };
+
+  if (authChecking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.authLoadingContainer}>
+          <ActivityIndicator
+            size="small"
+            color="#635BFF"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1375,16 +1427,25 @@ export default function SeekerHomeScreen() {
             </Text>
           </View>
 
-          {!loading && (
+          {hasLoadedOnce && (
             <View style={styles.resultsCountBadge}>
-              <Text style={styles.resultsCount}>
-                {properties.length}
-              </Text>
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#635BFF"
+                />
+              ) : (
+                <Text style={styles.resultsCount}>
+                  {properties.length}
+                </Text>
+              )}
             </View>
           )}
         </View>
 
-        {loading && (
+        {loading &&
+          !hasLoadedOnce &&
+          properties.length === 0 && (
           <View style={styles.loadingContainer}>
             <View style={styles.loadingIconBox}>
               <ActivityIndicator
@@ -1403,7 +1464,9 @@ export default function SeekerHomeScreen() {
           </View>
         )}
 
-        {!loading && error !== "" && (
+        {!loading &&
+          error !== "" &&
+          properties.length === 0 && (
           <View style={styles.messageBox}>
             <View style={styles.errorIconBox}>
               <Ionicons
@@ -1424,6 +1487,7 @@ export default function SeekerHomeScreen() {
         )}
 
         {!loading &&
+          hasLoadedOnce &&
           error === "" &&
           properties.length === 0 && (
             <View style={styles.messageBox}>
@@ -1445,8 +1509,7 @@ export default function SeekerHomeScreen() {
             </View>
           )}
 
-        {!loading &&
-          error === "" &&
+        {error === "" &&
           properties.map((property) => {
             const imageUrl =
               property.photos &&
@@ -1477,11 +1540,35 @@ export default function SeekerHomeScreen() {
             const isUpdatingFavorite =
               updatingFavoriteId === property._id;
 
+            const totalUnits =
+              Number.isInteger(property.totalUnits) &&
+              (property.totalUnits as number) > 0
+                ? (property.totalUnits as number)
+                : 1;
+
+            const availableUnits =
+              Number.isInteger(property.availableUnits) &&
+              (property.availableUnits as number) >= 0
+                ? Math.min(
+                    property.availableUnits as number,
+                    totalUnits
+                  )
+                : property.isAvailable === false
+                  ? 0
+                  : 1;
+
+            const occupiedUnits =
+              totalUnits - availableUnits;
+
+            const isVerifiedProperty =
+              property.isVerified === true &&
+              property.moderationStatus === "approved";
+
             return (
               <TouchableOpacity
                 key={property._id}
                 style={styles.propertyCard}
-                activeOpacity={0.92}
+                activeOpacity={1}
                 onPress={() =>
                   router.push({
                     pathname:
@@ -1572,6 +1659,20 @@ export default function SeekerHomeScreen() {
                       {property.propertyType.toUpperCase()}
                     </Text>
                   </View>
+
+                  {isVerifiedProperty && (
+                    <View style={styles.verifiedImageBadge}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={14}
+                        color="#027A48"
+                      />
+
+                      <Text style={styles.verifiedImageBadgeText}>
+                        Verified
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <View
@@ -1681,6 +1782,52 @@ export default function SeekerHomeScreen() {
                           </Text>
                         </>
                       )}
+                    </View>
+                  </View>
+
+                  <View style={styles.inventoryRow}>
+                    <View style={styles.inventoryItem}>
+                      <Text style={styles.inventoryValue}>
+                        {totalUnits}
+                      </Text>
+
+                      <Text style={styles.inventoryLabel}>
+                        Total
+                      </Text>
+                    </View>
+
+                    <View style={styles.inventoryDivider} />
+
+                    <View style={styles.inventoryItem}>
+                      <Text
+                        style={[
+                          styles.inventoryValue,
+                          styles.inventoryAvailableText,
+                        ]}
+                      >
+                        {availableUnits}
+                      </Text>
+
+                      <Text style={styles.inventoryLabel}>
+                        Available
+                      </Text>
+                    </View>
+
+                    <View style={styles.inventoryDivider} />
+
+                    <View style={styles.inventoryItem}>
+                      <Text
+                        style={[
+                          styles.inventoryValue,
+                          styles.inventoryOccupiedText,
+                        ]}
+                      >
+                        {occupiedUnits}
+                      </Text>
+
+                      <Text style={styles.inventoryLabel}>
+                        Occupied
+                      </Text>
                     </View>
                   </View>
 
@@ -1805,6 +1952,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F9FD",
+  },
+
+  authLoadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   scrollView: {
@@ -2538,6 +2691,70 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.8,
     color: "#FFFFFF",
+  },
+
+  verifiedImageBadge: {
+    position: "absolute",
+    left: 12,
+    top: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#ABEFC6",
+    backgroundColor: "rgba(236,253,243,0.96)",
+  },
+
+  verifiedImageBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#027A48",
+  },
+
+  inventoryRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    backgroundColor: "#F8F9FC",
+  },
+
+  inventoryItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  inventoryDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#EAECF0",
+  },
+
+  inventoryValue: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  inventoryAvailableText: {
+    color: "#027A48",
+  },
+
+  inventoryOccupiedText: {
+    color: "#B42318",
+  },
+
+  inventoryLabel: {
+    marginTop: 3,
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
   },
 
   propertyContent: {

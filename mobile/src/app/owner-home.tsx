@@ -68,12 +68,11 @@ export default function OwnerHomeScreen() {
       setError("");
 
       const token = await getAuthToken();
-
-      if (!token) {
-        setError("Please login again.");
-        return;
-      }
-
+if (!token) {
+  router.replace("/owner-login" as any);
+  return;
+}
+     
       const response = await fetch(
         `${API_BASE_URL}/properties/owner/my-properties`,
         {
@@ -168,13 +167,12 @@ export default function OwnerHomeScreen() {
       setRefreshing(false);
     }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchOwnerProperties();
-      fetchUnreadNotificationCount();
-    }, [])
-  );
+useFocusEffect(
+  useCallback(() => {
+    fetchOwnerProperties(properties.length === 0);
+    fetchUnreadNotificationCount();
+  }, [properties.length])
+);
 
   const totalProperties =
     properties.length;

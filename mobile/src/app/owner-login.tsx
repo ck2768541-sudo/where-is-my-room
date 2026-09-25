@@ -291,6 +291,8 @@ export default function OwnerLoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="username"
+                importantForAutofill="yes"
                 value={email}
                 onChangeText={setEmail}
               />
@@ -313,6 +315,9 @@ export default function OwnerLoginScreen() {
                 placeholderTextColor="#98A2B3"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="current-password"
+                importantForAutofill="yes"
                 value={password}
                 onChangeText={setPassword}
               />

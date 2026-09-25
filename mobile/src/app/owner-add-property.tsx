@@ -51,6 +51,9 @@ export default function OwnerAddPropertyScreen() {
 
   const [monthlyRent, setMonthlyRent] = useState("");
 
+  const [totalUnits, setTotalUnits] = useState("1");
+  const [availableUnits, setAvailableUnits] = useState("1");
+
   const [securityDeposit, setSecurityDeposit] =
     useState("");
 
@@ -134,6 +137,8 @@ const [longitude, setLongitude] = useState<number | null>(null);
     setDescription("");
     setPropertyType("room");
     setMonthlyRent("");
+    setTotalUnits("1");
+    setAvailableUnits("1");
     setSecurityDeposit("");
     setAvailableFor("anyone");
     setFurnishing("unfurnished");
@@ -323,6 +328,32 @@ const getCurrentLocation = async () => {
       }
     }
 
+    const parsedTotalUnits = Number(totalUnits);
+    const parsedAvailableUnits = Number(availableUnits);
+
+    if (
+      !Number.isInteger(parsedTotalUnits) ||
+      parsedTotalUnits < 1
+    ) {
+      Alert.alert(
+        "Invalid total units",
+        "Total units must be a whole number greater than 0."
+      );
+      return;
+    }
+
+    if (
+      !Number.isInteger(parsedAvailableUnits) ||
+      parsedAvailableUnits < 0 ||
+      parsedAvailableUnits > parsedTotalUnits
+    ) {
+      Alert.alert(
+        "Invalid available units",
+        "Available units must be a whole number between 0 and total units."
+      );
+      return;
+    }
+
     if (selectedPhotos.length === 0) {
       Alert.alert(
         "Photos required",
@@ -418,6 +449,9 @@ const uploadResponse = await expoFetch(
             propertyType === "hotel"
               ? "unfurnished"
               : furnishing,
+
+          totalUnits: parsedTotalUnits,
+          availableUnits: parsedAvailableUnits,
 
           acAvailable:
             propertyType === "hotel"
@@ -710,6 +744,119 @@ const uploadResponse = await expoFetch(
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            <Text style={styles.label}>
+              Unit availability
+            </Text>
+
+            <View
+              style={[
+                styles.twoColumnRow,
+                isSmallScreen && styles.twoColumnRowSmall,
+              ]}
+            >
+              <View style={styles.halfField}>
+                <Text style={styles.inventoryFieldLabel}>
+                  Total units
+                </Text>
+
+                <View style={styles.inputBox}>
+                  <Ionicons
+                    name="layers-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Example: 10"
+                    placeholderTextColor="#98A2B3"
+                    keyboardType="number-pad"
+                    value={totalUnits}
+                    onChangeText={setTotalUnits}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.halfField}>
+                <Text style={styles.inventoryFieldLabel}>
+                  Available units
+                </Text>
+
+                <View style={styles.inputBox}>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={18}
+                    color="#98A2B3"
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Example: 4"
+                    placeholderTextColor="#98A2B3"
+                    keyboardType="number-pad"
+                    value={availableUnits}
+                    onChangeText={setAvailableUnits}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.inventoryPreview}>
+              <View style={styles.inventoryPreviewItem}>
+                <Text style={styles.inventoryPreviewLabel}>
+                  Total
+                </Text>
+                <Text style={styles.inventoryPreviewValue}>
+                  {Number.isInteger(Number(totalUnits)) &&
+                  Number(totalUnits) >= 0
+                    ? Number(totalUnits)
+                    : 0}
+                </Text>
+              </View>
+
+              <View style={styles.inventoryPreviewDivider} />
+
+              <View style={styles.inventoryPreviewItem}>
+                <Text style={styles.inventoryPreviewLabel}>
+                  Available
+                </Text>
+                <Text
+                  style={[
+                    styles.inventoryPreviewValue,
+                    styles.inventoryAvailableText,
+                  ]}
+                >
+                  {Number.isInteger(Number(availableUnits)) &&
+                  Number(availableUnits) >= 0
+                    ? Number(availableUnits)
+                    : 0}
+                </Text>
+              </View>
+
+              <View style={styles.inventoryPreviewDivider} />
+
+              <View style={styles.inventoryPreviewItem}>
+                <Text style={styles.inventoryPreviewLabel}>
+                  Occupied
+                </Text>
+                <Text
+                  style={[
+                    styles.inventoryPreviewValue,
+                    styles.inventoryOccupiedText,
+                  ]}
+                >
+                  {Number.isInteger(Number(totalUnits)) &&
+                  Number.isInteger(Number(availableUnits))
+                    ? Math.max(
+                        0,
+                        Number(totalUnits) -
+                          Number(availableUnits)
+                      )
+                    : 0}
+                </Text>
+              </View>
             </View>
 
             {propertyType === "hotel" ? (
@@ -1693,6 +1840,57 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
     color: "#635BFF",
+  },
+
+  inventoryFieldLabel: {
+    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  inventoryPreview: {
+    marginTop: -2,
+    marginBottom: 20,
+    paddingVertical: 14,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FC",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+  },
+
+  inventoryPreviewItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  inventoryPreviewDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#EAECF0",
+  },
+
+  inventoryPreviewLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  inventoryPreviewValue: {
+    marginTop: 4,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  inventoryAvailableText: {
+    color: "#027A48",
+  },
+
+  inventoryOccupiedText: {
+    color: "#B42318",
   },
 
   hotelRateCard: {

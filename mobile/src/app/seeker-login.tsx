@@ -284,6 +284,8 @@ export default function SeekerLoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="username"
+                importantForAutofill="yes"
                 value={email}
                 onChangeText={setEmail}
               />
@@ -308,6 +310,9 @@ export default function SeekerLoginScreen() {
                   !showPassword
                 }
                 autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="current-password"
+                importantForAutofill="yes"
                 value={password}
                 onChangeText={setPassword}
               />

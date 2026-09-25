@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
+  TextInput,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -35,6 +37,8 @@ type Property = {
   city: string;
   photos?: string[];
   isAvailable: boolean;
+  totalUnits?: number;
+  availableUnits?: number;
   isVerified?: boolean;
   moderationStatus?: "pending" | "approved" | "rejected";
   rejectionReason?: string;
@@ -60,6 +64,18 @@ export default function OwnerPropertiesScreen() {
 
   const [deletingPropertyId, setDeletingPropertyId] =
     useState<string | null>(null);
+
+  const [inventoryModalVisible, setInventoryModalVisible] =
+    useState(false);
+
+  const [selectedInventoryProperty, setSelectedInventoryProperty] =
+    useState<Property | null>(null);
+
+  const [totalUnitsInput, setTotalUnitsInput] =
+    useState("");
+
+  const [availableUnitsInput, setAvailableUnitsInput] =
+    useState("");
 
   const fetchOwnerProperties = async (showLoading = true) => {
     try {
@@ -190,6 +206,157 @@ export default function OwnerPropertiesScreen() {
     } catch (error) {
       console.error(
         "Availability update error:",
+        error
+      );
+
+      Alert.alert(
+        "Network Error",
+        "Unable to connect to the server."
+      );
+    } finally {
+      setUpdatingPropertyId(null);
+    }
+  };
+
+  const openInventoryModal = (
+    property: Property
+  ) => {
+    const safeTotalUnits =
+      Number.isInteger(property.totalUnits) &&
+      (property.totalUnits as number) > 0
+        ? (property.totalUnits as number)
+        : 1;
+
+    const safeAvailableUnits =
+      Number.isInteger(property.availableUnits) &&
+      (property.availableUnits as number) >= 0
+        ? Math.min(
+            property.availableUnits as number,
+            safeTotalUnits
+          )
+        : property.isAvailable
+          ? 1
+          : 0;
+
+    setSelectedInventoryProperty(property);
+    setTotalUnitsInput(String(safeTotalUnits));
+    setAvailableUnitsInput(String(safeAvailableUnits));
+    setInventoryModalVisible(true);
+  };
+
+  const closeInventoryModal = () => {
+    if (updatingPropertyId) {
+      return;
+    }
+
+    setInventoryModalVisible(false);
+    setSelectedInventoryProperty(null);
+    setTotalUnitsInput("");
+    setAvailableUnitsInput("");
+  };
+
+  const updateUnitAvailability = async () => {
+    if (!selectedInventoryProperty) {
+      return;
+    }
+
+    const totalUnits = Number(totalUnitsInput);
+    const availableUnits = Number(availableUnitsInput);
+
+    if (
+      !Number.isInteger(totalUnits) ||
+      totalUnits < 1
+    ) {
+      Alert.alert(
+        "Invalid total units",
+        "Total units must be a whole number greater than 0."
+      );
+      return;
+    }
+
+    if (
+      !Number.isInteger(availableUnits) ||
+      availableUnits < 0 ||
+      availableUnits > totalUnits
+    ) {
+      Alert.alert(
+        "Invalid available units",
+        "Available units must be between 0 and total units."
+      );
+      return;
+    }
+
+    try {
+      setUpdatingPropertyId(
+        selectedInventoryProperty._id
+      );
+
+      const token = await getAuthToken();
+
+      if (!token) {
+        Alert.alert(
+          "Login required",
+          "Please login again."
+        );
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/properties/${selectedInventoryProperty._id}/availability`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            totalUnits,
+            availableUnits,
+            isAvailable: availableUnits > 0,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert(
+          "Update failed",
+          data?.message ||
+            "Unable to update unit availability."
+        );
+        return;
+      }
+
+      setProperties((currentProperties) =>
+        currentProperties.map((property) =>
+          property._id ===
+          selectedInventoryProperty._id
+            ? {
+                ...property,
+                totalUnits,
+                availableUnits,
+                isAvailable:
+                  availableUnits > 0,
+              }
+            : property
+        )
+      );
+
+      setInventoryModalVisible(false);
+      setSelectedInventoryProperty(null);
+      setTotalUnitsInput("");
+      setAvailableUnitsInput("");
+
+      Alert.alert(
+        "Availability Updated",
+        `Total: ${totalUnits}\nAvailable: ${availableUnits}\nOccupied: ${
+          totalUnits - availableUnits
+        }`
+      );
+    } catch (error) {
+      console.error(
+        "Unit availability update error:",
         error
       );
 
@@ -654,6 +821,26 @@ export default function OwnerPropertiesScreen() {
                 ? "close-circle"
                 : "time";
 
+            const totalUnits =
+              Number.isInteger(property.totalUnits) &&
+              (property.totalUnits as number) > 0
+                ? (property.totalUnits as number)
+                : 1;
+
+            const availableUnits =
+              Number.isInteger(property.availableUnits) &&
+              (property.availableUnits as number) >= 0
+                ? Math.min(
+                    property.availableUnits as number,
+                    totalUnits
+                  )
+                : property.isAvailable
+                  ? 1
+                  : 0;
+
+            const occupiedUnits =
+              totalUnits - availableUnits;
+
             return (
               <TouchableOpacity
                 key={property._id}
@@ -880,6 +1067,72 @@ export default function OwnerPropertiesScreen() {
                     )}
                   </View>
 
+                  <View style={styles.inventoryRow}>
+                    <View style={styles.inventoryItem}>
+                      <Text style={styles.inventoryNumber}>
+                        {totalUnits}
+                      </Text>
+                      <Text style={styles.inventoryLabel}>
+                        Total
+                      </Text>
+                    </View>
+
+                    <View style={styles.inventoryItem}>
+                      <Text
+                        style={[
+                          styles.inventoryNumber,
+                          styles.inventoryAvailableText,
+                        ]}
+                      >
+                        {availableUnits}
+                      </Text>
+                      <Text style={styles.inventoryLabel}>
+                        Available
+                      </Text>
+                    </View>
+
+                    <View style={styles.inventoryItem}>
+                      <Text
+                        style={[
+                          styles.inventoryNumber,
+                          styles.inventoryOccupiedText,
+                        ]}
+                      >
+                        {occupiedUnits}
+                      </Text>
+                      <Text style={styles.inventoryLabel}>
+                        Occupied
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.updateUnitsButton,
+                      isUpdating &&
+                        styles.statusButtonDisabled,
+                    ]}
+                    activeOpacity={0.85}
+                    disabled={
+                      isUpdating ||
+                      isDeleting
+                    }
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      openInventoryModal(property);
+                    }}
+                  >
+                    <Ionicons
+                      name="options-outline"
+                      size={18}
+                      color="#635BFF"
+                    />
+
+                    <Text style={styles.updateUnitsButtonText}>
+                      Update Units
+                    </Text>
+                  </TouchableOpacity>
+
                   <View
                     style={[
                       styles.moderationBox,
@@ -1094,6 +1347,188 @@ export default function OwnerPropertiesScreen() {
           })}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={inventoryModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeInventoryModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderTextWrap}>
+                <Text style={styles.modalTitle}>
+                  Update Availability
+                </Text>
+
+                <Text
+                  style={styles.modalSubtitle}
+                  numberOfLines={2}
+                >
+                  {selectedInventoryProperty?.title ||
+                    "Property"}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                activeOpacity={0.8}
+                disabled={Boolean(updatingPropertyId)}
+                onPress={closeInventoryModal}
+              >
+                <Ionicons
+                  name="close"
+                  size={21}
+                  color="#667085"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>
+                Total Units
+              </Text>
+
+              <TextInput
+                style={styles.modalInput}
+                value={totalUnitsInput}
+                onChangeText={setTotalUnitsInput}
+                keyboardType="number-pad"
+                placeholder="Enter total units"
+                placeholderTextColor="#98A2B3"
+                editable={!updatingPropertyId}
+              />
+            </View>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>
+                Available Units
+              </Text>
+
+              <TextInput
+                style={styles.modalInput}
+                value={availableUnitsInput}
+                onChangeText={setAvailableUnitsInput}
+                keyboardType="number-pad"
+                placeholder="Enter available units"
+                placeholderTextColor="#98A2B3"
+                editable={!updatingPropertyId}
+              />
+            </View>
+
+            <View style={styles.modalPreview}>
+              <View style={styles.modalPreviewItem}>
+                <Text style={styles.modalPreviewLabel}>
+                  Total
+                </Text>
+
+                <Text style={styles.modalPreviewValue}>
+                  {Number.isInteger(
+                    Number(totalUnitsInput)
+                  )
+                    ? Number(totalUnitsInput)
+                    : 0}
+                </Text>
+              </View>
+
+              <View style={styles.modalPreviewDivider} />
+
+              <View style={styles.modalPreviewItem}>
+                <Text style={styles.modalPreviewLabel}>
+                  Available
+                </Text>
+
+                <Text
+                  style={[
+                    styles.modalPreviewValue,
+                    styles.inventoryAvailableText,
+                  ]}
+                >
+                  {Number.isInteger(
+                    Number(availableUnitsInput)
+                  )
+                    ? Number(availableUnitsInput)
+                    : 0}
+                </Text>
+              </View>
+
+              <View style={styles.modalPreviewDivider} />
+
+              <View style={styles.modalPreviewItem}>
+                <Text style={styles.modalPreviewLabel}>
+                  Occupied
+                </Text>
+
+                <Text
+                  style={[
+                    styles.modalPreviewValue,
+                    styles.inventoryOccupiedText,
+                  ]}
+                >
+                  {Number.isInteger(
+                    Number(totalUnitsInput)
+                  ) &&
+                  Number.isInteger(
+                    Number(availableUnitsInput)
+                  )
+                    ? Math.max(
+                        0,
+                        Number(totalUnitsInput) -
+                          Number(
+                            availableUnitsInput
+                          )
+                      )
+                    : 0}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                activeOpacity={0.85}
+                disabled={Boolean(updatingPropertyId)}
+                onPress={closeInventoryModal}
+              >
+                <Text style={styles.modalCancelText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalSaveButton,
+                  updatingPropertyId &&
+                    styles.statusButtonDisabled,
+                ]}
+                activeOpacity={0.9}
+                disabled={Boolean(updatingPropertyId)}
+                onPress={updateUnitAvailability}
+              >
+                {updatingPropertyId ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#FFFFFF"
+                  />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={18}
+                      color="#FFFFFF"
+                    />
+
+                    <Text style={styles.modalSaveText}>
+                      Save
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <OwnerBottomNav />
     </SafeAreaView>
@@ -1731,6 +2166,63 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
 
+  inventoryRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  inventoryItem: {
+    flex: 1,
+    minHeight: 62,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    backgroundColor: "#F8F9FC",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+  },
+
+  inventoryNumber: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  inventoryAvailableText: {
+    color: "#027A48",
+  },
+
+  inventoryOccupiedText: {
+    color: "#B42318",
+  },
+
+  inventoryLabel: {
+    marginTop: 3,
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  updateUnitsButton: {
+    height: 44,
+    marginTop: 10,
+    borderRadius: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#D9D6FE",
+    backgroundColor: "#F8F7FF",
+  },
+
+  updateUnitsButtonText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#635BFF",
+  },
+
   moderationBox: {
     marginTop: 14,
     padding: 13,
@@ -1871,6 +2363,154 @@ const styles = StyleSheet.create({
 
   statusButtonText: {
     fontSize: 11,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(17,24,39,0.55)",
+  },
+
+  modalCard: {
+    width: "100%",
+    maxWidth: 430,
+    padding: 20,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  modalHeaderTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  modalSubtitle: {
+    marginTop: 4,
+    fontSize: 11,
+    lineHeight: 17,
+    color: "#667085",
+  },
+
+  modalCloseButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F2F4F7",
+  },
+
+  modalField: {
+    marginTop: 18,
+  },
+
+  modalLabel: {
+    marginBottom: 7,
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#344054",
+  },
+
+  modalInput: {
+    height: 50,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  modalPreview: {
+    marginTop: 18,
+    paddingVertical: 14,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FC",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+  },
+
+  modalPreviewItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  modalPreviewDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#EAECF0",
+  },
+
+  modalPreviewLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#667085",
+  },
+
+  modalPreviewValue: {
+    marginTop: 4,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  modalActions: {
+    marginTop: 20,
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  modalCancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#FFFFFF",
+  },
+
+  modalCancelText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#475467",
+  },
+
+  modalSaveButton: {
+    flex: 1.2,
+    height: 48,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#635BFF",
+  },
+
+  modalSaveText: {
+    fontSize: 12,
     fontWeight: "900",
     color: "#FFFFFF",
   },
