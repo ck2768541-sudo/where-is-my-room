@@ -2,12 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>website</title>
+
+    <meta name="theme-color" content="#635BFF" />
+
+    <meta
+      name="description"
+      content="StayRent helps you discover rooms, PGs, flats, hotels and rental properties easily."
+    />
+
+    <title>StayRent</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "StayRent",
+        "url": "https://stayrent.in",
+        "logo": "https://stayrent.in/favicon.png"
+      }
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+
+    <script
+      type="module"
+      src="/src/main.jsx"
+    ></script>
   </body>
 </html>

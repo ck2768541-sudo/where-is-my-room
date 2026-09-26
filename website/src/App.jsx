@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 
 import "./App.css";
-import stayrentLogo from "./assets/stayrent-logo.jpeg";
 
 const SUPPORT_EMAIL =
   "stayrentofficial@gmail.com";
@@ -26,11 +25,11 @@ function Layout({ children }) {
             to="/"
             className="brand"
           >
-        <img
-  src={stayrentLogo}
-  alt="StayRent"
-  className="brand-logo"
-/>
+            <img
+              src="/favicon.png"
+              alt="StayRent"
+              className="brand-logo"
+            />
 
             <span className="brand-name">
               StayRent
@@ -508,18 +507,14 @@ function PrivacyPolicyPage() {
 
         <p>
           Email:{" "}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-          >
+          <a href={`mailto:${SUPPORT_EMAIL}`}>
             {SUPPORT_EMAIL}
           </a>
         </p>
 
         <p>
           Phone:{" "}
-          <a
-            href={`tel:${SUPPORT_PHONE}`}
-          >
+          <a href={`tel:${SUPPORT_PHONE}`}>
             {SUPPORT_PHONE}
           </a>
         </p>
@@ -791,9 +786,7 @@ function TermsOfUsePage() {
         <p>
           Questions about these Terms can be
           sent to{" "}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-          >
+          <a href={`mailto:${SUPPORT_EMAIL}`}>
             {SUPPORT_EMAIL}
           </a>
           .
@@ -820,9 +813,7 @@ function ContactPage() {
           <div>
             <span>Email</span>
 
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-            >
+            <a href={`mailto:${SUPPORT_EMAIL}`}>
               {SUPPORT_EMAIL}
             </a>
           </div>
@@ -830,9 +821,7 @@ function ContactPage() {
           <div>
             <span>Phone</span>
 
-            <a
-              href={`tel:${SUPPORT_PHONE}`}
-            >
+            <a href={`tel:${SUPPORT_PHONE}`}>
               {SUPPORT_PHONE}
             </a>
           </div>
@@ -862,9 +851,7 @@ function AccountDeletionPage() {
         <p>
           Send an email from your registered
           email address to{" "}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-          >
+          <a href={`mailto:${SUPPORT_EMAIL}`}>
             {SUPPORT_EMAIL}
           </a>{" "}
           with the subject:
@@ -924,9 +911,7 @@ function AccountDeletionPage() {
 
         <p>
           Contact{" "}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-          >
+          <a href={`mailto:${SUPPORT_EMAIL}`}>
             {SUPPORT_EMAIL}
           </a>{" "}
           if you have questions about
